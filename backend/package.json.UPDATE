@@ -1,0 +1,36 @@
+# Package.json Update Instructions
+
+Add these dependencies to your `backend/package.json`:
+
+```json
+{
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0",
+    "uuid": "^9.0.1"
+  }
+}
+```
+
+## Installation Command
+
+Run this in your backend directory:
+
+```bash
+cd backend
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner uuid
+```
+
+## Full Dependencies List (for reference)
+
+Your backend should have these packages after installation:
+
+- @aws-sdk/client-s3 - AWS S3 client for uploading/downloading files
+- @aws-sdk/s3-request-presigner - For generating signed URLs
+- uuid - For generating unique file names
+- axios - For downloading files from external URLs (already installed)
+- express - Web framework (already installed)
+- @supabase/supabase-js - Database client (already installed)
+- dotenv - Environment variables (already installed)
+- express-fileupload - File upload handling (already installed)
+

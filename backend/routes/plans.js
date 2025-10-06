@@ -1,0 +1,507 @@
+const express = require("express");
+const router = express.Router();
+const { supabase, supabaseAdmin } = require("../utils/supabase");
+const { auth, requireAdmin } = require("../middleware/auth");
+
+// GET /api/plans - Get all active subscription plans
+router.get("/", async (req, res) => {
+  try {
+    console.log('Backend Route: GET /api/plans - Fetching subscription plans');
+
+    const client = supabaseAdmin || supabase;
+    
+    const { data, error } = await client
+      .from('plans')
+      .select(`
+        id,
+        name,
+        display_name,
+        description,
+        price_monthly,
+        price_quarterly,
+        price_yearly,
+        credits_included,
+        max_generations_per_month,
+        features,
+        badge,
+        badge_color,
+        cta,
+        concurrent_image_generations,
+        concurrent_video_generations,
+        image_visibility,
+        priority_support,
+        priority_queue,
+        seedream_unlimited,
+        is_active,
+        is_popular,
+        sort_order,
+        created_at,
+        updated_at
+      `)
+      .eq('is_active', true)
+      .order('sort_order');
+
+    if (error) {
+      console.error('Backend Route: GET /api/plans - Database error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch subscription plans',
+        details: error.message
+      });
+    }
+
+    console.log(`Backend Route: GET /api/plans - Found ${data?.length || 0} active plans`);
+    
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({
+      success: true,
+      data: data || []
+    });
+
+  } catch (error) {
+    console.error('Backend Route: GET /api/plans - Unexpected error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/plans/admin - Get all plans including inactive ones (Admin only)
+router.get("/admin", auth, requireAdmin, async (req, res) => {
+  try {
+    console.log('Backend Route: GET /api/plans/admin - Admin fetching all plans');
+
+    const client = supabaseAdmin || supabase;
+    
+    const { data, error } = await client
+      .from('plans')
+      .select(`
+        id,
+        name,
+        display_name,
+        description,
+        price_monthly,
+        price_quarterly,
+        price_yearly,
+        credits_included,
+        max_generations_per_month,
+        features,
+        badge,
+        badge_color,
+        cta,
+        concurrent_image_generations,
+        concurrent_video_generations,
+        image_visibility,
+        priority_support,
+        priority_queue,
+        seedream_unlimited,
+        is_active,
+        is_popular,
+        sort_order,
+        created_at,
+        updated_at
+      `)
+      .order('sort_order');
+
+    if (error) {
+      console.error('Backend Route: GET /api/plans/admin - Database error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch plans',
+        details: error.message
+      });
+    }
+
+    console.log(`Backend Route: GET /api/plans/admin - Found ${data?.length || 0} plans`);
+    
+    res.status(200).json({
+      success: true,
+      data: data || []
+    });
+
+  } catch (error) {
+    console.error('Backend Route: GET /api/plans/admin - Unexpected error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/plans/:id - Get a specific plan by ID
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`Backend Route: GET /api/plans/${id} - Fetching plan`);
+
+    const client = supabaseAdmin || supabase;
+    
+    const { data, error } = await client
+      .from('plans')
+      .select(`
+        id,
+        name,
+        display_name,
+        description,
+        price_monthly,
+        price_quarterly,
+        price_yearly,
+        credits_included,
+        max_generations_per_month,
+        features,
+        badge,
+        badge_color,
+        cta,
+        concurrent_image_generations,
+        concurrent_video_generations,
+        image_visibility,
+        priority_support,
+        priority_queue,
+        seedream_unlimited,
+        is_active,
+        is_popular,
+        sort_order,
+        created_at,
+        updated_at
+      `)
+      .eq('id', id)
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      console.error(`Backend Route: GET /api/plans/${id} - Database error:`, error);
+      return res.status(404).json({
+        success: false,
+        error: 'Plan not found',
+        details: error.message
+      });
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: 'Plan not found'
+      });
+    }
+
+    console.log(`Backend Route: GET /api/plans/${id} - Plan found: ${data.display_name}`);
+    
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({
+      success: true,
+      data: data
+    });
+
+  } catch (error) {
+    console.error(`Backend Route: GET /api/plans/${id} - Unexpected error:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+// GET /api/plans/popular - Get the most popular plan
+router.get("/popular", async (req, res) => {
+  try {
+    console.log('Backend Route: GET /api/plans/popular - Fetching popular plan');
+
+    const client = supabaseAdmin || supabase;
+    
+    const { data, error } = await client
+      .from('plans')
+      .select(`
+        id,
+        name,
+        display_name,
+        description,
+        price_monthly,
+        price_quarterly,
+        price_yearly,
+        credits_included,
+        max_generations_per_month,
+        features,
+        badge,
+        badge_color,
+        cta,
+        concurrent_image_generations,
+        concurrent_video_generations,
+        image_visibility,
+        priority_support,
+        priority_queue,
+        seedream_unlimited,
+        is_active,
+        is_popular,
+        sort_order,
+        created_at,
+        updated_at
+      `)
+      .eq('is_active', true)
+      .eq('is_popular', true)
+      .order('sort_order')
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error('Backend Route: GET /api/plans/popular - Database error:', error);
+      return res.status(404).json({
+        success: false,
+        error: 'No popular plan found',
+        details: error.message
+      });
+    }
+
+    console.log(`Backend Route: GET /api/plans/popular - Popular plan: ${data?.display_name || 'None'}`);
+    
+    res.set('Cache-Control', 'no-store');
+    res.status(200).json({
+      success: true,
+      data: data
+    });
+
+  } catch (error) {
+    console.error('Backend Route: GET /api/plans/popular - Unexpected error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+// =====================================================
+// ADMIN ROUTES - Protected by admin authentication
+// =====================================================
+
+// PUT /api/plans/:id - Update a specific plan (Admin only)
+router.put("/:id", auth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    console.log(`Backend Route: PUT /api/plans/${id} - Admin updating plan`);
+    console.log('Request body received:', JSON.stringify(updates, null, 2));
+
+    // Validate required fields
+    const allowedFields = [
+      'display_name',
+      'price_monthly', 
+      'price_quarterly',
+      'price_yearly',
+      'credits_included',
+      'max_generations_per_month',
+      'features',
+      'badge',
+      'badge_color',
+      'cta',
+      'concurrent_image_generations',
+      'concurrent_video_generations',
+      'image_visibility',
+      'priority_support',
+      'priority_queue',
+      'seedream_unlimited',
+      'is_popular',
+      'sort_order'
+    ];
+
+    // Filter only allowed fields
+    const filteredUpdates = {};
+    Object.keys(updates).forEach(key => {
+      if (allowedFields.includes(key)) {
+        filteredUpdates[key] = updates[key];
+      }
+    });
+
+    // If credits_included is being updated, also update the features array text
+    if (filteredUpdates.credits_included !== undefined) {
+      // First, fetch the current plan to get its features array
+      const { data: currentPlan } = await (supabaseAdmin || supabase)
+        .from('plans')
+        .select('features')
+        .eq('id', id)
+        .single();
+
+      if (currentPlan && Array.isArray(currentPlan.features)) {
+        // Update the credits line in features array
+        const updatedFeatures = currentPlan.features.map(feature => {
+          if (feature.toLowerCase().includes('credits per month')) {
+            return `${filteredUpdates.credits_included.toLocaleString()} credits per month`;
+          }
+          return feature;
+        });
+        filteredUpdates.features = updatedFeatures;
+      }
+    }
+
+    console.log('Filtered updates to be saved:', JSON.stringify(filteredUpdates, null, 2));
+
+    // Add updated_at timestamp
+    filteredUpdates.updated_at = new Date().toISOString();
+
+    const client = supabaseAdmin || supabase;
+    
+    const { data, error } = await client
+      .from('plans')
+      .update(filteredUpdates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Backend Route: PUT /api/plans/${id} - Database error:`, error);
+      return res.status(400).json({
+        success: false,
+        error: 'Failed to update plan',
+        details: error.message
+      });
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: 'Plan not found'
+      });
+    }
+
+    console.log(`Backend Route: PUT /api/plans/${id} - Plan updated successfully: ${data.display_name}`);
+    console.log('Updated plan data from DB:', JSON.stringify(data, null, 2));
+    
+    res.status(200).json({
+      success: true,
+      data: data,
+      message: 'Plan updated successfully'
+    });
+
+  } catch (error) {
+    console.error(`Backend Route: PUT /api/plans/${id} - Unexpected error:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+// POST /api/plans - Create a new plan (Admin only)
+router.post("/", auth, requireAdmin, async (req, res) => {
+  try {
+    const planData = req.body;
+    
+    console.log('Backend Route: POST /api/plans - Admin creating new plan');
+
+    // Validate required fields
+    const requiredFields = ['name', 'display_name', 'price_monthly', 'price_quarterly', 'price_yearly', 'credits_included'];
+    const missingFields = requiredFields.filter(field => !planData[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields',
+        details: `Required: ${missingFields.join(', ')}`
+      });
+    }
+
+    // Set defaults for optional fields
+    const newPlan = {
+      ...planData,
+      is_active: true,
+      is_popular: false,
+      sort_order: 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const client = supabaseAdmin || supabase;
+    
+    const { data, error } = await client
+      .from('plans')
+      .insert(newPlan)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Backend Route: POST /api/plans - Database error:', error);
+      return res.status(400).json({
+        success: false,
+        error: 'Failed to create plan',
+        details: error.message
+      });
+    }
+
+    console.log(`Backend Route: POST /api/plans - Plan created successfully: ${data.display_name}`);
+    
+    res.status(201).json({
+      success: true,
+      data: data,
+      message: 'Plan created successfully'
+    });
+
+  } catch (error) {
+    console.error('Backend Route: POST /api/plans - Unexpected error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+// DELETE /api/plans/:id - Delete a plan (Admin only)
+router.delete("/:id", auth, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log(`Backend Route: DELETE /api/plans/${id} - Admin deleting plan`);
+
+    const client = supabaseAdmin || supabase;
+    
+    // Instead of hard delete, we'll deactivate the plan
+    const { data, error } = await client
+      .from('plans')
+      .update({ 
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Backend Route: DELETE /api/plans/${id} - Database error:`, error);
+      return res.status(400).json({
+        success: false,
+        error: 'Failed to delete plan',
+        details: error.message
+      });
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: 'Plan not found'
+      });
+    }
+
+    console.log(`Backend Route: DELETE /api/plans/${id} - Plan deactivated: ${data.display_name}`);
+    
+    res.status(200).json({
+      success: true,
+      data: data,
+      message: 'Plan deactivated successfully'
+    });
+
+  } catch (error) {
+    console.error(`Backend Route: DELETE /api/plans/${id} - Unexpected error:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
+});
+
+module.exports = router;

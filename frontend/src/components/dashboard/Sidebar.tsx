@@ -1,0 +1,227 @@
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { 
+  LogOut,
+  Home,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
+import { authService } from '../../services/authService';
+import SidebarSectionList, { SidebarItem as TSidebarItem, SidebarSection as TSidebarSection } from './SidebarSectionList';
+import { toast } from 'react-hot-toast';
+
+const Sidebar: React.FC = () => {
+  const navigate = useNavigate();
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  type IconComponent = React.ComponentType<any>;
+  type SidebarItem = TSidebarItem;
+  type SidebarSection = TSidebarSection;
+
+  // Check if device is mobile/tablet on mount and on resize
+  useEffect(() => {
+    const checkDeviceType = () => {
+      const width = window.innerWidth;
+      setIsMobile(width < 768);
+      setIsTablet(width >= 768 && width < 1024);
+      
+      // On mobile and tablet, start collapsed
+      if (width < 1024) {
+        setIsExpanded(false);
+      } else {
+        setIsExpanded(true);
+      }
+    };
+
+    checkDeviceType();
+    window.addEventListener('resize', checkDeviceType);
+    return () => window.removeEventListener('resize', checkDeviceType);
+  }, []);
+
+  // Helper to check if device should use collapsible behavior
+  const isCollapsible = isMobile || isTablet;
+
+  const homeItem: SidebarItem = useMemo(
+    () => ({ name: 'Home', href: '/dashboard', icon: Home as IconComponent, color: 'text-green-400' }),
+    []
+  );
+
+  const sections: SidebarSection[] = useMemo(() => [
+    {
+      title: 'Tools',
+      items: [
+        { name: 'Text to Video', href: '/dashboard/text-to-video', icon: 'texttovideo', color: 'text-red-400' },
+        { name: 'Image to Video', href: '/dashboard/image-to-video', icon: 'imagetovideo', color: 'text-yellow-400' },
+        { name: 'Image to Image', href: '/dashboard/image-to-image', icon: 'imagetoimage', color: 'text-blue-400' },
+        { name: 'Text To Image', href: '/dashboard/text-to-image', icon: 'texttoimage', color: 'text-green-400' },
+      ],
+    },
+    {
+      title: 'Assets',
+      items: [
+        { name: 'View Generations', href: '/dashboard/view-generations', icon: 'viewgenerations', color: 'text-purple-400' },
+      ],
+    },
+    {
+      title: 'Subscription & Support',
+      items: [
+        { name: 'Manage Subscription', href: '/dashboard/subscription', icon: 'mangesubscriptions', color: 'text-pink-500' },
+        { name: 'Credits', href: '/dashboard/credits', icon: 'credits', color: 'text-orange-400' },
+        { name: 'Account', href: '/dashboard/settings', icon: 'account', color: 'text-cyan-400' },
+        { name: 'Billing', href: '/dashboard/billing', icon: 'billing', color: 'text-purple-500' },
+      ],
+    },
+  ], []);
+
+  // NavLink will handle active state; no custom matcher needed
+
+  const handleSignOut = async () => {
+    try {
+      setIsSigningOut(true);
+      await authService.logout();
+      toast.success('Signed out successfully');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to sign out');
+      setIsSigningOut(false);
+    } finally {
+      navigate('/signin', { replace: true });
+    }
+  };
+
+  const handleNavClick = useCallback(() => {
+    if (isCollapsible) {
+      setIsExpanded(false);
+    }
+  }, [isCollapsible]);
+
+  const handleOverlayClick = useCallback(() => {
+    setIsExpanded(false);
+  }, []);
+
+  const handleToggleExpanded = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
+
+  const renderHomeItem = useCallback(() => {
+    const Icon = homeItem.icon;
+    return (
+      <NavLink
+        key={homeItem.name}
+        to={homeItem.href}
+        end
+        className={({ isActive }) => `flex items-center gap-3 ${isCollapsible && !isExpanded ? 'px-2 py-3' : 'px-3 py-3'} rounded-lg text-sm font-medium transition-colors ${
+          isActive
+            ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white'
+            : 'text-white hover:bg-white/5'
+        } ${isCollapsible && !isExpanded ? 'justify-center' : ''}`}
+        onClick={handleNavClick}
+        title={isCollapsible && !isExpanded ? homeItem.name : undefined}
+      >
+        {({ isActive }) => (
+          <>
+            <Icon className={`${(isCollapsible && !isExpanded) || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'} ${isActive ? 'text-white' : homeItem.color}`} />
+            {(!isCollapsible || isExpanded) && <span className="whitespace-nowrap">{homeItem.name}</span>}
+          </>
+        )}
+      </NavLink>
+    );
+  }, [homeItem, isCollapsible, isExpanded, handleNavClick, isMobile, isTablet]);
+
+  const memoizedHomeItem = useMemo(() => renderHomeItem(), [renderHomeItem]);
+
+  // ItemIcon moved into SidebarSectionList
+
+  return (
+    <>
+      {/* Sidebar */}
+      <div className={`
+        flex flex-col h-screen bg-[#0F0F0F] border-r border-white/10 fixed left-0 top-0 transition-all duration-300 z-40
+        ${isCollapsible 
+          ? (isExpanded ? 'w-64' : 'w-16')
+          : 'w-64'
+        }
+      `}>
+        {/* Logo */}
+        <div className="hidden lg:block">
+          <div className="flex items-center justify-start p-6">
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/logo.svg" 
+                alt="NOLMT.AI" 
+                className={`${
+                  (!isCollapsible || isExpanded) ? 'h-10' : 'h-12 w-12'
+                }`}
+                style={{ 
+                  width: (!isCollapsible || isExpanded) ? 'auto' : '48px',
+                  height: (!isCollapsible || isExpanded) ? '40px' : '48px'
+                }}
+              />
+            </Link>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-2 md:px-4 py-6 space-y-4 overflow-y-auto">
+          {/* Home */}
+          {memoizedHomeItem}
+
+          <SidebarSectionList
+            sections={sections}
+            isCollapsible={isCollapsible}
+            isExpanded={isExpanded}
+            handleNavClick={handleNavClick}
+            isMobile={isMobile}
+            isTablet={isTablet}
+          />
+        </nav>
+
+        {/* Mobile/Tablet Toggle Section - Centered */}
+        {isCollapsible && (
+          <div className="border-t border-white/10 p-4 flex justify-center">
+            <button
+              onClick={handleToggleExpanded}
+              className="p-3 text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              {isExpanded ? <ChevronLeft className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+            </button>
+          </div>
+        )}
+
+        {/* Bottom Section */}
+        <div className="border-t border-white/10 space-y-2">
+          <button 
+            onClick={handleSignOut} 
+            disabled={isSigningOut}
+            className={`flex items-center gap-3 ${
+              isCollapsible && !isExpanded ? 'justify-center px-2' : 'px-3'
+            } py-3 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full ${
+              isSigningOut ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            <LogOut className={`${(isCollapsible && !isExpanded) || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'} ${
+              isSigningOut ? 'animate-pulse' : ''
+            }`} />
+            {(!isCollapsible || isExpanded) && (
+              <span className="whitespace-nowrap">
+                {isSigningOut ? 'Signing out...' : 'Sign Out'}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Overlay (exclude tablet) */}
+      {isMobile && isExpanded && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={handleOverlayClick}
+        />
+      )}
+    </>
+  );
+};
+
+export default Sidebar;
