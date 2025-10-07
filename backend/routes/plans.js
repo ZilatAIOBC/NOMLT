@@ -316,24 +316,77 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
       }
     });
 
-    // If credits_included is being updated, also update the features array text
-    if (filteredUpdates.credits_included !== undefined) {
-      // First, fetch the current plan to get its features array
-      const { data: currentPlan } = await (supabaseAdmin || supabase)
-        .from('plans')
-        .select('features')
-        .eq('id', id)
-        .single();
+    // Normalize features: allow string (comma/newline separated) or array of strings
+    if (filteredUpdates.features !== undefined) {
+      let normalizedFeatures = filteredUpdates.features;
 
-      if (currentPlan && Array.isArray(currentPlan.features)) {
-        // Update the credits line in features array
-        const updatedFeatures = currentPlan.features.map(feature => {
-          if (feature.toLowerCase().includes('credits per month')) {
-            return `${filteredUpdates.credits_included.toLocaleString()} credits per month`;
+      if (typeof normalizedFeatures === 'string') {
+        // Split by newlines; do not split by commas to preserve number formatting like 5,000
+        normalizedFeatures = normalizedFeatures
+          .split(/\n/)
+          .map(item => (item || '').trim())
+          .filter(item => item.length > 0);
+      }
+
+      if (Array.isArray(normalizedFeatures)) {
+        // Ensure all are strings, trimmed, unique, preserve order of first occurrence
+        const seen = new Set();
+        normalizedFeatures = normalizedFeatures
+          .map(item => String(item || '').trim())
+          .filter(item => item.length > 0 && !seen.has(item) && (seen.add(item), true));
+      } else {
+        // If invalid type, drop features from update to avoid bad data
+        console.warn('Invalid features type received; expected string or array. Ignoring features update.');
+        delete filteredUpdates.features;
+      }
+
+      if (normalizedFeatures) {
+        filteredUpdates.features = normalizedFeatures;
+      }
+    }
+
+    // If credits_included is being updated, also update or insert the credits line in features
+    if (filteredUpdates.credits_included !== undefined) {
+      const creditsLine = `${filteredUpdates.credits_included.toLocaleString()} credits per month`;
+
+      if (Array.isArray(filteredUpdates.features)) {
+        // Update in provided features list
+        let found = false;
+        const updated = filteredUpdates.features.map(f => {
+          if (typeof f === 'string' && f.toLowerCase().includes('credits per month')) {
+            found = true;
+            return creditsLine;
           }
-          return feature;
+          return f;
         });
-        filteredUpdates.features = updatedFeatures;
+        if (!found) {
+          updated.unshift(creditsLine);
+        }
+        filteredUpdates.features = updated;
+      } else {
+        // Fetch current features and update there
+        const { data: currentPlan } = await (supabaseAdmin || supabase)
+          .from('plans')
+          .select('features')
+          .eq('id', id)
+          .single();
+
+        if (currentPlan && Array.isArray(currentPlan.features)) {
+          let found = false;
+          const updated = currentPlan.features.map(feature => {
+            if (typeof feature === 'string' && feature.toLowerCase().includes('credits per month')) {
+              found = true;
+              return creditsLine;
+            }
+            return feature;
+          });
+          if (!found) {
+            updated.unshift(creditsLine);
+          }
+          filteredUpdates.features = updated;
+        } else {
+          filteredUpdates.features = [creditsLine];
+        }
       }
     }
 

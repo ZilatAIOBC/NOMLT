@@ -1,12 +1,15 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useCallback, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { authService } from '../../services/authService';
+import { toast } from 'react-hot-toast';
 
 // Removed unused SidebarItem to simplify and avoid lints
 
 export default function AdminSidebar() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const navigate = useNavigate();
 
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -25,6 +28,7 @@ export default function AdminSidebar() {
   }, []);
 
   const isCollapsible = isMobile || isTablet;
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleToggleExpanded = useCallback(() => {
     setIsExpanded((prev) => !prev);
@@ -52,6 +56,18 @@ export default function AdminSidebar() {
       path: '/admin/analytics',
     },
   ];
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      setIsSigningOut(true);
+      await authService.logoutAdmin();
+      toast.success('Signed out successfully');
+      navigate('/signin', { replace: true });
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to sign out');
+      setIsSigningOut(false);
+    }
+  }, [navigate]);
 
   return (
     <>
@@ -110,7 +126,25 @@ export default function AdminSidebar() {
         </div>
       )}
 
-      {/* Footer removed per design consistency */}
+      {/* Bottom Section */}
+      <div className="border-t border-white/10 space-y-2 p-2">
+        <button 
+          onClick={handleSignOut} 
+          disabled={isSigningOut}
+          className={`flex items-center gap-3 ${
+            isCollapsible && !isExpanded ? 'justify-center px-2' : 'px-3'
+          } py-3 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full ${
+            isSigningOut ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          <LogOut className={`${(isCollapsible && !isExpanded) || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'}`} />
+          {(!isCollapsible || isExpanded) && (
+            <span className="whitespace-nowrap">
+              {isSigningOut ? 'Signing out...' : 'Sign Out'}
+            </span>
+          )}
+        </button>
+      </div>
     </div>
 
     {/* Mobile overlay */}

@@ -121,4 +121,23 @@ export const authService = {
       await supabase.auth.signOut();
     } catch {}
   },
+  async logoutAdmin(): Promise<void> {
+    // Call backend admin logout (non-essential but keeps parity), then clear local
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('accessToken');
+      await fetch(`${baseUrl}/auth/admin/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      }).catch(() => {});
+    } catch {}
+    try { 
+      localStorage.removeItem('authUser');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    } catch {}
+  },
 };

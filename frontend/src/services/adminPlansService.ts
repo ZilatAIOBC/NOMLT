@@ -62,6 +62,74 @@ class AdminPlansService {
     this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   }
 
+  // Perform an authenticated request; on 401 try to refresh token once and retry
+  private async authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    const doFetch = async (): Promise<Response> => {
+      return await fetch(input, {
+        ...init,
+        headers: {
+          ...(init?.headers || {}),
+          ...this.getHeaders(),
+        },
+      });
+    };
+
+    let response = await doFetch();
+    if (response.status === 401) {
+      const refreshed = await this.tryRefreshToken();
+      if (refreshed) {
+        response = await doFetch();
+      }
+      if (response.status === 401) {
+        this.forceLogoutAndRedirect();
+      }
+    }
+    return response;
+  }
+
+  private async tryRefreshToken(): Promise<boolean> {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) return false;
+      const res = await fetch(`${this.baseUrl}/auth/refresh-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (data?.accessToken) {
+        try {
+          localStorage.setItem('accessToken', data.accessToken);
+          if (data.refreshToken) {
+            localStorage.setItem('refreshToken', data.refreshToken);
+          }
+        } catch {}
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  private forceLogoutAndRedirect() {
+    try {
+      localStorage.removeItem('authUser');
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+    } catch {}
+    // Avoid multiple redirects in rapid succession
+    if (typeof window !== 'undefined') {
+      const current = window.location.pathname;
+      // preserve a hint to show a toast on signin page if desired
+      const url = '/signin?reason=expired';
+      if (current !== '/signin') {
+        window.location.href = url;
+      }
+    }
+  }
+
   /**
    * Get authentication token from localStorage
    */
@@ -85,9 +153,8 @@ class AdminPlansService {
    */
   async getAllPlans(): Promise<Plan[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/plans/admin`, {
+      const response = await this.authFetch(`${this.baseUrl}/api/plans/admin`, {
         method: 'GET',
-        headers: this.getHeaders(),
       });
 
       if (!response.ok) {
@@ -112,9 +179,8 @@ class AdminPlansService {
    */
   async createPlan(planData: CreatePlanRequest): Promise<Plan> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/plans`, {
+      const response = await this.authFetch(`${this.baseUrl}/api/plans`, {
         method: 'POST',
-        headers: this.getHeaders(),
         body: JSON.stringify(planData),
       });
 
@@ -140,9 +206,8 @@ class AdminPlansService {
    */
   async updatePlan(planId: string, updates: UpdatePlanRequest): Promise<Plan> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/plans/${planId}`, {
+      const response = await this.authFetch(`${this.baseUrl}/api/plans/${planId}`, {
         method: 'PUT',
-        headers: this.getHeaders(),
         body: JSON.stringify(updates),
       });
 
@@ -168,9 +233,8 @@ class AdminPlansService {
    */
   async deletePlan(planId: string): Promise<Plan> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/plans/${planId}`, {
+      const response = await this.authFetch(`${this.baseUrl}/api/plans/${planId}`, {
         method: 'DELETE',
-        headers: this.getHeaders(),
       });
 
       if (!response.ok) {

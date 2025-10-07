@@ -2,7 +2,7 @@ const express = require("express");
 const { check, validationResult } = require("express-validator");
 const { supabase } = require("../utils/supabase");
 const router = express.Router();
-const { auth, requireVerifiedEmail } = require("../middleware/auth.js");
+const { auth, requireVerifiedEmail, requireAdmin } = require("../middleware/auth.js");
 
 // Using Supabase's built-in verification emails exclusively
 
@@ -301,6 +301,17 @@ router.post("/logout", auth, async (req, res) => {
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Logout error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Admin-specific logout (same behavior, but ensures admin context)
+router.post("/admin/logout", auth, requireAdmin, async (req, res) => {
+  try {
+    // Place to add server-side session invalidation if implemented later
+    return res.status(200).json({ message: "Admin logged out successfully" });
+  } catch (error) {
+    console.error("Admin logout error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });

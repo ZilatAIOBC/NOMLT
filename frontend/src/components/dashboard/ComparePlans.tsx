@@ -12,7 +12,7 @@ const ComparePlans: React.FC = () => {
 
       {/* Top summary bar */}
       <div className="rounded-2xl border border-white/10 bg-[#121212] overflow-hidden shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset]">
-        <div className="flex flex-col lg:grid lg:grid-cols-5">
+        <div className="flex flex-col lg:grid lg:grid-cols-4">
           {/* Free */}
           <div className="p-5 md:p-6 border-b lg:border-b-0 border-white/10">
             <div className="flex items-end gap-2">
@@ -26,7 +26,7 @@ const ComparePlans: React.FC = () => {
           {/* Basic */}
           <div className="p-5 md:p-6 border-b lg:border-b-0 border-white/10">
             <div className="flex items-end gap-2">
-              <span className="text-2xl md:text-3xl font-semibold text-white">$ 4,249</span>
+              <span className="text-2xl md:text-3xl font-semibold text-white">$ 4.25</span>
               <span className="text-xs text-white/60 mb-1">/mo</span>
             </div>
             <div className="text-sm text-white/70 mt-1">Basic</div>
@@ -36,7 +36,7 @@ const ComparePlans: React.FC = () => {
           {/* Standard */}
           <div className="p-5 md:p-6 border-b lg:border-b-0 border-white/10">
             <div className="flex items-end gap-2">
-              <span className="text-2xl md:text-3xl font-semibold text-green-400">$ 8,499</span>
+              <span className="text-2xl md:text-3xl font-semibold text-green-400">$ 14.17</span>
               <span className="text-xs text-white/60 mb-1">/mo</span>
             </div>
             <div className="text-sm text-white/70 mt-1">Standard</div>
@@ -46,34 +46,25 @@ const ComparePlans: React.FC = () => {
           {/* Ultimate */}
           <div className="p-5 md:p-6 border-b lg:border-b-0 border-white/10">
             <div className="flex items-end gap-2">
-              <span className="text-2xl md:text-3xl font-semibold text-blue-400">$ 14,165</span>
+              <span className="text-2xl md:text-3xl font-semibold text-blue-400">$ 70.82</span>
               <span className="text-xs text-white/60 mb-1">/mo</span>
             </div>
-            <div className="text-sm text-white/70 mt-1">Ultimate</div>
+            <div className="text-sm text-white/70 mt-1">Pro</div>
             <button className="mt-4 inline-flex items-center px-5 py-2 rounded-full text-white/90 text-sm border border-white/15 bg-[#0D131F] hover:border-white/25">Get Started</button>
           </div>
 
-          {/* Creator */}
-          <div className="p-5 md:p-6">
-            <div className="flex items-end gap-2">
-              <span className="text-2xl md:text-3xl font-semibold text-pink-400">$ 70,823</span>
-              <span className="text-xs text-white/60 mb-1">/mo</span>
-            </div>
-            <div className="text-sm text-white/70 mt-1">Creator</div>
-            <button className="mt-4 inline-flex items-center px-5 py-2 rounded-full text-white/90 text-sm border border-white/15 bg-[#0D131F] hover:border-white/25">Get Started</button>
-          </div>
+     
         </div>
 
         {/* Plan names strip - hidden on mobile, shown on desktop */}
         <div className="hidden lg:block mx-4 my-3 rounded-xl bg-[#0B1324] text-sm relative px-4 py-3">
           {/* Absolute label so it does not affect column widths */}
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/70 whitespace-nowrap">Plan names:</div>
-          <div className="grid grid-cols-5 w-full">
+          <div className="grid grid-cols-4 w-full">
             <div className="px-8" />
             <div className="px-10 text-left text-white font-medium">Basic</div>
             <div className="px-10 text-left text-green-400 font-medium">Standard</div>
-            <div className="px-10 text-left text-blue-400 font-medium">Ultimate</div>
-            <div className="px-14 text-left text-pink-400 font-medium">Creator</div>
+            <div className="px-14 text-left text-blue-400 font-medium">Pro</div>
           </div>
         </div>
       </div>
@@ -82,15 +73,15 @@ const ComparePlans: React.FC = () => {
       {[{
         title: 'Video Generations',
         rows: [
-          ['Text to Video', '141', '283', '472', '2360'],
-          ['Image to Video', '141', '283', '472', '2360'],
-          ['Video Effects', '70', '141', '236', '1180'],
+          ['Text to Video', '141', '283', '472'],
+          ['Image to Video', '141', '283', '472'],
+          ['Video Effects', '70', '141', '236'],
         ]
       }, {
         title: 'Image Generations',
         rows: [
-          ['Text to Image', '849', '1699', '2833', '14164'],
-          ['Edit Image', '236', '472', '788', '3934'],
+          ['Text to Image', '849', '1699', '2833'],
+          ['Edit Image', '236', '472', '788'],
         ]
       }].map((section, idx) => (
         <div key={idx} className="rounded-xl border border-white/10 overflow-hidden">
@@ -107,13 +98,12 @@ const ComparePlans: React.FC = () => {
             {section.rows.map((row, rIdx) => (
               <div 
                 key={rIdx} 
-                className="grid grid-cols-5 border-t border-white/10 text-sm text-white/80"
+                className="grid grid-cols-4 border-t border-white/10 text-sm text-white/80"
               >
                 <div className="px-6 py-4 text-white/70">{row[0]}</div>
                 <div className="px-14 py-4 text-white">{row[1]}</div>
-                <div className="px-10 py-4 text-white">{row[2]}</div>
-                <div className="px-10 py-4 text-white">{row[3]}</div>
-                <div className="px-14 py-4 text-white">{row[4]}</div>
+                <div className="px-12 py-4 text-white">{row[2]}</div>
+                <div className="px-14 py-4 text-white">{row[3]}</div>
               </div>
             ))}
           </div>
