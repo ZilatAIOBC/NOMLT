@@ -23,6 +23,9 @@ export interface Plan {
   price_monthly: number;
   price_quarterly: number;
   price_yearly: number;
+  stripe_price_id_monthly?: string;
+  stripe_price_id_yearly?: string;
+  stripe_product_id?: string;
   credits_included: number;
   max_generations_per_month: number;
   features: string[];

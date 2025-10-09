@@ -9,6 +9,7 @@ const { supabase, supabaseAdmin } = require("./utils/supabase");
 dotenv.config();
 
 const app = express();
+
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(fileUpload({ limits: { fileSize: 100 * 1024 * 1024 } }));
@@ -85,6 +86,10 @@ app.use("/api/image-to-video", require("./routes/imageToVideo"));
 app.use("/api/usage", require("./routes/usage"));
 app.use("/api/generations", require("./routes/generations"));
 app.use("/api/plans", require("./routes/plans"));
+app.use("/api/payments", require("./routes/payments"));
+app.use("/api/billing", require("./routes/billing"));
+app.use("/api/transactions", require("./routes/transactions"));
+app.use("/api/webhooks", require("./routes/webhooks"));
 
 
 const PORT = process.env.PORT || 5000;
