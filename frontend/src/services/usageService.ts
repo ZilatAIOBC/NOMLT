@@ -19,9 +19,37 @@ function getSupabaseAccessToken(): string | undefined {
   return undefined;
 }
 
+export interface GenerationTypeStats {
+  count: number;
+  credits: number;
+  successful: number;
+  failed: number;
+}
+
 export interface UsageSummaryResponse {
   user_id: string;
+  from: string | null;
+  to: string | null;
   counts: Record<string, number>;
+  credit_balance: {
+    current: number;
+    lifetime_earned: number;
+    lifetime_spent: number;
+  } | null;
+  credits_spent_by_type: {
+    text_to_image: number;
+    image_to_image: number;
+    text_to_video: number;
+    image_to_video: number;
+    other: number;
+  };
+  total_credits_spent: number;
+  generation_stats: {
+    'text-to-image': GenerationTypeStats;
+    'image-to-image': GenerationTypeStats;
+    'text-to-video': GenerationTypeStats;
+    'image-to-video': GenerationTypeStats;
+  };
 }
 
 export const fetchUsageSummary = async (): Promise<UsageSummaryResponse> => {

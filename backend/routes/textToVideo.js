@@ -8,10 +8,13 @@ const {
 const { saveGenerationToS3 } = require("../services/s3Service");
 const { createGeneration } = require("../models/Generation");
 const { auth } = require("../middleware/auth");
+const { checkCredits } = require("../middleware/creditCheck");
+const { deductCredits, refundCredits } = require("../services/creditService");
+const { updateUsageSummaryAfterGeneration } = require("../services/usageSummaryService");
 const { supabase, supabaseAdmin } = require("../utils/supabase");
 
 // POST /api/text-to-video
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, checkCredits('text_to_video'), async (req, res) => {
   try {
     const startedAt = Date.now();
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
@@ -81,7 +84,7 @@ router.get("/result", auth, async (req, res) => {
 
     console.log(`Text-to-Video: Uploaded to S3 - Key: ${s3Result.s3Key}`);
 
-    // Step 3: Save to database
+    // Step 3: Save to database FIRST to get generation ID
     const generation = await createGeneration({
       userId,
       generationType: "text-to-video",
@@ -101,7 +104,55 @@ router.get("/result", auth, async (req, res) => {
 
     console.log(`Text-to-Video: Saved to database - Generation ID: ${generation.id}`);
 
-    // Step 4: Return response with S3 URL and generation info
+    // Step 4: Deduct credits with generation ID (enables idempotency)
+    const creditCost = req.creditInfo?.cost || 80; // Default to 80 if not set
+    let creditResult = null;
+    
+    try {
+      creditResult = await deductCredits(
+        userId, 
+        creditCost, 
+        'text_to_video', 
+        generation.id // Use generation ID for idempotency
+      );
+      console.log(`Text-to-Video: Deducted ${creditCost} credits. New balance: ${creditResult.new_balance}`);
+      
+      // Update generation record with credits_used
+      const client = supabaseAdmin || supabase;
+      await client
+        .from('generations')
+        .update({ 
+          credits_used: creditCost,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', generation.id);
+
+      // Update usage summary (all_time and daily)
+      updateUsageSummaryAfterGeneration(userId, {
+        generationType: 'text-to-video',
+        creditsUsed: creditCost,
+        status: 'completed',
+        createdAt: new Date().toISOString()
+      }).catch(err => console.error('Failed to update usage summary:', err));
+        
+    } catch (creditError) {
+      console.error(`Text-to-Video: Failed to deduct credits:`, creditError);
+      // Mark generation as completed even if credit deduction fails
+      try {
+        const client = supabaseAdmin || supabase;
+        await client
+          .from('generations')
+          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .eq('id', generation.id);
+      } catch (statusError) {
+        console.error(`Text-to-Video: Failed to update status:`, statusError);
+      }
+    }
+
+    console.log(`Text-to-Video: Generation complete - ID: ${generation.id}, Credits used: ${creditCost}`);
+
+    // Step 5: Return response with S3 URL, generation info, and credit balance
     res.status(200).json({
       success: true,
       message: "Video generated and saved successfully",
@@ -116,6 +167,12 @@ router.get("/result", auth, async (req, res) => {
         s3Key: s3Result.s3Key,
         createdAt: generation.created_at,
       },
+      // Include credit information
+      credits: creditResult ? {
+        used: creditCost,
+        newBalance: creditResult.new_balance,
+        lifetimeSpent: creditResult.lifetime_spent
+      } : null,
       // Keep original external URL for reference
       externalUrl: externalVideoUrl,
     });

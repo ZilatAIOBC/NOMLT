@@ -7,7 +7,8 @@ export * from './usageService';
 export * from './plansService';
 export * from './adminPlansService';
 export * from './subscriptionService';
+export * from './creditsService';
 
 // Export API base URL
-export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_BACKEND_URL || '';
+export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 

@@ -18,7 +18,6 @@ router.get("/", async (req, res) => {
         display_name,
         description,
         price_monthly,
-        price_quarterly,
         price_yearly,
         stripe_price_id_monthly,
         stripe_price_id_yearly,
@@ -86,7 +85,6 @@ router.get("/admin", auth, requireAdmin, async (req, res) => {
         display_name,
         description,
         price_monthly,
-        price_quarterly,
         price_yearly,
         stripe_price_id_monthly,
         stripe_price_id_yearly,
@@ -153,7 +151,6 @@ router.get("/:id", async (req, res) => {
         display_name,
         description,
         price_monthly,
-        price_quarterly,
         price_yearly,
         stripe_price_id_monthly,
         stripe_price_id_yearly,
@@ -229,7 +226,6 @@ router.get("/popular", async (req, res) => {
         display_name,
         description,
         price_monthly,
-        price_quarterly,
         price_yearly,
         stripe_price_id_monthly,
         stripe_price_id_yearly,
@@ -301,8 +297,7 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
     // Validate required fields
     const allowedFields = [
       'display_name',
-      'price_monthly', 
-      'price_quarterly',
+      'price_monthly',
       'price_yearly',
       'credits_included',
       'max_generations_per_month',
@@ -459,7 +454,7 @@ router.post("/", auth, requireAdmin, async (req, res) => {
     console.log('Backend Route: POST /api/plans - Admin creating new plan');
 
     // Validate required fields
-    const requiredFields = ['name', 'display_name', 'price_monthly', 'price_quarterly', 'price_yearly', 'credits_included'];
+    const requiredFields = ['name', 'display_name', 'price_monthly', 'price_yearly', 'credits_included'];
     const missingFields = requiredFields.filter(field => !planData[field]);
     
     if (missingFields.length > 0) {

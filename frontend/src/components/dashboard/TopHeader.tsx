@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { Crown, Bell, MessageSquare, ChevronDown, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import CreditDisplay from './CreditDisplay';
 
-const TopHeader: React.FC = () => {
+interface TopHeaderProps {
+  creditRefreshTrigger?: number;
+}
+
+const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -20,6 +25,7 @@ const TopHeader: React.FC = () => {
 
         {/* Desktop: actions visible and aligned left */}
         <div className="hidden lg:flex items-center gap-3 lg:-translate-x-2">
+          <CreditDisplay variant="full" refreshTrigger={creditRefreshTrigger} />
           <button className="px-3 py-1.5 rounded-full bg-purple-900/60 text-white border border-white/10 flex items-center gap-2 text-sm">
             <Crown className="w-4 h-4" />
             Upgrade
@@ -68,6 +74,9 @@ const TopHeader: React.FC = () => {
             onClick={() => setIsMobileMenuOpen(false)}
           />
           <div className="absolute right-0 top-full mt-2 z-50 w-80 max-w-[calc(100vw-1rem)] p-3 rounded-lg border border-white/10 bg-[#0F0F0F]/95 backdrop-blur shadow-xl space-y-3 md:inset-x-0 md:w-full md:max-w-none md:rounded-none md:border-x-0 md:border-b md:mt-0 md:p-4">
+            <div className="w-full flex justify-center">
+              <CreditDisplay variant="full" refreshTrigger={creditRefreshTrigger} />
+            </div>
             <button className="w-full justify-center px-3 py-2 rounded-md bg-purple-900/60 text-white border border-white/10 flex items-center gap-2 text-sm">
               <Crown className="w-4 h-4" />
               Upgrade

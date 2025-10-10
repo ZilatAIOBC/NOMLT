@@ -5,6 +5,8 @@ import HeaderBar from '../../components/dashboard/HeaderBar';
 import ExamplesGrid from '../../components/dashboard/ExamplesGrid';
 import { Sparkles, RefreshCw, Info, Mic, Video, Wand2 } from 'lucide-react';
 import IdeaChips from '../../components/common/IdeaChips';
+import CreditCostBadge from '../../components/dashboard/CreditCostBadge';
+import InsufficientCreditsModal from '../../components/dashboard/InsufficientCreditsModal';
 import { callTextToVideoAPI, getTextToVideoResult, TextToVideoRequest } from '../../services/textToVideoService';
 import { fetchUsageSummary } from '../../services/usageService';
 
@@ -18,6 +20,22 @@ const TextToVideo: React.FC = () => {
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generationProgress, setGenerationProgress] = useState('');
+  
+  // Credit system states
+  const [creditRefreshTrigger, setCreditRefreshTrigger] = useState(0);
+  const [insufficientCreditsModal, setInsufficientCreditsModal] = useState<{
+    isOpen: boolean;
+    required: number;
+    current: number;
+    shortfall: number;
+  }>({
+    isOpen: false,
+    required: 0,
+    current: 0,
+    shortfall: 0
+  });
+
+  const CREDIT_COST = 80; // Text-to-video costs 80 credits
 
   const handleRun = async () => {
     if (!prompt) {
@@ -72,19 +90,41 @@ const TextToVideo: React.FC = () => {
         setGeneratedVideo(result.data.outputs[0]);
         setStatus('completed');
         setGenerationProgress('');
-        // Fetch and log usage summary for the current user (text-to-video key will be included)
+        
+        // Refresh credit balance after successful generation
+        setCreditRefreshTrigger(prev => prev + 1);
+        
+        // Fetch and log enhanced usage summary
         try {
           const summary = await fetchUsageSummary();
-          console.log('Usage summary after text-to-video generation:', summary);
+          console.log('📊 Usage Summary (Text-to-Video):', summary);
+          console.log('💰 Credit Balance:', summary.credit_balance);
+          console.log('📈 Credits Spent by Type:', summary.credits_spent_by_type);
+      
+          
         } catch (e) {
           console.warn('Failed to fetch usage summary:', e);
         }
       } else {
         throw new Error('No video URL found in result outputs');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Generation failed:', error);
-      setError(error instanceof Error ? error.message : 'Failed to generate video');
+      
+      // Handle insufficient credits error (402)
+      if (error.response?.status === 402 || error.message?.includes('Insufficient credits')) {
+        const errorData = error.response?.data;
+        setInsufficientCreditsModal({
+          isOpen: true,
+          required: errorData?.details?.required || CREDIT_COST,
+          current: errorData?.details?.currentBalance || 0,
+          shortfall: errorData?.details?.shortfall || CREDIT_COST
+        });
+        setError('');
+      } else {
+        setError(error instanceof Error ? error.message : 'Failed to generate video');
+      }
+      
       setStatus('idle');
       setGenerationProgress('');
     }
@@ -108,7 +148,7 @@ const TextToVideo: React.FC = () => {
   return (
     <div className="ml-16 lg:ml-64 h-screen overflow-y-auto transition-all duration-300">
       <HeaderBar>
-        <TopHeader />
+        <TopHeader creditRefreshTrigger={creditRefreshTrigger} />
       </HeaderBar>
       
       <div className="flex flex-col xl:flex-row min-h-[calc(100vh-80px)] pt-24">
@@ -273,6 +313,11 @@ const TextToVideo: React.FC = () => {
               <span className="text-white font-semibold">3 Credits</span>
             </div>
 
+            {/* Credit Cost Badge */}
+            <div className="flex justify-center">
+              <CreditCostBadge cost={CREDIT_COST} />
+            </div>
+
             {/* Create Button */}
             <div className="pt-4 pb-10">
               <button
@@ -380,6 +425,16 @@ const TextToVideo: React.FC = () => {
 
       {/* Examples Section */}
       <ExamplesGrid />
+
+      {/* Insufficient Credits Modal */}
+      <InsufficientCreditsModal
+        isOpen={insufficientCreditsModal.isOpen}
+        onClose={() => setInsufficientCreditsModal({ ...insufficientCreditsModal, isOpen: false })}
+        required={insufficientCreditsModal.required}
+        current={insufficientCreditsModal.current}
+        shortfall={insufficientCreditsModal.shortfall}
+        generationType="text_to_video"
+      />
     </div>
   );
 };

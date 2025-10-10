@@ -8,10 +8,13 @@ const {
 const { saveGenerationToS3 } = require("../services/s3Service");
 const { createGeneration } = require("../models/Generation");
 const { auth } = require("../middleware/auth");
+const { checkCredits } = require("../middleware/creditCheck");
+const { deductCredits, refundCredits } = require("../services/creditService");
+const { updateUsageSummaryAfterGeneration } = require("../services/usageSummaryService");
 const { supabase, supabaseAdmin } = require("../utils/supabase");
 
 // POST /api/image-to-image
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, checkCredits('image_to_image'), async (req, res) => {
   try {
     console.log('Backend Route: POST /api/image-to-image received request body:', JSON.stringify(req.body, null, 2));
 
@@ -98,7 +101,7 @@ router.get("/result", auth, async (req, res) => {
 
     console.log(`Image-to-Image: Uploaded to S3 - Key: ${s3Result.s3Key}`);
 
-    // Step 3: Save to database
+    // Step 3: Save to database FIRST to get generation ID
     const generation = await createGeneration({
       userId,
       generationType: "image-to-image",
@@ -118,7 +121,55 @@ router.get("/result", auth, async (req, res) => {
 
     console.log(`Image-to-Image: Saved to database - Generation ID: ${generation.id}`);
 
-    // Step 4: Return response with S3 URL and generation info
+    // Step 4: Deduct credits with generation ID (enables idempotency)
+    const creditCost = req.creditInfo?.cost || 30; // Default to 30 if not set
+    let creditResult = null;
+    
+    try {
+      creditResult = await deductCredits(
+        userId, 
+        creditCost, 
+        'image_to_image', 
+        generation.id // Use generation ID for idempotency
+      );
+      console.log(`Image-to-Image: Deducted ${creditCost} credits. New balance: ${creditResult.new_balance}`);
+      
+      // Update generation record with credits_used
+      const client = supabaseAdmin || supabase;
+      await client
+        .from('generations')
+        .update({ 
+          credits_used: creditCost,
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', generation.id);
+
+      // Update usage summary (all_time and daily)
+      updateUsageSummaryAfterGeneration(userId, {
+        generationType: 'image-to-image',
+        creditsUsed: creditCost,
+        status: 'completed',
+        createdAt: new Date().toISOString()
+      }).catch(err => console.error('Failed to update usage summary:', err));
+        
+    } catch (creditError) {
+      console.error(`Image-to-Image: Failed to deduct credits:`, creditError);
+      // Mark generation as completed even if credit deduction fails
+      try {
+        const client = supabaseAdmin || supabase;
+        await client
+          .from('generations')
+          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .eq('id', generation.id);
+      } catch (statusError) {
+        console.error(`Image-to-Image: Failed to update status:`, statusError);
+      }
+    }
+
+    console.log(`Image-to-Image: Generation complete - ID: ${generation.id}, Credits used: ${creditCost}`);
+
+    // Step 5: Return response with S3 URL, generation info, and credit balance
     res.status(200).json({
       success: true,
       message: "Image generated and saved successfully",
@@ -133,6 +184,12 @@ router.get("/result", auth, async (req, res) => {
         s3Key: s3Result.s3Key,
         createdAt: generation.created_at,
       },
+      // Include credit information
+      credits: creditResult ? {
+        used: creditCost,
+        newBalance: creditResult.new_balance,
+        lifetimeSpent: creditResult.lifetime_spent
+      } : null,
       // Keep original external URL for reference
       externalUrl: externalImageUrl,
     });

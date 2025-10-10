@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { getStripeClient } = require('../config/stripe');
 const { supabase, supabaseAdmin } = require('../utils/supabase');
+const { addCredits, resetCredits } = require('../services/creditService');
+const { updateUsageSummaryAfterCreditsAdded } = require('../services/usageSummaryService');
 
 // Stripe webhook endpoint - this handles events from Stripe
 // POST /api/webhooks/stripe
@@ -218,6 +220,65 @@ async function handleCheckoutSessionCompleted(session) {
       });
     }
 
+    // ========================================
+    // CREDIT ALLOCATION - NEW SUBSCRIPTION
+    // ========================================
+    console.log(`🎯 CREDIT ALLOCATION START - User: ${userId}, Plan: ${planId}`);
+    
+    try {
+      // Get plan details to find credits_included
+      console.log(`📋 Fetching plan details for plan_id: ${planId}`);
+      
+      const { data: plan, error: planError } = await client
+        .from('plans')
+        .select('credits_included, display_name, name')
+        .eq('id', planId)
+        .single();
+
+      console.log(`📋 Plan query result:`, { plan, error: planError });
+
+      if (planError) {
+        console.error('❌ Error fetching plan for credit allocation:', planError);
+        console.error('❌ Plan error details:', JSON.stringify(planError, null, 2));
+      } else if (plan && plan.credits_included) {
+        console.log(`✅ Plan found: ${plan.display_name} (${plan.name})`);
+        console.log(`💰 Credits to allocate: ${plan.credits_included}`);
+        console.log(`👤 Target user: ${userId}`);
+        
+        // Add credits to user (rollover strategy - they accumulate)
+        console.log(`🔄 Calling addCredits function...`);
+        const creditResult = await addCredits(
+          userId,
+          plan.credits_included,
+          'purchased', // Using 'purchased' type for subscription credits
+          `Credits from ${plan.display_name} subscription (${subscription.id})`,
+          null, // reference_id must be UUID, but subscription.id is a Stripe string
+          'subscription'
+        );
+
+        console.log(`✅ Successfully added ${plan.credits_included} credits!`);
+        console.log(`💰 New balance: ${creditResult.new_balance}`);
+        console.log(`📊 Lifetime earned: ${creditResult.lifetime_earned}`);
+        
+        // Update usage summary to track credit additions
+        updateUsageSummaryAfterCreditsAdded(userId, plan.credits_included, 'purchased')
+          .catch(err => console.error('Failed to update usage summary:', err));
+        
+        console.log(`🎉 CREDIT ALLOCATION COMPLETE!`);
+      } else {
+        console.log('⚠️ Plan has no credits_included or plan not found');
+        console.log(`⚠️ Plan data:`, plan);
+      }
+    } catch (creditError) {
+      console.error('❌ ERROR allocating credits for new subscription:', creditError);
+      console.error('❌ Error stack:', creditError.stack);
+      console.error('❌ Error details:', JSON.stringify(creditError, null, 2));
+      // Don't throw - subscription is already created
+    }
+    
+    console.log(`🏁 CREDIT ALLOCATION END`);
+    console.log(`================================================`)
+
   } catch (error) {
     console.error('Error in handleCheckoutSessionCompleted:', error);
     throw error;
@@ -292,6 +353,83 @@ async function handleSubscriptionUpdated(subscription) {
     }
 
     console.log('Successfully updated subscription in database:', subscription.id);
+
+    // ========================================
+    // CREDIT ALLOCATION - PLAN CHANGE (UPGRADE/DOWNGRADE)
+    // ========================================
+    // Check if plan changed (upgrade or downgrade)
+    try {
+      const { data: currentSub, error: subError } = await client
+        .from('subscriptions')
+        .select('plan_id, user_id')
+        .eq('stripe_subscription_id', subscription.id)
+        .single();
+
+      if (subError || !currentSub) {
+        console.log('Could not fetch subscription for plan change check');
+        return;
+      }
+
+      // Check if subscription items changed (plan change)
+      if (subscription.items && subscription.items.data && subscription.items.data.length > 0) {
+        const newStripePriceId = subscription.items.data[0].price.id;
+        
+        // Find the plan that matches this price ID
+        const { data: newPlan, error: planError } = await client
+          .from('plans')
+          .select('id, credits_included, display_name, stripe_price_id_monthly, stripe_price_id_yearly')
+          .or(`stripe_price_id_monthly.eq.${newStripePriceId},stripe_price_id_yearly.eq.${newStripePriceId}`)
+          .single();
+
+        if (!planError && newPlan && newPlan.id !== currentSub.plan_id) {
+          // Plan changed! Get the old plan details
+          const { data: oldPlan } = await client
+            .from('plans')
+            .select('credits_included, display_name')
+            .eq('id', currentSub.plan_id)
+            .single();
+
+          console.log(`Plan changed from ${oldPlan?.display_name} to ${newPlan.display_name}`);
+          console.log(`Old credits: ${oldPlan?.credits_included}, New credits: ${newPlan.credits_included}`);
+
+          // Calculate credit difference
+          const creditDifference = newPlan.credits_included - (oldPlan?.credits_included || 0);
+
+          if (creditDifference > 0) {
+            // UPGRADE - Add the extra credits
+            console.log(`Upgrade detected: Adding ${creditDifference} extra credits`);
+            const creditResult = await addCredits(
+              currentSub.user_id,
+              creditDifference,
+              'purchased',
+              `Upgrade bonus: ${oldPlan?.display_name} → ${newPlan.display_name} (${subscription.id})`,
+              null, // reference_id must be UUID
+              'subscription'
+            );
+            console.log(`Successfully added ${creditDifference} credits. New balance: ${creditResult.new_balance}`);
+            
+            // Update usage summary
+            updateUsageSummaryAfterCreditsAdded(currentSub.user_id, creditDifference, 'purchased')
+              .catch(err => console.error('Failed to update usage summary:', err));
+          } else if (creditDifference < 0) {
+            // DOWNGRADE - Keep existing credits (Option B: Rollover)
+            console.log(`Downgrade detected: User keeps existing credits (no removal)`);
+          }
+
+          // Update the plan_id in subscriptions table
+          await client
+            .from('subscriptions')
+            .update({ plan_id: newPlan.id })
+            .eq('stripe_subscription_id', subscription.id);
+
+          console.log('Updated subscription plan_id in database');
+        }
+      }
+    } catch (creditError) {
+      console.error('Error handling plan change credits:', creditError);
+      // Don't throw - subscription update is already done
+    }
+
   } catch (error) {
     console.error('Error in handleSubscriptionUpdated:', error);
     // Don't throw error to prevent webhook retries for non-critical updates
@@ -328,7 +466,84 @@ async function handleSubscriptionDeleted(subscription) {
 
 async function handleInvoicePaymentSucceeded(invoice) {
   console.log('Processing invoice.payment_succeeded:', invoice.id);
-  // You can add logic here to handle successful payments, like updating credits, sending emails, etc.
+  
+  const client = supabaseAdmin || supabase;
+  
+  try {
+    // Check if this is a subscription invoice
+    if (!invoice.subscription) {
+      console.log('Invoice is not for a subscription, skipping credit allocation');
+      return;
+    }
+
+    // Get subscription details from Stripe
+    const stripe = getStripeClient();
+    const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+    
+    // Get subscription from database
+    const { data: dbSubscription, error: subError } = await client
+      .from('subscriptions')
+      .select('user_id, plan_id')
+      .eq('stripe_subscription_id', subscription.id)
+      .single();
+
+    if (subError || !dbSubscription) {
+      console.log('Subscription not found in database, skipping credit allocation');
+      return;
+    }
+
+    // Check if this is a renewal (not the first invoice)
+    // billing_reason can be: subscription_create, subscription_cycle, subscription_update
+    const isRenewal = invoice.billing_reason === 'subscription_cycle';
+    
+    if (!isRenewal) {
+      console.log(`Invoice billing_reason is "${invoice.billing_reason}", not a renewal. Skipping credit allocation.`);
+      return;
+    }
+
+    // ========================================
+    // CREDIT ALLOCATION - SUBSCRIPTION RENEWAL
+    // ========================================
+    console.log('Subscription renewal detected! Adding credits...');
+
+    // Get plan details
+    const { data: plan, error: planError } = await client
+      .from('plans')
+      .select('credits_included, display_name')
+      .eq('id', dbSubscription.plan_id)
+      .single();
+
+    if (planError || !plan) {
+      console.error('Error fetching plan for renewal credit allocation:', planError);
+      return;
+    }
+
+    if (plan.credits_included && plan.credits_included > 0) {
+      console.log(`Adding ${plan.credits_included} credits to user ${dbSubscription.user_id} for ${plan.display_name} renewal`);
+      
+      // Add credits (Option B: Rollover - they accumulate)
+      const creditResult = await addCredits(
+        dbSubscription.user_id,
+        plan.credits_included,
+        'purchased',
+        `Monthly renewal: ${plan.display_name} (${invoice.id})`,
+        null, // reference_id must be UUID
+        'subscription'
+      );
+
+      console.log(`Successfully added ${plan.credits_included} credits for renewal. New balance: ${creditResult.new_balance}`);
+      
+      // Update usage summary
+      updateUsageSummaryAfterCreditsAdded(dbSubscription.user_id, plan.credits_included, 'purchased')
+        .catch(err => console.error('Failed to update usage summary:', err));
+    } else {
+      console.log('Plan has no credits_included or 0 credits');
+    }
+
+  } catch (error) {
+    console.error('Error in handleInvoicePaymentSucceeded:', error);
+    // Don't throw - payment is already successful
+  }
 }
 
 // NEW FEATURE: Invoice payment failed handler

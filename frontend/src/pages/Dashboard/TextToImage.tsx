@@ -4,6 +4,8 @@ import HeaderBar from '../../components/dashboard/HeaderBar';
 import ImageExamplesGrid from '../../components/dashboard/ImageExamplesGrid';
 import { Sparkles, Mic, Video, Wand2, Info } from 'lucide-react';
 import IdeaChips from '../../components/common/IdeaChips';
+import CreditCostBadge from '../../components/dashboard/CreditCostBadge';
+import InsufficientCreditsModal from '../../components/dashboard/InsufficientCreditsModal';
 import { callTextToImageAPI, getTextToImageResult, TextToImageRequest } from '../../services/textToImageService';
 import { fetchUsageSummary } from '../../services/usageService';
 
@@ -16,6 +18,22 @@ const TextToImage: React.FC = () => {
   const [generationProgress, setGenerationProgress] = useState('');
   const [width, setWidth] = useState<number>(1024);
   const [height, setHeight] = useState<number>(1024);
+  
+  // Credit system states
+  const [creditRefreshTrigger, setCreditRefreshTrigger] = useState(0);
+  const [insufficientCreditsModal, setInsufficientCreditsModal] = useState<{
+    isOpen: boolean;
+    required: number;
+    current: number;
+    shortfall: number;
+  }>({
+    isOpen: false,
+    required: 0,
+    current: 0,
+    shortfall: 0
+  });
+
+  const CREDIT_COST = 30; // Text-to-image costs 30 credits
 
   const handleRun = async () => {
     if (!prompt) {
@@ -69,19 +87,40 @@ const TextToImage: React.FC = () => {
         setGeneratedImage(result.data.outputs[0]);
         setStatus('completed');
         setGenerationProgress('');
-        // Fetch and log usage summary for the current user
+        
+        // Refresh credit balance after successful generation
+        setCreditRefreshTrigger(prev => prev + 1);
+        
+        // Fetch and log enhanced usage summary
         try {
           const summary = await fetchUsageSummary();
-          console.log('Usage summary after generation:', summary);
+          console.log('📊 Usage Summary:', summary);
+          console.log('💰 Credit Balance:', summary.credit_balance);
+          console.log('📈 Credits Spent by Type:', summary.credits_spent_by_type);
+       
         } catch (e) {
           console.warn('Failed to fetch usage summary:', e);
         }
       } else {
         throw new Error('No image URL found in result outputs');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Generation failed:', error);
-      setError(error instanceof Error ? error.message : 'Failed to generate image');
+      
+      // Handle insufficient credits error (402)
+      if (error.response?.status === 402 || error.message?.includes('Insufficient credits')) {
+        const errorData = error.response?.data;
+        setInsufficientCreditsModal({
+          isOpen: true,
+          required: errorData?.details?.required || CREDIT_COST,
+          current: errorData?.details?.currentBalance || 0,
+          shortfall: errorData?.details?.shortfall || CREDIT_COST
+        });
+        setError('');
+      } else {
+        setError(error instanceof Error ? error.message : 'Failed to generate image');
+      }
+      
       setStatus('idle');
       setGenerationProgress('');
     }
@@ -92,7 +131,7 @@ const TextToImage: React.FC = () => {
   return (
     <div className="ml-16 lg:ml-64 h-screen overflow-y-auto transition-all duration-300">
       <HeaderBar>
-        <TopHeader />
+        <TopHeader creditRefreshTrigger={creditRefreshTrigger} />
       </HeaderBar>
 
       <div className="flex flex-col xl:flex-row min-h-[calc(100vh-80px)] pt-24">
@@ -202,6 +241,11 @@ const TextToImage: React.FC = () => {
                   <Info className="w-4 h-4 text-gray-400" />
                 </div>
                 <span className="text-white font-semibold">1 Credit</span>
+              </div>
+
+              {/* Credit Cost Badge */}
+              <div className="flex justify-center">
+                <CreditCostBadge cost={CREDIT_COST} />
               </div>
 
               {/* Create Button */}
@@ -332,6 +376,16 @@ const TextToImage: React.FC = () => {
 
       {/* Examples Section */}
       <ImageExamplesGrid />
+
+      {/* Insufficient Credits Modal */}
+      <InsufficientCreditsModal
+        isOpen={insufficientCreditsModal.isOpen}
+        onClose={() => setInsufficientCreditsModal({ ...insufficientCreditsModal, isOpen: false })}
+        required={insufficientCreditsModal.required}
+        current={insufficientCreditsModal.current}
+        shortfall={insufficientCreditsModal.shortfall}
+        generationType="text_to_image"
+      />
     </div>
   );
 };

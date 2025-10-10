@@ -89,6 +89,10 @@ app.use("/api/plans", require("./routes/plans"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/billing", require("./routes/billing"));
 app.use("/api/transactions", require("./routes/transactions"));
+app.use("/api/credits", require("./routes/credits"));
+app.use("/api/models", require("./routes/models"));
+app.use("/api/analytics", require("./routes/analytics"));
+app.use("/api/admin/credits", require("./routes/adminCredits"));
 app.use("/api/webhooks", require("./routes/webhooks"));
 
 

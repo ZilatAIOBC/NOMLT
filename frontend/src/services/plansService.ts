@@ -21,7 +21,7 @@ export interface Plan {
   display_name: string;
   description: string;
   price_monthly: number;
-  price_quarterly: number;
+  price_quarterly?: number; // Optional - can be calculated
   price_yearly: number;
   stripe_price_id_monthly?: string;
   stripe_price_id_yearly?: string;
@@ -105,19 +105,19 @@ class PlansService {
         priceByCycle: {
           monthly: {
             currency: 'USD',
-            amount: plan.price_monthly.toString(),
+            amount: plan.price_monthly?.toString() || '0',
             cadenceLabel: '/ month',
             billedLabel: 'billed monthly'
           },
           quarterly: {
             currency: 'USD',
-            amount: plan.price_quarterly.toString(),
+            amount: plan.price_quarterly?.toString() || (plan.price_monthly * 3 * 0.85).toFixed(2), // 15% discount if not set
             cadenceLabel: '/ quarter',
             billedLabel: 'billed quarterly'
           },
           yearly: {
             currency: 'USD',
-            amount: plan.price_yearly.toString(),
+            amount: plan.price_yearly?.toString() || '0',
             cadenceLabel: '/ year',
             billedLabel: 'billed yearly'
           }
