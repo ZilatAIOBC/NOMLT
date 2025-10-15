@@ -1,25 +1,7 @@
+import { authHelper } from '../utils/authHelper';
 
 // Service for fetching actual generations from database
 const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
-
-function getSupabaseAccessToken(): string | undefined {
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i) || "";
-      if (/^sb-.*-auth-token$/.test(key)) {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.access_token) return parsed.access_token as string;
-      }
-    }
-    const sbSimple = localStorage.getItem('sb-access-token');
-    if (sbSimple) return sbSimple;
-    const custom = localStorage.getItem('accessToken');
-    if (custom) return custom;
-  } catch (_) {}
-  return undefined;
-}
 
 export interface GenerationFromDB {
   id: string;
@@ -55,10 +37,6 @@ export const getUserGenerations = async (
 ): Promise<GenerationsResponse> => {
   const url = `${BACKEND_BASE_URL}/api/generations`;
   
-  const token = getSupabaseAccessToken();
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
   const params = new URLSearchParams();
   if (type) params.append('type', type);
   params.append('limit', limit.toString());
@@ -67,11 +45,9 @@ export const getUserGenerations = async (
   const fullUrl = `${url}?${params.toString()}`;
   
   console.log('Frontend: Fetching generations from:', fullUrl);
-  console.log('Frontend: Using token:', token ? 'YES' : 'NO');
 
-  const response = await fetch(fullUrl, {
+  const response = await authHelper.authFetch(fullUrl, {
     method: 'GET',
-    headers,
     credentials: 'include',
   });
 
@@ -101,16 +77,11 @@ export const getUserGenerations = async (
 // Get fresh signed URL for a generation
 export const getGenerationSignedUrl = async (generationId: string): Promise<string> => {
   const url = `${BACKEND_BASE_URL}/api/generations/${generationId}/signed-url`;
-  
-  const token = getSupabaseAccessToken();
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
 
   console.log('Frontend: Getting fresh signed URL for generation:', generationId);
 
-  const response = await fetch(url, {
+  const response = await authHelper.authFetch(url, {
     method: 'GET',
-    headers,
     credentials: 'include',
   });
 

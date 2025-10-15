@@ -140,4 +140,79 @@ export const authService = {
       localStorage.removeItem('refreshToken');
     } catch {}
   },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const accessToken = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    if (!accessToken || !refreshToken) {
+      throw new Error('No authentication tokens found');
+    }
+
+    const response = await fetch(`${baseUrl}/auth/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ 
+        currentPassword, 
+        newPassword,
+        refreshToken 
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to change password');
+    }
+
+    const data = await response.json();
+    return data;
+  },
+
+  async updateProfile(name: string, email: string): Promise<{ message: string; user: any }> {
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const accessToken = localStorage.getItem('accessToken');
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    if (!accessToken || !refreshToken) {
+      throw new Error('No authentication tokens found');
+    }
+
+    const response = await fetch(`${baseUrl}/auth/update-profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ 
+        name,
+        email,
+        refreshToken 
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update profile');
+    }
+
+    const data = await response.json();
+    
+    // Update the stored user data with the new information
+    try {
+      const storedUser = localStorage.getItem('authUser');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        const updatedUser = { ...user, name, email };
+        localStorage.setItem('authUser', JSON.stringify(updatedUser));
+      }
+    } catch (storageError) {
+      console.warn('Could not update stored user data:', storageError);
+    }
+
+    return data;
+  },
 };

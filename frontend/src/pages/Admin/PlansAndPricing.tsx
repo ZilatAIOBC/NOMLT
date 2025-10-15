@@ -1,4 +1,3 @@
-import { Plus } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { adminPlansService } from '../../services/adminPlansService';
@@ -115,10 +114,7 @@ export default function PlansAndPricing() {
             <h1 className="text-3xl font-bold text-white mb-2">Plans & Pricing</h1>
             <p className="text-gray-400">Manage subscription plans and credit pricing</p>
           </div>
-          <button className="bg-[#8A3FFC] hover:opacity-90 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-            <Plus size={20} />
-            <span>Create Plan</span>
-          </button>
+          {/* Create Plan button removed per request */}
         </div>
 
         {/* Navigation Tabs */}

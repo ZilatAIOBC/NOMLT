@@ -1,4 +1,5 @@
 import { apiBaseUrl } from './index';
+import { authHelper } from '../utils/authHelper';
 
 export interface SubscriptionData {
   id: string;
@@ -35,12 +36,9 @@ export interface BillingData {
 }
 
 export async function getBillingData(): Promise<BillingData> {
-  const res = await fetch(`${apiBaseUrl}/api/billing/data`, {
+  const res = await authHelper.authFetch(`${apiBaseUrl}/api/billing/data`, {
     method: 'GET',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
 
   if (!res.ok) {
@@ -53,24 +51,20 @@ export async function getBillingData(): Promise<BillingData> {
 
 export async function getSubscriptionStatus(): Promise<SubscriptionData | null> {
   // Get user ID from localStorage
-  const authUser = localStorage.getItem('authUser');
-  if (!authUser) {
+  const userData = authHelper.getCurrentUser();
+  if (!userData) {
     throw new Error('User not authenticated');
   }
   
-  const userData = JSON.parse(authUser);
   const userId = userData.id;
   
   if (!userId) {
     throw new Error('User ID not found');
   }
 
-  const res = await fetch(`${apiBaseUrl}/api/billing/subscription?userId=${encodeURIComponent(userId)}`, {
+  const res = await authHelper.authFetch(`${apiBaseUrl}/api/billing/subscription?userId=${encodeURIComponent(userId)}`, {
     method: 'GET',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
 
   if (!res.ok) {
@@ -96,24 +90,20 @@ export interface TransactionData {
 
 export async function getTransactionHistory(): Promise<TransactionData[]> {
   // Get user ID from localStorage
-  const authUser = localStorage.getItem('authUser');
-  if (!authUser) {
+  const userData = authHelper.getCurrentUser();
+  if (!userData) {
     throw new Error('User not authenticated');
   }
   
-  const userData = JSON.parse(authUser);
   const userId = userData.id;
   
   if (!userId) {
     throw new Error('User ID not found');
   }
 
-  const res = await fetch(`${apiBaseUrl}/api/transactions?userId=${encodeURIComponent(userId)}`, {
+  const res = await authHelper.authFetch(`${apiBaseUrl}/api/transactions?userId=${encodeURIComponent(userId)}`, {
     method: 'GET',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
 
   if (!res.ok) {
@@ -129,24 +119,20 @@ export async function getTransactionHistory(): Promise<TransactionData[]> {
  */
 export async function cancelSubscription(): Promise<{ success: boolean; message: string }> {
   // Get user ID from localStorage
-  const authUser = localStorage.getItem('authUser');
-  if (!authUser) {
+  const userData = authHelper.getCurrentUser();
+  if (!userData) {
     throw new Error('User not authenticated');
   }
   
-  const userData = JSON.parse(authUser);
   const userId = userData.id;
   
   if (!userId) {
     throw new Error('User ID not found');
   }
 
-  const res = await fetch(`${apiBaseUrl}/api/billing/subscription/cancel`, {
+  const res = await authHelper.authFetch(`${apiBaseUrl}/api/billing/subscription/cancel`, {
     method: 'POST',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({ userId }),
   });
 
@@ -163,24 +149,20 @@ export async function cancelSubscription(): Promise<{ success: boolean; message:
  */
 export async function reactivateSubscription(): Promise<{ success: boolean; message: string }> {
   // Get user ID from localStorage
-  const authUser = localStorage.getItem('authUser');
-  if (!authUser) {
+  const userData = authHelper.getCurrentUser();
+  if (!userData) {
     throw new Error('User not authenticated');
   }
   
-  const userData = JSON.parse(authUser);
   const userId = userData.id;
   
   if (!userId) {
     throw new Error('User ID not found');
   }
 
-  const res = await fetch(`${apiBaseUrl}/api/billing/subscription/reactivate`, {
+  const res = await authHelper.authFetch(`${apiBaseUrl}/api/billing/subscription/reactivate`, {
     method: 'POST',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({ userId }),
   });
 
@@ -200,24 +182,20 @@ export async function changeSubscriptionPlan(
   interval: 'monthly' | 'yearly'
 ): Promise<{ success: boolean; message: string }> {
   // Get user ID from localStorage
-  const authUser = localStorage.getItem('authUser');
-  if (!authUser) {
+  const userData = authHelper.getCurrentUser();
+  if (!userData) {
     throw new Error('User not authenticated');
   }
   
-  const userData = JSON.parse(authUser);
   const userId = userData.id;
   
   if (!userId) {
     throw new Error('User ID not found');
   }
 
-  const res = await fetch(`${apiBaseUrl}/api/billing/subscription/change-plan`, {
+  const res = await authHelper.authFetch(`${apiBaseUrl}/api/billing/subscription/change-plan`, {
     method: 'POST',
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({ userId, newPlanId, interval }),
   });
 

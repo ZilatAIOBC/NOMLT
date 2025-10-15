@@ -31,7 +31,7 @@ const {
  */
 router.get('/costs', async (req, res) => {
   try {
-    const costs = getAllCreditCosts();
+    const costs = await getAllCreditCosts();
     
     // Add human-readable names
     const costsWithNames = Object.entries(costs).map(([type, cost]) => ({
@@ -65,15 +65,16 @@ router.get('/costs/:generationType', async (req, res) => {
   try {
     const { generationType } = req.params;
 
-    if (!isValidGenerationType(generationType)) {
+    if (!(await isValidGenerationType(generationType))) {
+      const allCosts = await getAllCreditCosts();
       return res.status(400).json({
         success: false,
         error: 'Invalid generation type',
-        message: `Valid types are: ${Object.keys(getAllCreditCosts()).join(', ')}`
+        message: `Valid types are: ${Object.keys(allCosts).join(', ')}`
       });
     }
 
-    const cost = getCreditCost(generationType);
+    const cost = await getCreditCost(generationType);
     const name = getGenerationTypeName(generationType);
 
     res.status(200).json({

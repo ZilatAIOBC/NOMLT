@@ -1,78 +1,108 @@
-import { MoreVertical, Download, Plus } from 'lucide-react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'Admin' | 'User';
-  status: 'Active' | 'Suspended';
-  plan: 'Pro' | 'Basic';
-  credits: number;
-  joinDate: string;
-}
+import { useEffect, useState, useRef } from 'react';
+import { MoreVertical } from 'lucide-react';
+import { type User, getUsers, updateUserRole, updateUserStatus } from '../../services/adminUsersService';
+import toast from 'react-hot-toast';
 
 export default function UserManagement() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 100,
+    total: 0,
+    totalPages: 0,
+  });
+  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Sample data - replace with actual API call
-  const users: User[] = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      email: 'sarah@example.com',
-      role: 'Admin',
-      status: 'Active',
-      plan: 'Pro',
-      credits: 1240,
-      joinDate: '2024-01-15',
-    },
-    {
-      id: '2',
-      name: 'Mike Chen',
-      email: 'mike@example.com',
-      role: 'User',
-      status: 'Active',
-      plan: 'Basic',
-      credits: 980,
-      joinDate: '2024-02-20',
-    },
-    {
-      id: '3',
-      name: 'Emma Davis',
-      email: 'emma@example.com',
-      role: 'User',
-      status: 'Suspended',
-      plan: 'Pro',
-      credits: 856,
-      joinDate: '2024-01-08',
-    },
-    {
-      id: '4',
-      name: 'James Wilson',
-      email: 'james@example.com',
-      role: 'User',
-      status: 'Active',
-      plan: 'Basic',
-      credits: 742,
-      joinDate: '2024-03-12',
-    },
-  ];
+  // Fetch users from API
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await getUsers({ 
+        page: pagination.page, 
+        limit: pagination.limit,
+        sortBy: 'created_at',
+        sortOrder: 'desc'
+      });
+      setUsers(response.users);
+      setPagination(response.pagination);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch users');
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Close action menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActionMenuOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle page change - Currently disabled, using sample data
+  const handlePageChange = (_newPage: number) => {
+    // TODO: Enable when backend is ready
+    console.log('Pagination will be enabled when backend is ready');
+  };
+
+  // Handle status update
+  const handleStatusUpdate = async (userId: string, newStatus: 'active' | 'suspended') => {
+    try {
+      await updateUserStatus(userId, newStatus);
+      toast.success(`User ${newStatus === 'active' ? 'activated' : 'suspended'} successfully`);
+      fetchUsers();
+      setActionMenuOpen(null);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update user status');
+    }
+  };
+
+  // Handle role update
+  const handleRoleUpdate = async (userId: string, newRole: 'user' | 'admin') => {
+    try {
+      await updateUserRole(userId, newRole);
+      toast.success(`User role updated to ${newRole} successfully`);
+      fetchUsers();
+      setActionMenuOpen(null);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update user role');
+    }
+  };
+
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active':
+    switch (status.toLowerCase()) {
+      case 'active':
         return 'bg-green-500/20 text-green-400';
-      case 'Suspended':
+      case 'suspended':
         return 'bg-orange-500/20 text-orange-400';
+      case 'deleted':
+        return 'bg-red-500/20 text-red-400';
       default:
         return 'bg-gray-500/20 text-gray-400';
     }
   };
 
   const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'Admin':
+    switch (role.toLowerCase()) {
+      case 'admin':
         return 'bg-purple-500/20 text-purple-400';
-      case 'User':
+      case 'user':
         return 'bg-blue-500/20 text-blue-400';
       default:
         return 'bg-gray-500/20 text-gray-400';
@@ -80,14 +110,27 @@ export default function UserManagement() {
   };
 
   const getPlanColor = (plan: string) => {
-    switch (plan) {
-      case 'Pro':
-        return 'bg-purple-500/20 text-purple-400';
-      case 'Basic':
-        return 'bg-gray-500/20 text-gray-400';
-      default:
-        return 'bg-gray-500/20 text-gray-400';
+    const planLower = plan.toLowerCase();
+    if (planLower.includes('pro') || planLower.includes('premium')) {
+      return 'bg-purple-500/20 text-purple-400';
+    } else if (planLower.includes('basic')) {
+      return 'bg-blue-500/20 text-blue-400';
+    } else if (planLower.includes('free')) {
+      return 'bg-gray-500/20 text-gray-400';
     }
+    return 'bg-gray-500/20 text-gray-400';
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const capitalizeFirst = (str: string) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
   return (
@@ -98,88 +141,188 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
           <p className="text-gray-400">Manage users, roles, and permissions.</p>
         </div>
-        <div className="flex gap-3">
-          <button className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-            <Download size={16} />
-            Export
-          </button>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
-            <Plus size={16} />
-            Add User
-          </button>
-        </div>
       </div>
-
 
       {/* Users Table */}
       <div className="bg-[#0F0F0F] rounded-lg border border-white/10 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-[#0F0F0F] border-b border-white/10">
-            <tr>
-              <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">NAME</th>
-              <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">EMAIL</th>
-              <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">ROLE</th>
-              <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">STATUS</th>
-              <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">PLAN</th>
-              <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">CREDITS</th>
-              <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">JOIN DATE</th>
-              <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-white/10 hover:bg-white/5">
-                <td className="px-6 py-4">
-                  <div className="text-white font-medium">{user.name}</div>
-                </td>
-                <td className="px-6 py-4 text-gray-400">{user.email}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPlanColor(user.plan)}`}>
-                    {user.plan}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-white">{user.credits.toLocaleString()}</td>
-                <td className="px-6 py-4 text-gray-400">{user.joinDate}</td>
-                <td className="px-6 py-4">
-                  <button className="p-2 hover:bg-white/10 rounded text-gray-400 hover:text-white" title="More">
-                    <MoreVertical size={16} />
-                  </button>
-                </td>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+          </div>
+        ) : users.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <p className="text-gray-400 text-lg mb-2">No users found</p>
+            <p className="text-gray-500 text-sm">Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-[#0F0F0F] border-b border-white/10">
+              <tr>
+                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">NAME</th>
+                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">EMAIL</th>
+                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">ROLE</th>
+                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">STATUS</th>
+                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">PLAN</th>
+                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">CREDITS</th>
+                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">JOIN DATE</th>
+                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">ACTIONS</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} className="border-b border-white/10 hover:bg-white/5">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      {user.profilePicture ? (
+                        <img 
+                          src={user.profilePicture} 
+                          alt={user.name}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-sm font-medium">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="text-white font-medium">{user.name}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-gray-400">{user.email}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                      {capitalizeFirst(user.role)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                      {capitalizeFirst(user.status)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPlanColor(user.plan)}`}>
+                      {capitalizeFirst(user.plan)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-white">{user.credits.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-gray-400">{formatDate(user.joinDate)}</td>
+                  <td className="px-6 py-4 relative">
+                    <button 
+                      onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
+                      className="p-2 hover:bg-white/10 rounded text-gray-400 hover:text-white" 
+                      title="More"
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                    {actionMenuOpen === user.id && (
+                      <div 
+                        ref={menuRef} 
+                        className="absolute right-0 w-48 bg-[#1A1A1A] border border-white/10 rounded-lg shadow-lg z-50"
+                        style={{
+                          bottom: users.indexOf(user) >= users.length - 2 ? '100%' : 'auto',
+                          top: users.indexOf(user) >= users.length - 2 ? 'auto' : '100%',
+                          marginTop: users.indexOf(user) >= users.length - 2 ? 'auto' : '8px',
+                          marginBottom: users.indexOf(user) >= users.length - 2 ? '8px' : 'auto'
+                        }}
+                      >
+                        <div className="py-1">
+                          {user.role === 'user' && (
+                            <button
+                              onClick={() => handleRoleUpdate(user.id, 'admin')}
+                              className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
+                            >
+                              Make Admin
+                            </button>
+                          )}
+                          {user.role === 'admin' && (
+                            <button
+                              onClick={() => handleRoleUpdate(user.id, 'user')}
+                              className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
+                            >
+                              Remove Admin
+                            </button>
+                          )}
+                          {user.status === 'active' && (
+                            <button
+                              onClick={() => handleStatusUpdate(user.id, 'suspended')}
+                              className="w-full text-left px-4 py-2 text-sm text-orange-400 hover:bg-white/5"
+                            >
+                              Suspend User
+                            </button>
+                          )}
+                          {user.status === 'suspended' && (
+                            <button
+                              onClick={() => handleStatusUpdate(user.id, 'active')}
+                              className="w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-white/5"
+                            >
+                              Activate User
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Pagination */}
-      <div className="mt-6 flex justify-between items-center">
-        <div className="text-gray-400 text-sm">Showing 1 to 4 of 12,847 users</div>
-        <div className="flex gap-2">
-          <button className="px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5">
-            Previous
-          </button>
-          <button className="px-4 py-2 bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] rounded text-white">1</button>
-          <button className="px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5">
-            2
-          </button>
-          <button className="px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5">
-            3
-          </button>
-          <button className="px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5">
-            Next
-          </button>
+      {!loading && users.length > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-gray-400 text-sm">
+            Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+            {pagination.total} users
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+              className="px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            
+            {/* Page numbers */}
+            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+              let pageNum;
+              if (pagination.totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (pagination.page <= 3) {
+                pageNum = i + 1;
+              } else if (pagination.page >= pagination.totalPages - 2) {
+                pageNum = pagination.totalPages - 4 + i;
+              } else {
+                pageNum = pagination.page - 2 + i;
+              }
+              
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => handlePageChange(pageNum)}
+                  className={`px-4 py-2 rounded text-white ${
+                    pagination.page === pageNum
+                      ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB]'
+                      : 'bg-[#0F0F0F] border border-white/10 hover:bg-white/5'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            
+            <button
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.totalPages}
+              className="px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

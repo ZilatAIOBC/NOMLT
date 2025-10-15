@@ -50,7 +50,14 @@ router.post('/stripe', async (req, res) => {
         break;
         
       case 'invoice.payment_succeeded':
-        await handleInvoicePaymentSucceeded(event.data.object);
+        console.log('🎯 Processing invoice.payment_succeeded event...');
+        // Retrieve full invoice with expanded fields to ensure we have all data
+        const stripe = getStripeClient();
+        const fullInvoice = await stripe.invoices.retrieve(event.data.object.id, {
+          expand: ['subscription', 'lines.data.subscription']
+        });
+        await handleInvoicePaymentSucceeded(fullInvoice);
+        console.log('✅ Completed invoice.payment_succeeded processing');
         break;
         
       // Additional event handlers - NEW FEATURES
@@ -97,7 +104,9 @@ router.post('/stripe', async (req, res) => {
 
     res.json({ received: true });
   } catch (error) {
-    console.error('Error processing webhook:', error);
+    console.error('❌ Error processing webhook:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ error: error.message });
   }
 });
@@ -470,30 +479,153 @@ async function handleInvoicePaymentSucceeded(invoice) {
   const client = supabaseAdmin || supabase;
   
   try {
+    // Get subscription ID from invoice (Stripe can store it in multiple locations)
+    let subscriptionId = invoice.subscription;
+    
+    // If subscription is an object (from expanded invoice), extract the ID
+    if (subscriptionId && typeof subscriptionId === 'object' && subscriptionId.id) {
+      console.log('📋 Subscription is expanded object, extracting ID');
+      subscriptionId = subscriptionId.id;
+    }
+    
+    // If not found directly, check in lines.data (subscription items)
+    if (!subscriptionId && invoice.lines && invoice.lines.data && invoice.lines.data.length > 0) {
+      subscriptionId = invoice.lines.data[0].subscription;
+      // Handle if it's an object here too
+      if (subscriptionId && typeof subscriptionId === 'object' && subscriptionId.id) {
+        subscriptionId = subscriptionId.id;
+      }
+      console.log('📋 Found subscription ID in invoice lines:', subscriptionId);
+    }
+    
+    console.log('Invoice details:', {
+      id: invoice.id,
+      subscription_id: subscriptionId,
+      amount_paid: invoice.amount_paid,
+      currency: invoice.currency,
+      billing_reason: invoice.billing_reason,
+      charge: invoice.charge,
+      payment_intent: invoice.payment_intent,
+      status: invoice.status
+    });
+    
     // Check if this is a subscription invoice
-    if (!invoice.subscription) {
-      console.log('Invoice is not for a subscription, skipping credit allocation');
+    if (!subscriptionId) {
+      console.log('❌ Invoice is not for a subscription, skipping processing');
+      console.log('Available invoice fields:', Object.keys(invoice));
       return;
     }
 
-    // Get subscription details from Stripe
-    const stripe = getStripeClient();
-    const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+    console.log('✅ Found subscription ID:', subscriptionId);
+
+    // Get subscription details from Stripe (or use expanded one if available)
+    let subscription;
+    if (invoice.subscription && typeof invoice.subscription === 'object' && invoice.subscription.id) {
+      console.log('✅ Using expanded subscription from invoice');
+      subscription = invoice.subscription;
+    } else {
+      console.log('📥 Retrieving subscription from Stripe API');
+      const stripe = getStripeClient();
+      subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    }
+    console.log('Stripe subscription retrieved:', {
+      id: subscription.id,
+      status: subscription.status
+    });
     
     // Get subscription from database
     const { data: dbSubscription, error: subError } = await client
       .from('subscriptions')
-      .select('user_id, plan_id')
+      .select('user_id, plan_id, id')
       .eq('stripe_subscription_id', subscription.id)
       .single();
 
+    console.log('Database subscription lookup result:', {
+      found: !!dbSubscription,
+      error: subError?.message,
+      data: dbSubscription
+    });
+
     if (subError || !dbSubscription) {
-      console.log('Subscription not found in database, skipping credit allocation');
+      console.log('❌ Subscription not found in database, skipping processing');
+      console.log('Error details:', subError);
       return;
     }
 
+    // ========================================
+    // STORE PAYMENT TRANSACTION
+    // ========================================
+    console.log('Storing payment transaction for invoice:', invoice.id);
+
+    // Get charge ID from invoice (can be in different fields)
+    const chargeId = invoice.charge || invoice.charge_id || invoice.payment_intent;
+    
+    // Check if transaction already exists (prevent duplicates)
+    // Use stripe_invoice_id as it's UNIQUE in the database schema
+    console.log('Checking for existing transaction with invoice_id:', invoice.id);
+    const { data: existingTransaction, error: checkError } = await client
+      .from('payment_transactions')
+      .select('id')
+      .eq('stripe_invoice_id', invoice.id)
+      .maybeSingle(); // Use maybeSingle() to avoid error when not found
+
+    console.log('Existing transaction check result:', {
+      exists: !!existingTransaction,
+      error: checkError?.message
+    });
+
+    if (existingTransaction) {
+      console.log('✅ Payment transaction already exists, skipping duplicate');
+    } else {
+      // Store payment transaction matching actual database schema
+      const transactionData = {
+        user_id: dbSubscription.user_id,
+        subscription_id: dbSubscription.id,
+        stripe_invoice_id: invoice.id, // REQUIRED field
+        stripe_payment_intent_id: invoice.payment_intent,
+        stripe_charge_id: chargeId,
+        amount_cents: invoice.amount_paid, // Store in cents, not dollars
+        currency: invoice.currency,
+        status: 'succeeded',
+        billing_reason: invoice.billing_reason,
+        invoice_number: invoice.number,
+        description: invoice.description || `Payment for ${subscription.plan?.nickname || 'subscription'}`,
+        metadata: {
+          stripe_subscription_id: subscription.id,
+          plan_id: dbSubscription.plan_id,
+          invoice_period_start: invoice.period_start ? new Date(invoice.period_start * 1000).toISOString() : null,
+          invoice_period_end: invoice.period_end ? new Date(invoice.period_end * 1000).toISOString() : null,
+          hosted_invoice_url: invoice.hosted_invoice_url,
+          invoice_pdf: invoice.invoice_pdf
+        }
+      };
+
+      console.log('Attempting to store payment transaction:', {
+        user_id: transactionData.user_id,
+        stripe_invoice_id: transactionData.stripe_invoice_id,
+        stripe_charge_id: transactionData.stripe_charge_id,
+        amount_cents: transactionData.amount_cents,
+        billing_reason: transactionData.billing_reason
+      });
+
+      const { data: insertedData, error: transactionError } = await client
+        .from('payment_transactions')
+        .insert(transactionData)
+        .select();
+
+      if (transactionError) {
+        console.error('❌ Error storing payment transaction:', transactionError);
+        console.error('Transaction data that failed:', transactionData);
+      } else {
+        console.log('✅ Successfully stored payment transaction:', insertedData);
+        console.log('✅ Payment transaction stored for invoice:', invoice.id);
+      }
+    }
+
+    // ========================================
+    // CREDIT ALLOCATION - SUBSCRIPTION RENEWAL
+    // ========================================
     // Check if this is a renewal (not the first invoice)
-    // billing_reason can be: subscription_create, subscription_cycle, subscription_update
     const isRenewal = invoice.billing_reason === 'subscription_cycle';
     
     if (!isRenewal) {
@@ -501,9 +633,6 @@ async function handleInvoicePaymentSucceeded(invoice) {
       return;
     }
 
-    // ========================================
-    // CREDIT ALLOCATION - SUBSCRIPTION RENEWAL
-    // ========================================
     console.log('Subscription renewal detected! Adding credits...');
 
     // Get plan details

@@ -33,10 +33,7 @@ router.get('/', async (req, res) => {
     const userId = await getUserId(req);
     const client = supabaseAdmin || supabase;
     
-    // Get user's transactions from subscriptions and payment_transactions tables
-    // For now, we'll create transactions from subscription data
-    // In the future, you can add a dedicated payment_transactions table
-    
+    // Get user's subscriptions to generate mock transaction data
     const { data: subscriptions, error } = await client
       .from('subscriptions')
       .select(`
@@ -59,7 +56,7 @@ router.get('/', async (req, res) => {
     }
 
     // Transform subscription data into transaction format
-    const transactions = subscriptions.map(sub => {
+    const transactions = (subscriptions || []).map(sub => {
       // Determine the price based on billing period
       const periodStart = new Date(sub.current_period_start);
       const periodEnd = new Date(sub.current_period_end);

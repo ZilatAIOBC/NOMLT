@@ -1,45 +1,82 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActiveUser } from './ActiveUser';
+import { getTopUsers, TopUser } from '../../services/analyticsService';
 
 export const ActiveUsers = () => {
+  const [topUsers, setTopUsers] = useState<TopUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchTopUsers();
+  }, []);
+
+  const fetchTopUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getTopUsers(4, 'credits'); // Get top 4 users by credits spent
+      setTopUsers(data.top_users);
+    } catch (err) {
+      console.error('Error fetching top users:', err);
+      setError('Failed to load top users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = (name: string): string => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
   return (
     <div 
       className="rounded-lg p-6 border border-white/10"
       style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #0D131F 100%)' }}
     >
       <h2 className="text-xl font-bold text-white mb-2">Most Active Users</h2>
-      <p className="text-gray-400 text-sm mb-6">Top performers this month</p>
+      <p className="text-gray-400 text-sm mb-6">Top performers by credits spent</p>
       
-      <div>
-        <ActiveUser
-          initials="SJ"
-          name="Sarah Johnson"
-          email="sarah@example.com"
-          credits={1240}
-          tier="Pro"
-        />
-        <ActiveUser
-          initials="MC"
-          name="Mike Chen"
-          email="mike@example.com"
-          credits={980}
-          tier="Basic"
-        />
-        <ActiveUser
-          initials="ED"
-          name="Emma Davis"
-          email="emma@example.com"
-          credits={856}
-          tier="Pro"
-        />
-        <ActiveUser
-          initials="JW"
-          name="James Wilson"
-          email="james@example.com"
-          credits={742}
-          tier="Basic"
-        />
-      </div>
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center justify-between py-3 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white/10 animate-pulse"></div>
+                <div className="space-y-2">
+                  <div className="h-4 w-32 bg-white/10 rounded animate-pulse"></div>
+                  <div className="h-3 w-24 bg-white/10 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="text-right space-y-2">
+                <div className="h-4 w-20 bg-white/10 rounded animate-pulse ml-auto"></div>
+                <div className="h-5 w-16 bg-white/10 rounded-full animate-pulse ml-auto"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="text-red-400 text-sm py-4 text-center">{error}</div>
+      ) : topUsers.length === 0 ? (
+        <div className="text-gray-400 text-sm py-4 text-center">No active users yet</div>
+      ) : (
+        <div>
+          {topUsers.map((user) => (
+            <ActiveUser
+              key={user.user_id}
+              initials={getInitials(user.name)}
+              name={user.name}
+              email={user.email}
+              credits={user.credits_balance}
+              tier={user.plan_name}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -1,15 +1,81 @@
-import React, { useState } from 'react';
-import { Crown, Bell, MessageSquare, ChevronDown, Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Crown, ChevronDown, Menu, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import CreditDisplay from './CreditDisplay';
+import { authService } from '../../services/authService';
 
 interface TopHeaderProps {
   creditRefreshTrigger?: number;
 }
 
 const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
+  const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userName, setUserName] = useState('User');
+  const [userInitial, setUserInitial] = useState('U');
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileProfileDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Load user data from localStorage
+    try {
+      const storedUser = localStorage.getItem('authUser');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        const name = user.name || 'User';
+        setUserName(name);
+        setUserInitial(name.charAt(0).toUpperCase());
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  }, []);
+
+  // Click outside handler to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+      if (
+        mobileProfileDropdownRef.current &&
+        !mobileProfileDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileOpen]);
+
+  const handleSignOut = async () => {
+    try {
+      await authService.logout();
+      navigate('/signin');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Force logout even if there's an error
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authUser');
+      navigate('/signin');
+    }
+  };
+
+  const handleNavigateToSettings = () => {
+    setIsProfileOpen(false);
+    setIsMobileMenuOpen(false);
+    navigate('/dashboard/settings');
+  };
 
   return (
     <div className="mb-6 relative w-full lg:w-auto">
@@ -26,30 +92,36 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
         {/* Desktop: actions visible and aligned left */}
         <div className="hidden lg:flex items-center gap-3 lg:-translate-x-2">
           <CreditDisplay variant="full" refreshTrigger={creditRefreshTrigger} />
-          <button className="px-3 py-1.5 rounded-full bg-purple-900/60 text-white border border-white/10 flex items-center gap-2 text-sm">
+          <button 
+            onClick={() => navigate('/dashboard/subscription')}
+            className="px-3 py-1.5 rounded-full bg-purple-900/60 text-white border border-white/10 flex items-center gap-2 text-sm hover:bg-purple-800/60 transition-colors"
+          >
             <Crown className="w-4 h-4" />
             Upgrade
           </button>
-          <button className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors">
-            <MessageSquare className="w-4 h-4 text-indigo-400" />
-          </button>
-          <button className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors">
-            <Bell className="w-4 h-4 text-white/80" />
-          </button>
-          <div className="relative">
+          <div className="relative" ref={profileDropdownRef}>
             <button
               onClick={() => setIsProfileOpen((v) => !v)}
               className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
             >
-              <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">Z</div>
-              <span className="hidden sm:inline text-sm text-white/90">zohaib ali</span>
+              <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">{userInitial}</div>
+              <span className="hidden sm:inline text-sm text-white/90">{userName}</span>
               <ChevronDown className={`w-4 h-4 text-white/80 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
             </button>
             {isProfileOpen && (
-              <div className="absolute left-0 mt-2 w-40 rounded-lg bg-[#121212] border border-white/10 shadow-xl overflow-hidden z-10">
-                <a href="#" className="block px-4 py-2 text-sm text-white/90 hover:bg-white/5">My Profile</a>
-                <a href="#" className="block px-4 py-2 text-sm text-white/90 hover:bg-white/5">Account Settings</a>
-                <a href="#" className="block px-4 py-2 text-sm text-red-400 hover:bg-red-500/10">Sign Out</a>
+              <div className="absolute left-0 mt-2 w-48 rounded-lg bg-[#121212] border border-white/10 shadow-xl overflow-hidden z-10">
+                <button 
+                  onClick={handleNavigateToSettings}
+                  className="w-full text-left block px-4 py-2 text-sm text-white/90 hover:bg-white/5 transition-colors"
+                >
+                  Account Settings
+                </button>
+                <button 
+                  onClick={handleSignOut}
+                  className="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                >
+                  Sign Out
+                </button>
               </div>
             )}
           </div>
@@ -77,34 +149,41 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
             <div className="w-full flex justify-center">
               <CreditDisplay variant="full" refreshTrigger={creditRefreshTrigger} />
             </div>
-            <button className="w-full justify-center px-3 py-2 rounded-md bg-purple-900/60 text-white border border-white/10 flex items-center gap-2 text-sm">
+            <button 
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                navigate('/dashboard/subscription');
+              }}
+              className="w-full justify-center px-3 py-2 rounded-md bg-purple-900/60 text-white border border-white/10 flex items-center gap-2 text-sm hover:bg-purple-800/60 transition-colors"
+            >
               <Crown className="w-4 h-4" />
               Upgrade
             </button>
-            <div className="space-y-2">
-              <button className="w-full justify-center py-2 rounded-md bg-white/5 border border-white/10 flex items-center hover:bg-white/10 transition-colors">
-                <MessageSquare className="w-4 h-4 text-indigo-400" />
-              </button>
-              <button className="w-full justify-center py-2 rounded-md bg-white/5 border border-white/10 flex items-center hover:bg-white/10 transition-colors">
-                <Bell className="w-4 h-4 text-white/80" />
-              </button>
-            </div>
-            <div className="relative">
+            <div className="relative" ref={mobileProfileDropdownRef}>
               <button
                 onClick={() => setIsProfileOpen((v) => !v)}
                 className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">Z</div>
-                  <span className="text-sm text-white/90">zohaib ali</span>
+                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">{userInitial}</div>
+                  <span className="text-sm text-white/90">{userName}</span>
                 </div>
                 <ChevronDown className={`w-4 h-4 text-white/80 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
               {isProfileOpen && (
                 <div className="mt-2 w-full rounded-lg bg-[#121212] border border-white/10 shadow-xl overflow-hidden">
-                  <a href="#" className="block px-4 py-2 text-sm text-white/90 hover:bg-white/5">My Profile</a>
-                  <a href="#" className="block px-4 py-2 text-sm text-white/90 hover:bg-white/5">Account Settings</a>
-                  <a href="#" className="block px-4 py-2 text-sm text-red-400 hover:bg-red-500/10">Sign Out</a>
+                  <button 
+                    onClick={handleNavigateToSettings}
+                    className="w-full text-left block px-4 py-2 text-sm text-white/90 hover:bg-white/5 transition-colors"
+                  >
+                    Account Settings
+                  </button>
+                  <button 
+                    onClick={handleSignOut}
+                    className="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    Sign Out
+                  </button>
                 </div>
               )}
             </div>

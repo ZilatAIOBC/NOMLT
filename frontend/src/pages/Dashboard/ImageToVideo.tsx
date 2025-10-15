@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import ImageUpload from '../../components/image-to-video/ImageUpload';
 import VideoPlayer from '../../components/image-to-video/VideoPlayer';
- 
+
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
-import ExamplesGrid from '../../components/dashboard/ExamplesGrid';
+import RecentGenerations from '../../components/dashboard/RecentGenerations';
 import { RefreshCw, Sparkles, Mic, Video, Wand2, Info } from 'lucide-react';
 import IdeaChips from '../../components/common/IdeaChips';
-import CreditCostBadge from '../../components/dashboard/CreditCostBadge';
 import InsufficientCreditsModal from '../../components/dashboard/InsufficientCreditsModal';
 import { callImageToVideoAPI, getImageToVideoResult, uploadImageToUrl, ImageToVideoRequest } from '../../services/imageToVideoService';
 import { fetchUsageSummary } from '../../services/usageService';
+import { useCreditCost } from '../../hooks/useCreditCost';
 
 const ImageToVideo: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -38,7 +38,8 @@ const ImageToVideo: React.FC = () => {
     shortfall: 0
   });
 
-  const CREDIT_COST = 80; // Image-to-video costs 80 credits
+  // Fetch dynamic credit cost from database
+  const { cost: CREDIT_COST } = useCreditCost('image_to_video');
 
   const handleRun = async () => {
     if (!imageFile || !prompt) {
@@ -261,12 +262,7 @@ const ImageToVideo: React.FC = () => {
                   <span>Credits required:</span>
                   <Info className="w-4 h-4 text-gray-400" />
                 </div>
-                <span className="text-white font-semibold">2 Credits</span>
-              </div>
-
-              {/* Credit Cost Badge */}
-              <div className="flex justify-center">
-                <CreditCostBadge cost={CREDIT_COST} />
+                <span className="text-white font-semibold">{CREDIT_COST} Credits</span>
               </div>
 
               {/* Action Buttons */}
@@ -371,8 +367,8 @@ const ImageToVideo: React.FC = () => {
         </div>
       </div>
 
-      {/* Examples Section */}
-      <ExamplesGrid />
+      {/* Recent Generations Section */}
+      <RecentGenerations generationType="image-to-video" limit={10} />
 
       {/* Insufficient Credits Modal */}
       <InsufficientCreditsModal

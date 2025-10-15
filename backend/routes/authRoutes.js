@@ -253,43 +253,194 @@ router.post(
   }
 );
 
-// Change password (when logged in)
-// router.post("/change-password", auth, [
-//   check("currentPassword", "Current password is required").not().isEmpty(),
-//   check("newPassword", "New password must be at least 8 characters").isLength({ min: 8 }),
-// ], async (req, res) => {
-//   try {
-//     // Validate input
-//     const errors = validationResult(req);
-//     if (!errors.isEmpty()) {
-//       return res.status(400).json({ errors: errors.array() });
-//     }
+// Change password (when logged in) - Supabase version
+router.post("/change-password", auth, [
+  check("currentPassword", "Current password is required").not().isEmpty(),
+  check(
+    "newPassword", 
+    "New password must be at least 8 characters with uppercase, lowercase, and number"
+  )
+    .isLength({ min: 8 })
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/),
+], async (req, res) => {
+  try {
+    // Validate input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     
-//     const { currentPassword, newPassword } = req.body;
-//     const userId = req.user._id;
+    const { currentPassword, newPassword, refreshToken } = req.body;
+    const userEmail = req.user.email;
     
-//     // Find user with full details including password
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+    if (!userEmail) {
+      return res.status(400).json({ message: "User email not found" });
+    }
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token is required" });
+    }
+
+    // First, verify the current password by attempting to sign in
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: userEmail,
+      password: currentPassword
+    });
+
+    if (signInError) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // Get the access token from the Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: "No authorization token provided" });
+    }
+
+    const accessToken = authHeader.replace('Bearer ', '');
+
+    // Create a Supabase client with the user's access token and set the session
+    const { createClient } = require('@supabase/supabase-js');
+    const userSupabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY
+    );
+
+    // Set the session using both access and refresh tokens
+    const { data: sessionData, error: sessionError } = await userSupabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    });
+
+    if (sessionError || !sessionData.session) {
+      console.error("Error setting session:", sessionError);
+      return res.status(401).json({ message: "Invalid session" });
+    }
+
+    // Update the password using the authenticated user's session
+    const { error: updateError } = await userSupabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (updateError) {
+      console.error("Error updating password:", updateError);
+      return res.status(400).json({ message: updateError.message });
+    }
     
-//     // Check current password
-//     const isMatch = await user.comparePassword(currentPassword);
-//     if (!isMatch) {
-//       return res.status(401).json({ message: "Current password is incorrect" });
-//     }
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Error changing password:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update user profile (name and email)
+router.put("/update-profile", auth, [
+  check("name", "Name is required").not().isEmpty().trim(),
+  check("email", "Please include a valid email").isEmail().normalizeEmail(),
+], async (req, res) => {
+  try {
+    // Validate input
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
     
-//     // Update password
-//     user.password = newPassword;
-//     await user.save();
+    const { name, email } = req.body;
+    const userId = req.user._id;
+    const currentEmail = req.user.email;
     
-//     res.status(200).json({ message: "Password changed successfully" });
-//   } catch (error) {
-//     console.error("Error changing password:", error);
-//     res.status(500).json({ message: "Server error" });
-//   }
-// });
+    // Check if email is being changed
+    if (email !== currentEmail) {
+      // Check if new email already exists in Supabase
+      const { data: existingUser, error: checkError } = await supabase.auth.admin.getUserByEmail(email);
+      
+      if (checkError && checkError.message !== "User not found") {
+        console.error("Error checking email:", checkError);
+        return res.status(500).json({ message: "Server error while checking email" });
+      }
+      
+      if (existingUser && existingUser.user && existingUser.user.id !== userId) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+    }
+
+    // Get the access token from the Authorization header
+    const authHeader = req.headers.authorization;
+    const accessToken = authHeader.replace('Bearer ', '');
+    const refreshToken = req.body.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token is required" });
+    }
+
+    // Create a Supabase client with the user's access token and set the session
+    const { createClient } = require('@supabase/supabase-js');
+    const userSupabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY
+    );
+
+    // Set the session using both access and refresh tokens
+    const { data: sessionData, error: sessionError } = await userSupabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken
+    });
+
+    if (sessionError || !sessionData.session) {
+      console.error("Error setting session:", sessionError);
+      return res.status(401).json({ message: "Invalid session" });
+    }
+
+    // Prepare update data
+    const updateData = { data: { name } };
+    
+    // Only update email if it's different
+    if (email !== currentEmail) {
+      updateData.email = email;
+    }
+
+    // Update user profile in Supabase
+    const { data: updateResult, error: updateError } = await userSupabase.auth.updateUser(updateData);
+
+    if (updateError) {
+      console.error("Error updating profile:", updateError);
+      return res.status(400).json({ message: updateError.message });
+    }
+
+    // Update profile in our profiles table if needed
+    try {
+      const serviceSupabase = require("../utils/supabase").supabaseAdmin || supabase;
+      const { error: profileError } = await serviceSupabase
+        .from('profiles')
+        .update({ 
+          name: name,
+          ...(email !== currentEmail && { email: email })
+        })
+        .eq('id', userId);
+
+      if (profileError) {
+        console.warn("Could not update profile in profiles table:", profileError);
+        // Don't fail the request since Supabase auth was updated successfully
+      }
+    } catch (profileErr) {
+      console.warn("Error updating profiles table:", profileErr);
+    }
+
+    res.status(200).json({ 
+      message: "Profile updated successfully",
+      user: {
+        id: userId,
+        name: name,
+        email: email,
+        verified: updateResult.user?.email_confirmed_at ? true : false
+      }
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // Logout route (token blacklisting would be implemented here)
 router.post("/logout", auth, async (req, res) => {

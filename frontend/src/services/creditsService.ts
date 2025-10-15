@@ -6,29 +6,9 @@
  * Frontend service for interacting with credit-related APIs
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL|| import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+import { authHelper } from '../utils/authHelper';
 
-// Helper to get auth token from localStorage (same pattern as other services)
-function getSupabaseAccessToken(): string | undefined {
-  try {
-    // Prefer dynamic Supabase key: sb-<project-ref>-auth-token
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i) || "";
-      if (/^sb-.*-auth-token$/.test(key)) {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.access_token) return parsed.access_token as string;
-      }
-    }
-    // Fallbacks if above not found
-    const sbSimple = localStorage.getItem('sb-access-token');
-    if (sbSimple) return sbSimple;
-    const custom = localStorage.getItem('accessToken');
-    if (custom) return custom;
-  } catch (_) {}
-  return undefined;
-}
+const API_BASE_URL = import.meta.env.VITE_API_URL|| import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 // Types
 export interface CreditCosts {
@@ -136,18 +116,8 @@ export async function getCreditCostByType(generationType: string): Promise<Credi
  */
 export async function getCreditBalance(): Promise<CreditBalance> {
   try {
-    const token = getSupabaseAccessToken();
-    
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/credits/balance`, {
+    const response = await authHelper.authFetch(`${API_BASE_URL}/api/credits/balance`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
     });
 
     if (!response.ok) {
@@ -177,12 +147,6 @@ export async function getCreditTransactions(
   offset: number;
 }> {
   try {
-    const token = getSupabaseAccessToken();
-    
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
     const params = new URLSearchParams({
       limit: limit.toString(),
       offset: offset.toString(),
@@ -192,12 +156,8 @@ export async function getCreditTransactions(
       params.append('type', type);
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/credits/transactions?${params}`, {
+    const response = await authHelper.authFetch(`${API_BASE_URL}/api/credits/transactions?${params}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
     });
 
     if (!response.ok) {
@@ -218,18 +178,8 @@ export async function getCreditTransactions(
  */
 export async function getCreditSummary(): Promise<CreditSummary> {
   try {
-    const token = getSupabaseAccessToken();
-    
-    if (!token) {
-      throw new Error('Not authenticated');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/credits/summary`, {
+    const response = await authHelper.authFetch(`${API_BASE_URL}/api/credits/summary`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
     });
 
     if (!response.ok) {

@@ -17,7 +17,7 @@ export const FeatureBar = ({ name, credits, percentage, color = "#8A3FFC", estim
           <div className="text-gray-500 text-xs">{estimatedCost}</div>
         )}
       </div>
-      <div className="text-sm font-semibold" style={{ color: '#8A3FFC' }}>{percentage}%</div>
+      <div className="text-sm font-semibold" style={{ color }}>{percentage}%</div>
     </div>
     <div className="w-full bg-gray-800 rounded-full h-2">
       <div

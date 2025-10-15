@@ -32,10 +32,10 @@ function checkCredits(generationType) {
 
       const userId = req.user._id;
 
-      // 2. Get credit cost for this generation type
+      // 2. Get credit cost for this generation type (now fetches from database)
       let cost;
       try {
-        cost = getCreditCost(generationType);
+        cost = await getCreditCost(generationType);
       } catch (error) {
         return res.status(400).json({
           success: false,

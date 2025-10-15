@@ -1,4 +1,5 @@
 import { apiBaseUrl } from './index';
+import { authHelper } from '../utils/authHelper';
 
 export type Interval = 'monthly' | 'yearly';
 
@@ -8,9 +9,8 @@ export async function createCheckoutSession(params: {
   userId: string;
   isUpgrade?: boolean;
 }) {
-  const res = await fetch(`${apiBaseUrl}/api/payments/create-checkout-session`, {
+  const res = await authHelper.authFetch(`${apiBaseUrl}/api/payments/create-checkout-session`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
     body: JSON.stringify(params)
   });
@@ -22,7 +22,7 @@ export async function createCheckoutSession(params: {
 }
 
 export async function retrieveCheckoutSession(sessionId: string) {
-  const res = await fetch(`${apiBaseUrl}/api/payments/checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
+  const res = await authHelper.authFetch(`${apiBaseUrl}/api/payments/checkout-session?session_id=${encodeURIComponent(sessionId)}`, {
     method: 'GET',
     credentials: 'include'
   });

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
-import ImageExamplesGrid from '../../components/dashboard/ImageExamplesGrid';
+import RecentGenerations from '../../components/dashboard/RecentGenerations';
 import { Sparkles, Mic, Video, Wand2, Info } from 'lucide-react';
 import IdeaChips from '../../components/common/IdeaChips';
-import CreditCostBadge from '../../components/dashboard/CreditCostBadge';
 import InsufficientCreditsModal from '../../components/dashboard/InsufficientCreditsModal';
 import { callTextToImageAPI, getTextToImageResult, TextToImageRequest } from '../../services/textToImageService';
 import { fetchUsageSummary } from '../../services/usageService';
+import { useCreditCost } from '../../hooks/useCreditCost';
 
 const TextToImage: React.FC = () => {
   const [prompt, setPrompt] = useState('');
@@ -33,7 +33,8 @@ const TextToImage: React.FC = () => {
     shortfall: 0
   });
 
-  const CREDIT_COST = 30; // Text-to-image costs 30 credits
+  // Fetch dynamic credit cost from database
+  const { cost: CREDIT_COST } = useCreditCost('text_to_image');
 
   const handleRun = async () => {
     if (!prompt) {
@@ -240,12 +241,7 @@ const TextToImage: React.FC = () => {
                   <span>Credits required:</span>
                   <Info className="w-4 h-4 text-gray-400" />
                 </div>
-                <span className="text-white font-semibold">1 Credit</span>
-              </div>
-
-              {/* Credit Cost Badge */}
-              <div className="flex justify-center">
-                <CreditCostBadge cost={CREDIT_COST} />
+                <span className="text-white font-semibold">{CREDIT_COST} Credits</span>
               </div>
 
               {/* Create Button */}
@@ -374,8 +370,8 @@ const TextToImage: React.FC = () => {
         </div>
       </div>
 
-      {/* Examples Section */}
-      <ImageExamplesGrid />
+      {/* Recent Generations Section */}
+      <RecentGenerations generationType="text-to-image" limit={10} />
 
       {/* Insufficient Credits Modal */}
       <InsufficientCreditsModal

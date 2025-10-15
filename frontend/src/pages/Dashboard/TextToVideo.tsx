@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import VideoPlayer from '../../components/image-to-video/VideoPlayer';
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
-import ExamplesGrid from '../../components/dashboard/ExamplesGrid';
+import RecentGenerations from '../../components/dashboard/RecentGenerations';
 import { Sparkles, RefreshCw, Info, Mic, Video, Wand2 } from 'lucide-react';
 import IdeaChips from '../../components/common/IdeaChips';
-import CreditCostBadge from '../../components/dashboard/CreditCostBadge';
 import InsufficientCreditsModal from '../../components/dashboard/InsufficientCreditsModal';
 import { callTextToVideoAPI, getTextToVideoResult, TextToVideoRequest } from '../../services/textToVideoService';
 import { fetchUsageSummary } from '../../services/usageService';
+import { useCreditCost } from '../../hooks/useCreditCost';
 
 const TextToVideo: React.FC = () => {
   const [prompt, setPrompt] = useState('');
@@ -35,7 +35,8 @@ const TextToVideo: React.FC = () => {
     shortfall: 0
   });
 
-  const CREDIT_COST = 80; // Text-to-video costs 80 credits
+  // Fetch dynamic credit cost from database
+  const { cost: CREDIT_COST } = useCreditCost('text_to_video');
 
   const handleRun = async () => {
     if (!prompt) {
@@ -310,12 +311,7 @@ const TextToVideo: React.FC = () => {
                 <span>Credits required:</span>
                 <Info className="w-4 h-4 text-gray-400" />
               </div>
-              <span className="text-white font-semibold">3 Credits</span>
-            </div>
-
-            {/* Credit Cost Badge */}
-            <div className="flex justify-center">
-              <CreditCostBadge cost={CREDIT_COST} />
+              <span className="text-white font-semibold">{CREDIT_COST} Credits</span>
             </div>
 
             {/* Create Button */}
@@ -423,8 +419,8 @@ const TextToVideo: React.FC = () => {
         </div>
       </div>
 
-      {/* Examples Section */}
-      <ExamplesGrid />
+      {/* Recent Generations Section */}
+      <RecentGenerations generationType="text-to-video" limit={10} />
 
       {/* Insufficient Credits Modal */}
       <InsufficientCreditsModal

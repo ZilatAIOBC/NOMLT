@@ -1,27 +1,86 @@
+import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { getDailyTrends } from '../../services/analyticsService';
 
 interface UsageTimelineChartProps {
   className?: string;
 }
 
-export default function UsageTimelineChart({ className = "" }: UsageTimelineChartProps) {
+interface ChartDataPoint {
+  day: string;
+  credits: number;
+  date: string;
+}
 
-  // Generate data for 30 days with a smooth wave pattern
-  const data = Array.from({ length: 30 }, (_, i) => {
-    const day = 30 - i;
-    const value = 150 + Math.sin((i / 30) * Math.PI * 3) * 100 + Math.cos((i / 20) * Math.PI * 2) * 50;
-    return {
-      day,
-      credits: Math.round(value),
-    };
-  });
+export default function UsageTimelineChart({ className = "" }: UsageTimelineChartProps) {
+  const [data, setData] = useState<ChartDataPoint[]>([]);
+
+  useEffect(() => {
+    fetchDailyTrends();
+  }, []);
+
+  const fetchDailyTrends = async () => {
+    try {
+      const response = await getDailyTrends(30);
+
+      // Helper: format a JS Date to YYYY-MM-DD using UTC parts (avoid TZ shift)
+      const formatDateUTC = (d: Date) => {
+        const y = d.getUTCFullYear();
+        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(d.getUTCDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+
+      // Map API results by UTC date (YYYY-MM-DD)
+      const creditsByDate: Record<string, number> = {};
+      (response.trends || []).forEach((t) => {
+        const key = (t.date || '').split('T')[0]; // backend already returns YYYY-MM-DD
+        creditsByDate[key] = (t.total_credits_spent || 0);
+      });
+
+      // Build days 1..30 for the CURRENT MONTH (so x=9 means the 9th of this month)
+      const days: ChartDataPoint[] = [];
+      const now = new Date();
+      const year = now.getUTCFullYear();
+      const month = now.getUTCMonth(); // 0-based
+      for (let dayNum = 1; dayNum <= 30; dayNum++) {
+        const d = new Date(Date.UTC(year, month, dayNum, 0, 0, 0));
+        const iso = formatDateUTC(d);
+        const displayDate = new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+        days.push({
+          day: String(dayNum),
+          credits: creditsByDate[iso] || 0,
+          date: displayDate
+        });
+      }
+
+      setData(days);
+    } catch (error) {
+      console.error('Error fetching daily trends:', error);
+      // Fallback: show 30 days of zeros to keep the UI intact
+      const fallback: ChartDataPoint[] = [];
+      const now = new Date();
+      const year = now.getUTCFullYear();
+      const month = now.getUTCMonth();
+      for (let dayNum = 1; dayNum <= 30; dayNum++) {
+        const d = new Date(Date.UTC(year, month, dayNum, 0, 0, 0));
+        fallback.push({
+          day: String(dayNum),
+          credits: 0,
+          date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        });
+      }
+      setData(fallback);
+    }
+  };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-purple-600 text-white px-3 py-1.5 rounded-md text-sm font-medium shadow-lg">
           <div>{payload[0].value} Credits</div>
-          <div className="text-xs text-purple-200">May 22</div>
+          <div className="text-xs text-purple-200">{payload[0].payload.date}</div>
         </div>
       );
     }
@@ -66,8 +125,6 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
           </LineChart>
         </ResponsiveContainer>
       </div>
-
-      
 
       {/* Legend */}
       <div className="flex items-center justify-center mt-4">

@@ -140,16 +140,41 @@ router.get('/data', async (req, res) => {
       console.log('No active subscription found:', subError.message);
     }
 
-    // Get payment transactions (mock data for now - you can implement real transaction fetching later)
-    const transactions = [
-      {
-        id: '1',
-        date: new Date().toISOString().split('T')[0],
-        description: 'Subscription Payment',
-        amount: subscription?.plans?.price_monthly || 0,
-        status: 'paid'
-      }
-    ];
+    // Get payment transactions - Generate mock data from subscription
+    let transactions = [];
+    
+    // If user has a subscription, create mock transaction data
+    if (subscription && subscription.id) {
+      const periodStart = new Date(subscription.current_period_start);
+      const periodEnd = new Date(subscription.current_period_end);
+      const periodLength = periodEnd - periodStart;
+      const isYearly = periodLength > 365 * 24 * 60 * 60 * 1000;
+      
+      // Get plan details to show price
+      const { data: plan } = await client
+        .from('plans')
+        .select('display_name, price_monthly, price_yearly')
+        .eq('id', subscription.plan_id)
+        .single();
+      
+      const price = isYearly ? (plan?.price_yearly || 0) : (plan?.price_monthly || 0);
+      const planName = plan?.display_name || 'Subscription';
+      
+      // Create mock transaction for current period
+      transactions = [
+        {
+          id: subscription.id,
+          date: periodStart.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          description: `${planName} ${isYearly ? '(Yearly)' : '(Monthly)'}`,
+          amount: `$${price.toFixed(2)}`,
+          status: 'paid'
+        }
+      ];
+    }
 
     res.json({
       subscription,

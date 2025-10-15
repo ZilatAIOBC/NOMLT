@@ -1,70 +1,91 @@
-
-import { Users, Zap, DollarSign, Filter, Calendar, Download, BarChart3 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Users, Zap, DollarSign, BarChart3 } from 'lucide-react';
 import UsageTimelineChart from '../../components/admin/UsageTimelineChart';
 import StatCard from '../../components/admin/StatCard';
 import CreditsBurnedByFeature from '../../components/admin/CreditsBurnedByFeature';
 import TopUsersByUsage from '../../components/admin/TopUsersByUsage';
 import CostPerFeature from '../../components/admin/CostPerFeature';
 import MonthlyTrends from '../../components/admin/MonthlyTrends';
-import PerformanceAlerts from '../../components/admin/PerformanceAlerts';
+import { getDashboardStats, DashboardStats } from '../../services/analyticsService';
 
 
 export default function Analytics() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+      const data = await getDashboardStats();
+      setStats(data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+      setError('Failed to load statistics');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`;
+    }
+    return num.toString();
+  };
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
+  const avgCreditsPerUser = stats && stats.total_users > 0 
+    ? Math.round(stats.total_credits_used / stats.total_users)
+    : 0;
+
   return (
     <div className="p-8">
       {/* Header */}
       <div className="mb-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">Usage & Cost Analytics</h1>
-          <p className="text-gray-400">Monitor platform usage and financial metrics</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <button 
-            className="px-4 py-2 rounded-lg border border-white/10 text-gray-400 hover:bg-white/5 hover:text-white flex items-center gap-2"
-          >
-            <Filter size={16} />
-            Filters
-          </button>
-          <button 
-            className="px-4 py-2 rounded-lg border border-white/10 text-gray-400 hover:bg-white/5 hover:text-white flex items-center gap-2"
-          >
-            <Calendar size={16} />
-            Last 30 Days
-          </button>
-          <button 
-            className="px-4 py-2 rounded-lg text-white flex items-center gap-2"
-            style={{ backgroundColor: '#8A3FFC' }}
-          >
-            <Download size={16} />
-            Export Report
-          </button>
-        </div>
+        <h1 className="text-3xl font-bold text-white mb-2">Usage & Cost Analytics</h1>
+        <p className="text-gray-400">Monitor platform usage and financial metrics</p>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Credits Burned"
-          value="1.2M"
-          change="+23% from last month"
+          value={loading ? "Loading..." : stats ? formatNumber(stats.total_credits_used) : "0"}
+          change={error ? error : "All-time credit usage"}
           icon={<Zap size={20} />}
         />
         <StatCard
-          title="Platform Revenue"
-          value="$58,420"
-          change="+18% from last month"
+          title="All-time Revenue"
+          value={loading ? "Loading..." : stats ? formatCurrency(stats.total_revenue) : "$0"}
+          change={error ? error : "Total revenue collected"}
           icon={<DollarSign size={20} />}
         />
         <StatCard
           title="Active Users"
-          value="3,247"
-          change="+12% from last month"
+          value={loading ? "Loading..." : stats ? formatNumber(stats.total_users) : "0"}
+          change={error ? error : "All registered users"}
           icon={<Users size={20} />}
         />
         <StatCard
           title="Avg Usage/User"
-          value="374"
-          change="+8% from last month"
+          value={loading ? "Loading..." : stats ? formatNumber(avgCreditsPerUser) : "0"}
+          change={error ? error : "Average credits per user"}
           icon={<BarChart3 size={20} />}
         />
       </div>
@@ -89,10 +110,9 @@ export default function Analytics() {
       </div>
 
       {/* Bottom Cards Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CostPerFeature />
         <MonthlyTrends />
-        <PerformanceAlerts />
       </div>
     </div>
   );

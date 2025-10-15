@@ -274,7 +274,7 @@ async function refundCredits(userId, amount, generationType, generationId, reaso
  */
 async function checkCreditsForGeneration(userId, generationType) {
   try {
-    const cost = getCreditCost(generationType);
+    const cost = await getCreditCost(generationType);
     const credits = await getUserCredits(userId);
     
     const hasEnough = credits.balance >= cost;

@@ -1,23 +1,6 @@
-const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
+import { authHelper } from '../utils/authHelper';
 
-function getSupabaseAccessToken(): string | undefined {
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i) || "";
-      if (/^sb-.*-auth-token$/.test(key)) {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.access_token) return parsed.access_token as string;
-      }
-    }
-    const sbSimple = localStorage.getItem('sb-access-token');
-    if (sbSimple) return sbSimple;
-    const custom = localStorage.getItem('accessToken');
-    if (custom) return custom;
-  } catch (_) {}
-  return undefined;
-}
+const BACKEND_BASE_URL = import.meta.env.VITE_BACKEND_URL || "";
 
 export interface GenerationTypeStats {
   count: number;
@@ -55,13 +38,13 @@ export interface UsageSummaryResponse {
 export const fetchUsageSummary = async (): Promise<UsageSummaryResponse> => {
   const url = `${BACKEND_BASE_URL}/api/usage/summary`;
 
-  const token = getSupabaseAccessToken();
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
   console.log('Frontend: Fetching usage summary from:', url);
 
-  const res = await fetch(url, { method: 'GET', headers, credentials: 'include' });
+  const res = await authHelper.authFetch(url, { 
+    method: 'GET', 
+    credentials: 'include' 
+  });
+  
   console.log('Frontend: Usage summary status:', res.status, res.statusText);
 
   if (!res.ok) {

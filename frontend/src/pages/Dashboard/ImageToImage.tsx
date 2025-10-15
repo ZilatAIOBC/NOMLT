@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import ImageUpload from '../../components/image-to-video/ImageUpload';
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
-import ImageExamplesGrid from '../../components/dashboard/ImageExamplesGrid';
+import RecentGenerations from '../../components/dashboard/RecentGenerations';
 import { Sparkles, Mic, Video, Wand2, Info } from 'lucide-react';
 import IdeaChips from '../../components/common/IdeaChips';
-import CreditCostBadge from '../../components/dashboard/CreditCostBadge';
 import InsufficientCreditsModal from '../../components/dashboard/InsufficientCreditsModal';
 import { callImageToImageAPI, getImageToImageResult, uploadImageToUrl, ImageToImageRequest } from '../../services/imageToImageService';
 import { fetchUsageSummary } from '../../services/usageService';
+import { useCreditCost } from '../../hooks/useCreditCost';
 
 const ImageToImage: React.FC = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -37,7 +37,8 @@ const ImageToImage: React.FC = () => {
     shortfall: 0
   });
 
-  const CREDIT_COST = 30; // Image-to-image costs 30 credits
+  // Fetch dynamic credit cost from database
+  const { cost: CREDIT_COST } = useCreditCost('image_to_image');
   
   // Minimum total pixels required by API (e.g., 921,600 = 960x960)
   const MIN_TOTAL_PIXELS = 921600;
@@ -300,12 +301,7 @@ const ImageToImage: React.FC = () => {
                   <span>Credits required:</span>
                   <Info className="w-4 h-4 text-gray-400" />
                 </div>
-                <span className="text-white font-semibold">1 Credit</span>
-              </div>
-
-              {/* Credit Cost Badge */}
-              <div className="flex justify-center">
-                <CreditCostBadge cost={CREDIT_COST} />
+                <span className="text-white font-semibold">{CREDIT_COST} Credits</span>
               </div>
 
               {/* Create Button */}
@@ -434,8 +430,8 @@ const ImageToImage: React.FC = () => {
         </div>
       </div>
 
-      {/* Examples Section */}
-      <ImageExamplesGrid />
+      {/* Recent Generations Section */}
+      <RecentGenerations generationType="image-to-image" limit={10} />
 
       {/* Insufficient Credits Modal */}
       <InsufficientCreditsModal

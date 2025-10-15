@@ -11,6 +11,7 @@ import UserManagement from './pages/Admin/UserManagement';
 import PlansAndPricing from './pages/Admin/PlansAndPricing';
 import Analytics from './pages/Admin/Analytics';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
+import UserProtectedRoute from './components/auth/UserProtectedRoute';
 import { Toaster, toast } from 'react-hot-toast';
 import { useEffect, useRef } from 'react';
 
@@ -41,11 +42,17 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/signin" element={<SignIn />} />
-          <Route path="/dashboard/*" element={<Dashboard />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           
-          {/* Admin Routes */}
+          {/* User Dashboard Routes - Protected */}
+          <Route path="/dashboard/*" element={
+            <UserProtectedRoute>
+              <Dashboard />
+            </UserProtectedRoute>
+          } />
+          
+          {/* Admin Routes - Protected */}
           <Route path="/admin" element={
             <AdminProtectedRoute>
               <AdminLayout />
