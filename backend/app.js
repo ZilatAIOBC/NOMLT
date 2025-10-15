@@ -97,6 +97,16 @@ app.use("/api/admin/users", require("./routes/adminUsers"));
 app.use("/api/admin/models", require("./routes/adminModels"));
 app.use("/api/webhooks", require("./routes/webhooks"));
 
+// Schedule background jobs
+try {
+  const { scheduleDailyUsageSummary } = require('./jobs/dailyUsageSummary');
+  const { scheduleCreditExpirationJob } = require('./jobs/creditExpirationJob');
+  scheduleDailyUsageSummary && scheduleDailyUsageSummary();
+  scheduleCreditExpirationJob && scheduleCreditExpirationJob();
+} catch (e) {
+  console.warn('Background jobs not scheduled:', e.message);
+}
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

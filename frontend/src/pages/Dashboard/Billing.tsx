@@ -83,7 +83,22 @@ const Billing: React.FC = () => {
           
           if (session.payment_status === 'paid') {
             toast.success('Subscription activated successfully! 🎉');
-            // Webhook should handle saving to database, no need to reload
+            // Give the webhook a moment to persist subscription, then refetch
+            await new Promise((r) => setTimeout(r, 1200));
+            try {
+              const refreshed = await getSubscriptionStatus();
+              if (refreshed) {
+                setBillingData(refreshed);
+              } else {
+                // Retry once more if still not available
+                await new Promise((r) => setTimeout(r, 1500));
+                const retry = await getSubscriptionStatus();
+                if (retry) setBillingData(retry);
+              }
+            } catch (e) {
+              // Non-fatal; user can refresh manually
+              console.warn('Post-checkout subscription refresh failed:', e);
+            }
           } else if (session.payment_status === 'unpaid') {
             toast.error('Payment was not completed');
           }

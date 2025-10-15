@@ -3,6 +3,7 @@ const router = express.Router();
 const { getStripeClient } = require('../config/stripe');
 const { supabase, supabaseAdmin } = require('../utils/supabase');
 const { addCredits, resetCredits } = require('../services/creditService');
+const { scheduleUpgradeBonusExpiration } = require('../services/creditExpirationService');
 const { updateUsageSummaryAfterCreditsAdded } = require('../services/usageSummaryService');
 
 // Stripe webhook endpoint - this handles events from Stripe
@@ -58,6 +59,9 @@ router.post('/stripe', async (req, res) => {
         });
         await handleInvoicePaymentSucceeded(fullInvoice);
         console.log('✅ Completed invoice.payment_succeeded processing');
+        break;
+      case 'invoice.upcoming':
+        await handleInvoiceUpcoming(event.data.object);
         break;
         
       // Additional event handlers - NEW FEATURES
@@ -405,20 +409,40 @@ async function handleSubscriptionUpdated(subscription) {
           const creditDifference = newPlan.credits_included - (oldPlan?.credits_included || 0);
 
           if (creditDifference > 0) {
-            // UPGRADE - Add the extra credits
-            console.log(`Upgrade detected: Adding ${creditDifference} extra credits`);
+            // UPGRADE - Add the extra credits as bonus with expiration at trial_end or current_period_end
+            console.log(`Upgrade detected: Adding ${creditDifference} upgrade bonus credits`);
+            const description = `Upgrade bonus: ${oldPlan?.display_name} → ${newPlan.display_name} (${subscription.id})`;
             const creditResult = await addCredits(
               currentSub.user_id,
               creditDifference,
-              'purchased',
-              `Upgrade bonus: ${oldPlan?.display_name} → ${newPlan.display_name} (${subscription.id})`,
-              null, // reference_id must be UUID
+              'bonus',
+              description,
+              null,
               'subscription'
             );
-            console.log(`Successfully added ${creditDifference} credits. New balance: ${creditResult.new_balance}`);
-            
+            console.log(`Successfully added ${creditDifference} bonus credits. New balance: ${creditResult.new_balance}`);
+
+            // Determine expiry = trial_end || current_period_end
+            const expiresAtEpoch = subscription.trial_end || subscription.current_period_end;
+            if (expiresAtEpoch) {
+              const expiresAt = new Date(expiresAtEpoch * 1000).toISOString();
+              try {
+                await scheduleUpgradeBonusExpiration(currentSub.user_id, creditDifference, expiresAt, {
+                  stripe_subscription_id: subscription.id,
+                  old_plan_id: currentSub.plan_id,
+                  new_plan_id: newPlan.id,
+                  description
+                });
+                console.log(`Scheduled expiration for ${creditDifference} bonus credits at ${expiresAt}`);
+              } catch (e) {
+                console.error('Failed to schedule bonus expiration:', e);
+              }
+            } else {
+              console.log('No trial_end or current_period_end available to set bonus expiry. Skipping expiration scheduling.');
+            }
+
             // Update usage summary
-            updateUsageSummaryAfterCreditsAdded(currentSub.user_id, creditDifference, 'purchased')
+            updateUsageSummaryAfterCreditsAdded(currentSub.user_id, creditDifference, 'bonus')
               .catch(err => console.error('Failed to update usage summary:', err));
           } else if (creditDifference < 0) {
             // DOWNGRADE - Keep existing credits (Option B: Rollover)
@@ -672,6 +696,76 @@ async function handleInvoicePaymentSucceeded(invoice) {
   } catch (error) {
     console.error('Error in handleInvoicePaymentSucceeded:', error);
     // Don't throw - payment is already successful
+  }
+}
+
+// Apply pending plan change (e.g., scheduled downgrade) right before the invoice is finalized
+async function handleInvoiceUpcoming(invoice) {
+  console.log('Processing invoice.upcoming:', invoice.id);
+
+  const client = supabaseAdmin || supabase;
+  try {
+    const subscriptionId = typeof invoice.subscription === 'object' ? invoice.subscription?.id : invoice.subscription;
+    if (!subscriptionId) return;
+
+    const { data: dbSubscription } = await client
+      .from('subscriptions')
+      .select('id, user_id, plan_id, pending_plan_id, pending_interval, pending_change_type, stripe_subscription_id')
+      .eq('stripe_subscription_id', subscriptionId)
+      .single();
+
+    if (!dbSubscription || !dbSubscription.pending_plan_id || dbSubscription.pending_change_type !== 'downgrade') {
+      console.log('No pending downgrade found, skipping.');
+      return;
+    }
+
+    // Resolve new price id from pending_plan_id and interval
+    const { data: newPlan } = await client
+      .from('plans')
+      .select('id, display_name, stripe_price_id_monthly, stripe_price_id_yearly')
+      .eq('id', dbSubscription.pending_plan_id)
+      .single();
+
+    if (!newPlan) {
+      console.log('Pending plan not found, skipping.');
+      return;
+    }
+
+    const newPriceId = (dbSubscription.pending_interval === 'yearly')
+      ? newPlan.stripe_price_id_yearly
+      : newPlan.stripe_price_id_monthly;
+
+    if (!newPriceId) {
+      console.log('Pending plan missing price for interval, skipping.');
+      return;
+    }
+
+    // Change the Stripe subscription to the pending plan so renewal bills the new plan
+    const stripe = getStripeClient();
+    const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
+    if (!stripeSub?.items?.data?.length) return;
+    const itemId = stripeSub.items.data[0].id;
+    await stripe.subscriptions.update(subscriptionId, {
+      items: [{ id: itemId, price: newPriceId }],
+      proration_behavior: 'none'
+    });
+
+    // Clear pending fields and set plan_id to new plan in DB
+    await client
+      .from('subscriptions')
+      .update({
+        plan_id: newPlan.id,
+        pending_plan_id: null,
+        pending_interval: null,
+        pending_change_type: null,
+        pending_requested_at: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', dbSubscription.id);
+
+    console.log(`Applied pending downgrade to ${newPlan.display_name} before renewal.`);
+  } catch (error) {
+    console.error('Error in handleInvoiceUpcoming:', error);
   }
 }
 

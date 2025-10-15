@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, AlertTriangle, Coins, Crown, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Button from '../common/Button';
 
 interface InsufficientCreditsModalProps {
   isOpen: boolean;
@@ -32,10 +33,10 @@ const InsufficientCreditsModal: React.FC<InsufficientCreditsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="relative w-full max-w-md bg-[#1A1A1A] rounded-2xl border border-white/10 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="relative p-6 pb-4 bg-gradient-to-br from-red-500/10 to-orange-500/10 border-b border-white/10">
+        <div className="relative p-6 pb-4 bg-gradient-to-br from-rose-500/10 to-red-500/10 border-b border-white/10">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors"
@@ -44,8 +45,8 @@ const InsufficientCreditsModal: React.FC<InsufficientCreditsModalProps> = ({
           </button>
           
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
-              <AlertTriangle className="w-6 h-6 text-red-400" />
+            <div className="w-12 h-12 rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center">
+              <AlertTriangle className="w-6 h-6 text-rose-400" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Insufficient Credits</h2>
@@ -66,52 +67,60 @@ const InsufficientCreditsModal: React.FC<InsufficientCreditsModalProps> = ({
             <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
               <span className="text-sm text-white/60">Required Credits:</span>
               <div className="flex items-center gap-1.5">
-                <Coins className="w-4 h-4 text-purple-400" />
-                <span className="text-sm font-semibold text-purple-400">{required.toLocaleString()}</span>
+                <Coins className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-semibold text-blue-400">{required.toLocaleString()}</span>
               </div>
             </div>
             
             <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
               <span className="text-sm text-white/60">Your Balance:</span>
               <div className="flex items-center gap-1.5">
-                <Coins className="w-4 h-4 text-red-400" />
-                <span className="text-sm font-semibold text-red-400">{current.toLocaleString()}</span>
+                <Coins className="w-4 h-4 text-rose-400" />
+                <span className="text-sm font-semibold text-rose-400">{current.toLocaleString()}</span>
               </div>
             </div>
             
-            <div className="flex items-center justify-between p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-rose-500/10 border border-rose-500/20">
               <span className="text-sm text-white/60">You Need:</span>
               <div className="flex items-center gap-1.5">
-                <Coins className="w-4 h-4 text-red-400" />
-                <span className="text-sm font-bold text-red-400">+{shortfall.toLocaleString()}</span>
+                <Coins className="w-4 h-4 text-rose-400" />
+                <span className="text-sm font-bold text-rose-400">+{shortfall.toLocaleString()}</span>
               </div>
             </div>
           </div>
 
           {/* Actions */}
           <div className="space-y-3">
-            <Link
-              to="/dashboard/billing"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium transition-all shadow-lg hover:shadow-xl"
-            >
-              <Crown className="w-4 h-4" />
-              Upgrade Your Plan
+            <Link to="/dashboard/subscription" className="block">
+              <Button
+                variant="primary"
+                size="md"
+                icon={Crown}
+                className="w-full"
+              >
+                Upgrade Your Plan
+              </Button>
             </Link>
 
-            <Link
-              to="/dashboard/credits"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium transition-colors"
-            >
-              <CreditCard className="w-4 h-4" />
-              Buy More Credits
+            <Link to="/dashboard/credits" className="block">
+              <Button
+                variant="secondary"
+                size="md"
+                icon={CreditCard}
+                className="w-full"
+              >
+                Buy More Credits
+              </Button>
             </Link>
 
-            <button
+            <Button
+              variant="ghost"
+              size="md"
               onClick={onClose}
-              className="w-full px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white transition-colors"
+              className="w-full bg-white/5 border border-white/10 text-white/60 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>

@@ -199,6 +199,48 @@ async function addCredits(userId, amount, type = 'earned', description = 'Credit
 }
 
 /**
+ * Spend credits for a generic reason (non-generation)
+ * Uses PostgreSQL function update_user_credits()
+ * @param {string} userId - User ID
+ * @param {number} amount - Amount of credits to spend (positive number)
+ * @param {string} description - Description for the spend (e.g., Upgrade bonus expired)
+ * @param {string|null} referenceId - Optional reference ID
+ * @param {string|null} referenceType - Optional reference type
+ * @returns {Promise<Object>} Updated credit info
+ */
+async function spendCredits(userId, amount, description = 'Credits spent', referenceId = null, referenceType = null) {
+  try {
+    console.log(`Credit Service: Spending ${amount} credits for user ${userId} - ${description}`);
+
+    const client = supabaseAdmin || supabase;
+
+    const { error } = await client.rpc('update_user_credits', {
+      p_user_id: userId,
+      p_amount: amount,
+      p_type: 'spent',
+      p_description: description,
+      p_reference_id: referenceId,
+      p_reference_type: referenceType
+    });
+
+    if (error) {
+      throw new Error(`Failed to spend credits: ${error.message}`);
+    }
+
+    const updatedCredits = await getUserCredits(userId);
+
+    return {
+      amount_spent: amount,
+      new_balance: updatedCredits.balance,
+      lifetime_spent: updatedCredits.lifetime_spent
+    };
+  } catch (error) {
+    console.error('Credit Service: Error spending credits:', error);
+    throw error;
+  }
+}
+
+/**
  * Refund credits to user (if generation fails or is cancelled)
  * Includes idempotency check to prevent double refunds
  * @param {string} userId - User ID
@@ -440,6 +482,7 @@ module.exports = {
   hasEnoughCredits,
   deductCredits,
   addCredits,
+  spendCredits,
   refundCredits,
   checkCreditsForGeneration,
   resetCredits,

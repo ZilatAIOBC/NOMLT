@@ -365,7 +365,7 @@ router.post('/subscription/reactivate', async (req, res) => {
 router.post('/subscription/change-plan', async (req, res) => {
   try {
     const userId = await getUserId(req);
-    const { newPlanId, interval } = req.body; // interval: 'monthly' or 'yearly'
+    const { newPlanId, interval, scheduleAtPeriodEnd = true } = req.body; // interval: 'monthly' or 'yearly'
 
     if (!newPlanId) {
       return res.status(400).json({ error: 'New plan ID is required' });
@@ -380,7 +380,7 @@ router.post('/subscription/change-plan', async (req, res) => {
     // Get user's active subscription
     const { data: currentSubscription, error: fetchError } = await client
       .from('subscriptions')
-      .select('id, stripe_subscription_id, plan_id, status')
+      .select('id, stripe_subscription_id, plan_id, status, current_period_end')
       .eq('user_id', userId)
       .eq('status', 'active')
       .order('created_at', { ascending: false })
@@ -426,45 +426,80 @@ router.post('/subscription/change-plan', async (req, res) => {
       });
     }
 
-    // Change the subscription plan in Stripe
-    const updatedStripeSubscription = await changeSubscriptionPlan(
-      currentSubscription.stripe_subscription_id, 
-      newPriceId
-    );
+    if (scheduleAtPeriodEnd) {
+      // Schedule a pending downgrade to be applied at the next renewal
+      const { error: updateError } = await client
+        .from('subscriptions')
+        .update({
+          pending_plan_id: newPlanId,
+          pending_interval: interval,
+          pending_change_type: 'downgrade',
+          pending_requested_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', currentSubscription.id);
 
-    // Update subscription in database with current dates from Stripe
-    const { error: updateError } = await client
-      .from('subscriptions')
-      .update({
-        plan_id: newPlanId,
-        current_period_start: updatedStripeSubscription.current_period_start 
-          ? new Date(updatedStripeSubscription.current_period_start * 1000).toISOString() 
-          : null,
-        current_period_end: updatedStripeSubscription.current_period_end 
-          ? new Date(updatedStripeSubscription.current_period_end * 1000).toISOString() 
-          : null,
-        status: updatedStripeSubscription.status,
-        cancel_at_period_end: updatedStripeSubscription.cancel_at_period_end || false,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', currentSubscription.id);
-
-    if (updateError) {
-      console.error('Error updating subscription in database:', updateError);
-    }
-
-    res.json({
-      success: true,
-      message: `Successfully changed plan to ${newPlan.display_name}`,
-      subscription: {
-        id: currentSubscription.id,
-        plan_id: newPlanId,
-        plan_name: newPlan.display_name,
-        current_period_end: updatedStripeSubscription.current_period_end 
-          ? new Date(updatedStripeSubscription.current_period_end * 1000).toISOString() 
-          : null
+      if (updateError) {
+        console.error('Error storing pending downgrade:', updateError);
+        return res.status(500).json({ error: 'Failed to schedule downgrade' });
       }
-    });
+
+      const effectiveIso = currentSubscription.current_period_end || null;
+      const effectiveDisplay = effectiveIso
+        ? new Date(effectiveIso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+        : 'the end of the current period';
+
+      return res.json({
+        success: true,
+        message: `Your plan will downgrade to ${newPlan.display_name} on  the end of the current period ${effectiveDisplay}`,
+        subscription: {
+          id: currentSubscription.id,
+          pending_plan_id: newPlanId,
+          pending_plan_name: newPlan.display_name,
+          pending_interval: interval,
+          effective_date: effectiveIso
+        }
+      });
+    } else {
+      // Immediate change (upgrade path typically). Proceed to Stripe now
+      const updatedStripeSubscription = await changeSubscriptionPlan(
+        currentSubscription.stripe_subscription_id, 
+        newPriceId
+      );
+
+      const { error: updateError } = await client
+        .from('subscriptions')
+        .update({
+          plan_id: newPlanId,
+          current_period_start: updatedStripeSubscription.current_period_start 
+            ? new Date(updatedStripeSubscription.current_period_start * 1000).toISOString() 
+            : null,
+          current_period_end: updatedStripeSubscription.current_period_end 
+            ? new Date(updatedStripeSubscription.current_period_end * 1000).toISOString() 
+            : null,
+          status: updatedStripeSubscription.status,
+          cancel_at_period_end: updatedStripeSubscription.cancel_at_period_end || false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', currentSubscription.id);
+
+      if (updateError) {
+        console.error('Error updating subscription in database:', updateError);
+      }
+
+      return res.json({
+        success: true,
+        message: `Successfully changed plan to ${newPlan.display_name}`,
+        subscription: {
+          id: currentSubscription.id,
+          plan_id: newPlanId,
+          plan_name: newPlan.display_name,
+          current_period_end: updatedStripeSubscription.current_period_end 
+            ? new Date(updatedStripeSubscription.current_period_end * 1000).toISOString() 
+            : null
+        }
+      });
+    }
 
   } catch (error) {
     console.error('Error changing subscription plan:', error);

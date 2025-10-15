@@ -6,6 +6,7 @@ import TopHeader from '../../components/dashboard/TopHeader';
 import { getCreditBalance } from '../../services/creditsService';
 import { getSubscriptionStatus, SubscriptionData } from '../../services/subscriptionService';
 import { authService } from '../../services/authService';
+import { toast } from 'react-hot-toast';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -40,6 +41,28 @@ const Settings: React.FC = () => {
     fetchAccountData();
     loadUserProfile();
   }, []);
+
+  // Auto-dismiss profile alerts
+  useEffect(() => {
+    if (profileSuccess || profileError) {
+      const timer = setTimeout(() => {
+        setProfileSuccess(null);
+        setProfileError(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [profileSuccess, profileError]);
+
+  // Auto-dismiss password alerts
+  useEffect(() => {
+    if (passwordSuccess || passwordError) {
+      const timer = setTimeout(() => {
+        setPasswordSuccess(null);
+        setPasswordError(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [passwordSuccess, passwordError]);
 
   const loadUserProfile = () => {
     try {
@@ -128,6 +151,7 @@ const Settings: React.FC = () => {
       setPasswordLoading(true);
       await authService.changePassword(currentPassword, newPassword);
       setPasswordSuccess('Password changed successfully!');
+      toast.success('Password changed successfully');
       
       // Clear form
       setCurrentPassword('');
@@ -135,6 +159,7 @@ const Settings: React.FC = () => {
       setConfirmPassword('');
     } catch (err: any) {
       setPasswordError(err.message || 'Failed to change password');
+      toast.error(err?.message || 'Failed to change password');
     } finally {
       setPasswordLoading(false);
     }
@@ -165,8 +190,10 @@ const Settings: React.FC = () => {
       setProfileLoading(true);
       await authService.updateProfile(name.trim(), email.trim());
       setProfileSuccess('Profile updated successfully!');
+      toast.success('Profile updated successfully');
     } catch (err: any) {
       setProfileError(err.message || 'Failed to update profile');
+      toast.error(err?.message || 'Failed to update profile');
     } finally {
       setProfileLoading(false);
     }
