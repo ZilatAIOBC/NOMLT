@@ -4,6 +4,7 @@ import SignUp from './pages/auth/SignUp';
 import SignIn from './pages/auth/SignIn';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import AuthCallback from './pages/auth/AuthCallback';
 import Dashboard from './pages/Dashboard/Dashboard';
 import AdminLayout from './pages/Admin/AdminLayout';
 import AdminDashboard from './pages/Admin/AdminDashboard';
@@ -44,6 +45,7 @@ function App() {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* User Dashboard Routes - Protected */}
           <Route path="/dashboard/*" element={

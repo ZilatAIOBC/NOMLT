@@ -40,6 +40,11 @@ function normalizeError(error: any): never {
 }
 
 export const authService = {
+  googleStart(): void {
+    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    // Redirect to backend which initiates Supabase Google OAuth
+    window.location.assign(`${baseUrl}/auth/oauth/google`);
+  },
   async forgotPassword(email: string): Promise<{ message: string }> {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,

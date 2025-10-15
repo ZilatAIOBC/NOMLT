@@ -8,6 +8,7 @@ const SignUpForm: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -113,10 +114,26 @@ const SignUpForm: React.FC = () => {
           {/* Google Sign In Button */}
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-3 bg-transparent hover:bg-white/10 text-white font-medium py-2.5 px-4 rounded-lg transition-colors mb-4 border border-gray-600"
+            disabled={googleLoading || loading}
+            className={`w-full flex items-center justify-center gap-3 bg-transparent hover:bg-white/10 text-white font-medium py-2.5 px-4 rounded-lg transition-colors mb-4 border border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed`}
+            onClick={() => {
+              if (googleLoading) return;
+              setGoogleLoading(true);
+              toast.loading('Redirecting to Google...', { id: 'google-oauth' });
+              authService.googleStart();
+            }}
           >
-            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
-            Continue with Google
+            {googleLoading ? (
+              <>
+                <span className="inline-block w-4 h-4 border-2 border-white/60 border-t-transparent rounded-full animate-spin" />
+                 Redirecting to Google...
+              </>
+            ) : (
+              <>
+                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+                Continue with Google
+              </>
+            )}
           </button>
 
           {/* Divider */}
