@@ -71,9 +71,9 @@ export default function Analytics() {
           icon={<Zap size={20} />}
         />
         <StatCard
-          title="All-time Revenue"
+          title="Platform Revenue"
           value={loading ? "Loading..." : stats ? formatCurrency(stats.total_revenue) : "$0"}
-          change={error ? error : "Total revenue collected"}
+          change={error ? error : "All-time revenue"}
           icon={<DollarSign size={20} />}
         />
         <StatCard
