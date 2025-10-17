@@ -1,99 +1,82 @@
 import React from 'react';
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Button from '../common/Button';
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
 
   const features = [
-    'Text to Image',
-    'Image to Image', 
-    'Text to Video',
-    'Image to Video'
+    {
+      icon: '/contents.svg',
+      title: 'No Content Restrictions',
+    },
+    {
+      icon: '/Video.svg',
+      title: 'Professional Quality',
+    },
+    {
+      icon: '/generations.svg',
+      title: 'Ultra-Fast Generation',
+    }
   ];
 
   return (
-    <section id="home" className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 overflow-hidden">
-      {/* Animated Background Elements */}
+    <section id="home" className="relative min-h-screen flex flex-col justify-center items-center overflow-hidden">
+      {/* Background with subtle lines and glowing dots */}
       <div className="absolute inset-0">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-full blur-3xl"></div>
+        {/* Custom gradient: very dark with subtle purple glow */}
+        <div className="absolute inset-0" style={{
+          background: 'radial-gradient(ellipse 800px 500px at center, rgba(138, 63, 252, 0.08) 0%, rgba(138, 63, 252, 0.03) 30%, rgba(0,0,0,0.9) 60%, #000000 100%)'
+        }}></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center space-y-8">
-          {/* Main Heading */}
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 mb-6">
-              <Sparkles className="w-4 h-4 text-blue-400" />
-              <span className="text-blue-300 text-sm font-medium">Next-Gen AI Platform</span>
-            </div>
-            
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-100 bg-clip-text text-transparent leading-tight">
-              Unleash Your Creativity
-              <br />
-              <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                with AI
-              </span>
+      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center justify-center text-center">
+        {/* Main Content */}
+        <div className="space-y-8 mb-16">
+          {/* Tagline */}
+          <p className="text-lg sm:text-xl md:text-2xl text-white/90 font-medium leading-tight">
+            Underground AI From China With Almost No Boundaries?
+          </p>
+          
+          {/* Main Title */}
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-relaxed mt-4 tracking-widest">
+              MEET NOLMT.ai
             </h1>
-            
-            <p className="text-xl sm:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Transform your ideas into stunning visuals and videos instantly. 
-              Generate anything with the power of advanced AI technology.
-            </p>
-          </div>
+          
+          {/* Disclaimer */}
+          <p className="text-base sm:text-lg md:text-xl text-white/80 font-normal leading-relaxed max-w-2xl mx-auto">
+            Check the local laws in your area before you proceed
+          </p>
+        </div>
 
-          {/* CTA Button */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button
-              variant="primary"
-              size="lg"
-              icon={ArrowRight}
-              onClick={() => navigate('/signup')}
-              className="text-lg px-8 py-4 shadow-2xl hover:shadow-blue-500/25 transform hover:scale-105"
+        {/* CTA Button */}
+        <button
+          onClick={() => navigate('/signup')}
+          className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-medium px-8 py-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25 flex items-center gap-2 text-lg"
+        >
+          Get started now
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Features Section */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+          {features.map((feature, index) => (
+            <div
+              key={index}
+              className="flex items-center justify-center gap-4"
             >
-              Start Generation
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => navigate('/signin')}
-              className="text-lg px-8 py-4"
-            >
-              View Examples
-            </Button>
-          </div>
-
-          {/* Features List */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-16">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gray-800/50 border border-gray-700/50 backdrop-blur-sm hover:bg-gray-700/50 transition-all duration-300"
-              >
-                <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
-                <span className="text-gray-200 font-medium text-sm sm:text-base">{feature}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto mt-16 pt-8 border-t border-gray-700/50">
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-2">10M+</div>
-              <div className="text-gray-400 text-sm">Generations</div>
+              <img 
+                src={feature.icon} 
+                alt={feature.title}
+                className="w-12 h-12 object-contain"
+              />
+              <h3 className="text-lg sm:text-xl font-medium text-white leading-tight" style={{ fontFamily: 'Monotype Corsiva, cursive' }}>
+                {feature.title}
+              </h3>
             </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-2">500K+</div>
-              <div className="text-gray-400 text-sm">Users</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-2">99.9%</div>
-              <div className="text-gray-400 text-sm">Uptime</div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>
