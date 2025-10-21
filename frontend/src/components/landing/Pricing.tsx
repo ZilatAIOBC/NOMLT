@@ -56,7 +56,7 @@ const Pricing: React.FC = () => {
   // Loading state with skeleton cards
   if (loading) {
     return (
-      <section className="py-16 md:py-24 bg-[#0F0F0F]">
+      <section className="py-16 md:py-24 bg-black">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
             <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">

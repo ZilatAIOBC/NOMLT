@@ -22,21 +22,26 @@ const Hero: React.FC = () => {
 
   return (
     <section id="home" className="relative min-h-screen flex flex-col justify-center items-center overflow-hidden">
-      {/* Background with subtle lines and glowing dots */}
+      {/* Background SVG */}
       <div className="absolute inset-0">
-        {/* Custom gradient: very dark with subtle purple glow */}
-        <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 800px 500px at center, rgba(138, 63, 252, 0.08) 0%, rgba(138, 63, 252, 0.03) 30%, rgba(0,0,0,0.9) 60%, #000000 100%)'
-        }}></div>
+        <img 
+          src="/herobg2.svg" 
+          alt="Hero background" 
+          className="w-full h-full object-cover"
+        />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center justify-center text-center">
         {/* Main Content */}
         <div className="space-y-8 mb-16">
-          {/* Tagline */}
-          <p className="text-lg sm:text-xl md:text-2xl text-white/90 font-medium leading-tight">
-            Underground AI From China With Almost No Boundaries?
-          </p>
+          {/* Tagline with decorative lines only */}
+          <div className="flex items-center justify-center gap-4">
+            <div className="hidden md:block w-16 h-px bg-gradient-to-r from-transparent to-white/60" />
+            <p className="text-lg sm:text-xl md:text-xl text-white/90 font-medium leading-tight">
+              Underground AI From China With Almost No Boundaries?
+            </p>
+            <div className="hidden md:block w-16 h-px bg-gradient-to-l from-transparent to-white/60" />
+          </div>
           
           {/* Main Title */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-relaxed mt-4 tracking-widest">
@@ -80,6 +85,7 @@ const Hero: React.FC = () => {
         </div>
       </div>
     </section>
+
   );
 };
 

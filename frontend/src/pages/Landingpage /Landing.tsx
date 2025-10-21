@@ -1,13 +1,17 @@
 import React from 'react';
 import Navbar from '../../components/common/Navbar';
 import Hero from '../../components/landing/Hero';
+import WhyNOLMT from '../../components/landing/WhyNOLMT';
 import Features from '../../components/landing/Features';
+import HowItWorks from '../../components/landing/HowItWorks';
+import Gallery from '../../components/landing/Gallery';
 import Examples from '../../components/landing/Examples';
 import Pricing from '../../components/landing/Pricing';
 import TestimonialsSection from '../../components/landing/Testinomials';
 import FAQ from '../../components/landing/FAQ';
 import Contact from '../../components/landing/Contact';
 import Footer from '../../components/common/Footer';
+import VideoSection from '../../components/landing/VideoSection';
 
 const Landing: React.FC = () => {
   return (
@@ -16,6 +20,10 @@ const Landing: React.FC = () => {
       <main>
         <Hero />
         <Features />
+        <VideoSection />
+        <WhyNOLMT />
+        <HowItWorks />
+        <Gallery />
         <Examples />
         <Pricing />
         <TestimonialsSection />
