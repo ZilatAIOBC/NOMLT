@@ -1,39 +1,51 @@
 
 import { Separator } from "../ui/separator";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import GenerationPreview from "../common/GenerationPreview";
 
 interface FeatureData {
   id: string;
   title: string;
   description: string;
+  prompt: string;
+  thumbnailSrc: string;
 }
 
 const featuresData: FeatureData[] = [
   {
     id: "imageToImage",
     title: "Image to Image",
-    description: "Take any picture and push it further than you thought possible. Subtitle edits? Perfectly lifelike. Radical remaining? Just as convincing."
+    description: "Take any picture and push it further than you thought possible. Subtitle edits? Perfectly lifelike. Radical remaining? Just as convincing.",
+    prompt: "Transform this image into a cyberpunk cityscape",
+    thumbnailSrc: "/imagetoimage.png"
   },
   {
     id: "imageToVideo",
     title: "Image to Video",
-    description: "Transform static images into dynamic videos with advanced AI technology. Add motion, effects, and cinematic quality to your visuals."
+    description: "Transform static images into dynamic videos with advanced AI technology. Add motion, effects, and cinematic quality to your visuals.",
+    prompt: "Create a cinematic video from this landscape",
+    thumbnailSrc: "/imagetovideo.png"
   },
   {
     id: "textToImage",
     title: "Text to Image",
-    description: "Transform your ideas into stunning visuals with AI-powered text-to-image generation. Create unique artwork and designs effortlessly."
+    description: "Transform your ideas into stunning visuals with AI-powered text-to-image generation. Create unique artwork and designs effortlessly.",
+    prompt: "A rabbit warrior slowly raises his sharp sword winks at camera",
+    thumbnailSrc: "/texttoimage.png"
   },
   {
     id: "textToVideo",
     title: "Text to Video",
-    description: "Bring your stories to life with AI-generated videos from text descriptions. Create dynamic content, animations, and visual narratives effortlessly."
+    description: "Bring your stories to life with AI-generated videos from text descriptions. Create dynamic content, animations, and visual narratives effortlessly.",
+    prompt: "A magical forest with glowing fireflies dancing in the moonlight",
+    thumbnailSrc: "/texttovideo.png"
   }
 ];
 
 const Features = (): JSX.Element => {
   const [activeFeature, setActiveFeature] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
   
   const currentFeature = featuresData[activeFeature];
 
@@ -50,19 +62,48 @@ const Features = (): JSX.Element => {
       ? "/we2.png"
       : "/we.svg";
 
-  // Autoplay: advance every 5s, pause when hovered
+  // Intersection Observer to detect when section is visible
   useEffect(() => {
-    if (isHovered) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      {
+        threshold: 0.3, // Trigger when 30% of the section is visible
+        rootMargin: '0px 0px -100px 0px' // Start animation slightly before fully visible
+      }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
+
+  // Autoplay: advance every 2s, only pause when not visible
+  useEffect(() => {
+    if (!isVisible) return;
+    
     const intervalId = setInterval(() => {
       setActiveFeature((prev) => (prev === featuresData.length - 1 ? 0 : prev + 1));
     }, 2000);
+    
     return () => clearInterval(intervalId);
-  }, [isHovered]);
+  }, [isVisible]);
 
   // Manual nav removed; autoplay handles progression
 
   return (
-    <section id="features" className="flex flex-col w-full items-center pt-24 sm:pt-32 md:pt-48 pb-16 sm:pb-24 md:pb-32 px-4 sm:px-8 md:px-20 bg-black">
+    <section 
+      ref={sectionRef}
+      id="features" 
+      className="flex flex-col w-full items-center pt-24 sm:pt-32 md:pt-48 pb-16 sm:pb-24 md:pb-32 px-4 sm:px-8 md:px-20 bg-black"
+    >
       {/* Our Features heading with decorative arrows */}
       <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 mb-4">
         <div className="w-8 sm:w-12 md:w-16 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
@@ -95,17 +136,26 @@ const Features = (): JSX.Element => {
 
       <div
         className="relative w-full max-w-[90vw] sm:max-w-[85vw] md:w-[1000px] overflow-visible"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
 
         {/* Main image varies by active feature */}
         <img className="w-full rounded-lg" alt={currentFeature.title} src={mainImageSrc} />
         
-        {/* Bottom badge varies by feature (we2 for textToImage/textToVideo) */}
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-          <img src={badgeImageSrc} alt="Badge" className="h-20 sm:h-24 md:h-32 w-auto" />
-        </div>
+        {/* Generation Preview Component - Only for Text-to-Image and Text-to-Video */}
+        {(currentFeature.id === "textToImage" || currentFeature.id === "textToVideo") && (
+          <GenerationPreview
+            thumbnailSrc={currentFeature.thumbnailSrc}
+            prompt={currentFeature.prompt}
+            onGenerate={() => console.log(`Generating ${currentFeature.title}`)}
+          />
+        )}
+        
+        {/* Original badge for Image-to-Image and Image-to-Video */}
+        {(currentFeature.id === "imageToImage" || currentFeature.id === "imageToVideo") && (
+          <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
+            <img src={badgeImageSrc} alt="Badge" className="h-20 sm:h-24 md:h-32 w-auto" />
+          </div>
+        )}
       </div>
     </section>
   );

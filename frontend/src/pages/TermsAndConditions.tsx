@@ -1,11 +1,78 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import CustomBackground from '../components/common/CustomBackground';
+import SidebarNav from '../components/common/SidebarNav';
 
 const TermsAndConditions: React.FC = () => {
+  const [activeSection, setActiveSection] = useState('acceptance-terms');
+
+  const sections = [
+    {
+      id: 'acceptance-terms',
+      title: 'Acceptance of Terms'
+    },
+    {
+      id: 'description-service',
+      title: 'Description of Service'
+    },
+    {
+      id: 'user-responsibilities',
+      title: 'User Responsibilities'
+    },
+    {
+      id: 'account-registration',
+      title: 'Account Registration'
+    },
+    {
+      id: 'payment-billing',
+      title: 'Payment and Billing'
+    },
+    {
+      id: 'intellectual-property',
+      title: 'Intellectual Property'
+    },
+    {
+      id: 'prohibited-uses',
+      title: 'Prohibited Uses'
+    },
+    {
+      id: 'service-availability',
+      title: 'Service Availability'
+    },
+    {
+      id: 'limitation-liability',
+      title: 'Limitation of Liability'
+    },
+    {
+      id: 'termination',
+      title: 'Termination'
+    },
+    {
+      id: 'changes-terms',
+      title: 'Changes to Terms'
+    },
+    {
+      id: 'contact-information',
+      title: 'Contact Information'
+    }
+  ];
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const elementPosition = element.offsetTop;
+      const offsetPosition = elementPosition - 100; // Offset to account for navbar
+      
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+      setActiveSection(sectionId);
+    }
+  };
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen">
       {/* Background */}
       <CustomBackground />
       
@@ -13,16 +80,37 @@ const TermsAndConditions: React.FC = () => {
       
       {/* Main Content */}
       <div className="pt-20 pb-16 relative z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="backdrop-blur-sm rounded-2xl border border-gray-700/50 p-8 md:p-12">
-            <h1 className="text-4xl font-bold text-white mb-8">Terms & Conditions</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex gap-8 lg:gap-12">
+            {/* Sidebar Navigation */}
+            <div className="hidden lg:block flex-shrink-0">
+              <SidebarNav 
+                sections={sections}
+                activeSection={activeSection}
+                onSectionClick={scrollToSection}
+              />
+            </div>
             
-            <div className="prose prose-invert max-w-none">
-              <p className="text-gray-300 text-lg mb-6">
+            {/* Main Content */}
+            <div className="flex-1 min-w-0">
+              {/* Mobile Sidebar */}
+              <div className="lg:hidden">
+                <SidebarNav 
+                  sections={sections}
+                  activeSection={activeSection}
+                  onSectionClick={scrollToSection}
+                />
+              </div>
+              
+              <div className="backdrop-blur-sm rounded-2xl p-8 md:p-12">
+                <h1 className="text-4xl font-bold text-white mb-8">Terms & Conditions</h1>
+            
+              <div className="prose prose-invert max-w-none">
+              <p className="text-gray-300 text-lg mb-8">
                 Last updated: {new Date().toLocaleDateString()}
               </p>
 
-              <section className="mb-8">
+              <section id="acceptance-terms" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">1. Acceptance of Terms</h2>
                 <p className="text-gray-300 mb-4">
                   By accessing and using NOLMT.ai ("the Service"), you accept and agree to be bound by the 
@@ -31,7 +119,7 @@ const TermsAndConditions: React.FC = () => {
                 </p>
               </section>
 
-              <section className="mb-8">
+              <section id="description-service" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">2. Description of Service</h2>
                 <p className="text-gray-300 mb-4">
                   NOLMT.ai provides AI-powered content generation services including but not limited to 
@@ -45,7 +133,7 @@ const TermsAndConditions: React.FC = () => {
                 </p>
               </section>
 
-              <section className="mb-8">
+              <section id="user-responsibilities" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">3. User Responsibilities</h2>
                 <p className="text-gray-300 mb-4">
                   As a user of our service, you agree to:
@@ -60,7 +148,7 @@ const TermsAndConditions: React.FC = () => {
                 </ul>
               </section>
 
-              <section className="mb-8">
+              <section id="account-registration" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">4. Account Registration</h2>
                 <p className="text-gray-300 mb-4">
                   To access certain features of the service, you must register for an account. You agree to:
@@ -73,7 +161,7 @@ const TermsAndConditions: React.FC = () => {
                 </ul>
               </section>
 
-              <section className="mb-8">
+              <section id="payment-billing" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">5. Payment and Billing</h2>
                 <p className="text-gray-300 mb-4">
                   Our service operates on a credit-based system. You agree to:
@@ -86,7 +174,7 @@ const TermsAndConditions: React.FC = () => {
                 </ul>
               </section>
 
-              <section className="mb-8">
+              <section id="intellectual-property" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">6. Intellectual Property</h2>
                 <p className="text-gray-300 mb-4">
                   You retain ownership of any content you input into our service. However, you acknowledge that:
@@ -99,7 +187,7 @@ const TermsAndConditions: React.FC = () => {
                 </ul>
               </section>
 
-              <section className="mb-8">
+              <section id="prohibited-uses" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">7. Prohibited Uses</h2>
                 <p className="text-gray-300 mb-4">
                   You may not use our service to:
@@ -114,7 +202,7 @@ const TermsAndConditions: React.FC = () => {
                 </ul>
               </section>
 
-              <section className="mb-8">
+              <section id="service-availability" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">8. Service Availability</h2>
                 <p className="text-gray-300 mb-4">
                   We strive to maintain high service availability but cannot guarantee uninterrupted access. 
@@ -128,33 +216,91 @@ const TermsAndConditions: React.FC = () => {
                 </ul>
               </section>
 
-              <section className="mb-8">
+              <section id="limitation-liability" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">9. Limitation of Liability</h2>
                 <p className="text-gray-300 mb-4">
                   To the maximum extent permitted by law, NOLMT.ai shall not be liable for any indirect, 
                   incidental, special, consequential, or punitive damages, including but not limited to loss 
                   of profits, data, or use, arising out of or relating to your use of the service.
                 </p>
+                <p className="text-gray-300 mb-4">
+                  <strong className="text-white">Important Limitations:</strong> Our liability is limited to the maximum extent 
+                  permitted by applicable law. This includes but is not limited to:
+                </p>
+                <ul className="text-gray-300 list-disc list-inside space-y-2 mb-4">
+                  <li>Loss of business, revenue, or profits</li>
+                  <li>Loss of data or information</li>
+                  <li>Loss of goodwill or reputation</li>
+                  <li>Consequential or indirect damages</li>
+                  <li>Punitive or exemplary damages</li>
+                  <li>Damages arising from third-party AI model outputs</li>
+                </ul>
+                <p className="text-gray-300 mb-4">
+                  In no event shall our total liability exceed the amount you paid for the service in the 
+                  twelve (12) months preceding the claim. Some jurisdictions do not allow the limitation 
+                  of liability, so these limitations may not apply to you.
+                </p>
               </section>
 
-              <section className="mb-8">
+              <section id="termination" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">10. Termination</h2>
                 <p className="text-gray-300 mb-4">
                   We may terminate or suspend your account immediately, without prior notice, for conduct 
                   that we believe violates these Terms or is harmful to other users, us, or third parties.
                 </p>
+                <p className="text-gray-300 mb-4">
+                  <strong className="text-white">Grounds for Termination:</strong> We reserve the right to terminate 
+                  your access to the service for any of the following reasons:
+                </p>
+                <ul className="text-gray-300 list-disc list-inside space-y-2 mb-4">
+                  <li>Violation of these Terms and Conditions</li>
+                  <li>Fraudulent or illegal activity</li>
+                  <li>Abuse of the service or other users</li>
+                  <li>Non-payment of fees or charges</li>
+                  <li>Technical abuse or system exploitation</li>
+                  <li>Creation of multiple accounts to circumvent restrictions</li>
+                </ul>
+                <p className="text-gray-300 mb-4">
+                  <strong className="text-white">Effect of Termination:</strong> Upon termination, your right to use 
+                  the service will cease immediately. We may delete your account and all associated data 
+                  at our discretion. You remain responsible for any charges incurred prior to termination.
+                </p>
+                <p className="text-gray-300 mb-4">
+                  You may terminate your account at any time by contacting our support team. We will 
+                  process account deletion requests within 30 days of receipt.
+                </p>
               </section>
 
-              <section className="mb-8">
+              <section id="changes-terms" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">11. Changes to Terms</h2>
                 <p className="text-gray-300 mb-4">
                   We reserve the right to modify these terms at any time. We will notify users of any 
                   material changes via email or through the service. Continued use of the service 
                   after such modifications constitutes acceptance of the updated terms.
                 </p>
+                <p className="text-gray-300 mb-4">
+                  <strong className="text-white">Notification Process:</strong> When we make changes to these terms, 
+                  we will:
+                </p>
+                <ul className="text-gray-300 list-disc list-inside space-y-2 mb-4">
+                  <li>Post the updated terms on our website</li>
+                  <li>Send email notifications to registered users</li>
+                  <li>Display prominent notices within the service</li>
+                  <li>Update the "Last updated" date at the top of this document</li>
+                </ul>
+                <p className="text-gray-300 mb-4">
+                  <strong className="text-white">Your Rights:</strong> If you disagree with any changes to these terms, 
+                  you have the right to discontinue using the service. Your continued use after the 
+                  effective date of changes constitutes acceptance of the new terms.
+                </p>
+                <p className="text-gray-300 mb-4">
+                  We recommend reviewing these terms periodically to stay informed of any updates. 
+                  Material changes will be highlighted in our communications to ensure you are 
+                  aware of important modifications.
+                </p>
               </section>
 
-              <section className="mb-8">
+              <section id="contact-information" className="mb-8">
                 <h2 className="text-2xl font-semibold text-white mb-4">12. Contact Information</h2>
                 <p className="text-gray-300 mb-4">
                   If you have any questions about these Terms & Conditions, please contact us at:
@@ -164,6 +310,8 @@ const TermsAndConditions: React.FC = () => {
                   <p>Address: NOLMT.ai Legal Team</p>
                 </div>
               </section>
+            </div>
+              </div>
             </div>
           </div>
         </div>

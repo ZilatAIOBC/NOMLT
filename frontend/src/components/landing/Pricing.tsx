@@ -191,7 +191,7 @@ const Pricing: React.FC = () => {
             {plans.map((plan) => (
               <div 
                 key={plan.id} 
-                className="relative rounded-2xl border border-white/10 bg-[#121212] hover:border-white/20 hover:shadow-[0_8px_25px_rgba(118,62,234,0.3)] p-5 md:p-6 xl:p-6 pt-6 md:pt-7 xl:pt-8 flex flex-col transition-all duration-300 w-full max-w-[320px] md:max-w-[340px] xl:w-[350px] min-h-[560px] md:min-h-[640px] xl:h-[750px] overflow-hidden"
+                className="relative rounded-2xl border border-white/10  hover:border-white/20 hover:shadow-[0_8px_25px_rgba(118,62,234,0.3)] p-5 md:p-6 xl:p-6 pt-6 md:pt-7 xl:pt-8 flex flex-col transition-all duration-300 w-full max-w-[320px] md:max-w-[340px] xl:w-[350px] min-h-[560px] md:min-h-[640px] xl:h-[750px] overflow-hidden"
               >
                 {plan.badge && (
                   <div className={`absolute top-3 right-4 px-3 py-1 text-xs rounded-full ${
