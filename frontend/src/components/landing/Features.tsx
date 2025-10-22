@@ -62,31 +62,31 @@ const Features = (): JSX.Element => {
   // Manual nav removed; autoplay handles progression
 
   return (
-    <section id="features" className="flex flex-col w-full items-center pt-48 pb-32 px-20 bg-black">
+    <section id="features" className="flex flex-col w-full items-center pt-24 sm:pt-32 md:pt-48 pb-16 sm:pb-24 md:pb-32 px-4 sm:px-8 md:px-20 bg-black">
       {/* Our Features heading with decorative arrows */}
-      <div className="flex items-center justify-center gap-6 mb-4">
-        <div className="w-16 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
-        <h3 className="text-white text-sm font-medium tracking-[0.1em] uppercase">
+      <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 mb-4">
+        <div className="w-8 sm:w-12 md:w-16 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
+        <h3 className="text-white text-xs sm:text-sm md:text-sm font-medium tracking-[0.1em] uppercase">
           Our Features
         </h3>
-        <div className="w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
+        <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
       </div>
 
-      <div className="inline-flex flex-col items-start pt-0 pb-8 px-0">
-        <div className="inline-flex items-center justify-center gap-10">
+      <div className="inline-flex flex-col items-start pt-0 pb-6 sm:pb-7 md:pb-8 px-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center md:inline-flex md:items-center md:justify-center gap-4 sm:gap-6 md:gap-10">
           <div className="inline-flex flex-col items-start">
-            <h2 className="[font-family:'Microsoft_YaHei-Regular',Helvetica] font-normal text-white text-[47.6px] tracking-[0] leading-[72px] whitespace-nowrap">
+            <h2 className="[font-family:'Microsoft_YaHei-Regular',Helvetica] font-normal text-white text-2xl sm:text-3xl md:text-[47.6px] tracking-[0] leading-8 sm:leading-10 md:leading-[72px] whitespace-nowrap">
               {currentFeature.title}
             </h2>
           </div>
 
           <Separator
             orientation="vertical"
-            className="w-0.5 h-[50px] bg-white opacity-[0.24]"
+            className="hidden sm:block w-0.5 h-[40px] sm:h-[45px] md:h-[50px] bg-white opacity-[0.24]"
           />
 
-          <div className="flex flex-col w-[405px] items-start opacity-65">
-            <p className="w-[390px] [font-family:'Microsoft_YaHei-Regular',Helvetica] font-normal text-white text-base tracking-[0] leading-[22px]">
+          <div className="flex flex-col w-full sm:w-[350px] md:w-[405px] items-start opacity-65">
+            <p className="w-full sm:w-[350px] md:w-[390px] [font-family:'Microsoft_YaHei-Regular',Helvetica] font-normal text-white text-sm sm:text-base md:text-base tracking-[0] leading-5 sm:leading-6 md:leading-[22px]">
               {currentFeature.description}
             </p>
           </div>
@@ -94,7 +94,7 @@ const Features = (): JSX.Element => {
       </div>
 
       <div
-        className="relative w-[1000px] overflow-visible"
+        className="relative w-full max-w-[90vw] sm:max-w-[85vw] md:w-[1000px] overflow-visible"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -104,7 +104,7 @@ const Features = (): JSX.Element => {
         
         {/* Bottom badge varies by feature (we2 for textToImage/textToVideo) */}
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2">
-          <img src={badgeImageSrc} alt="Badge" className="h-32 w-auto" />
+          <img src={badgeImageSrc} alt="Badge" className="h-20 sm:h-24 md:h-32 w-auto" />
         </div>
       </div>
     </section>

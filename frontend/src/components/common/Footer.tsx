@@ -86,7 +86,25 @@ const Footer: React.FC = () => {
 
         {/* Bottom Section */}
         <div className="border-t border-white/20 mt-10 pt-6">
-          <div className="flex items-center justify-center">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-6">
+              <Link
+                to="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-[#8A3FFC] text-sm transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                to="/terms-and-conditions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-[#8A3FFC] text-sm transition-colors"
+              >
+                Terms & Conditions
+              </Link>
+            </div>
             <p className="text-gray-400 text-sm text-center">
               © NOLMTai {currentYear}. All Rights Reserved.
             </p>

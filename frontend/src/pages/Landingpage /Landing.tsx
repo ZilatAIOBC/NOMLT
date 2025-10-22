@@ -5,7 +5,7 @@ import WhyNOLMT from '../../components/landing/WhyNOLMT';
 import Features from '../../components/landing/Features';
 import HowItWorks from '../../components/landing/HowItWorks';
 import Gallery from '../../components/landing/Gallery';
-import Examples from '../../components/landing/Examples';
+import { WarningSection } from '../../components/landing/warning';
 import Pricing from '../../components/landing/Pricing';
 import TestimonialsSection from '../../components/landing/Testinomials';
 import FAQ from '../../components/landing/FAQ';
@@ -24,7 +24,7 @@ const Landing: React.FC = () => {
         <WhyNOLMT />
         <HowItWorks />
         <Gallery />
-        <Examples />
+        <WarningSection />
         <Pricing />
         <TestimonialsSection />
         <FAQ />

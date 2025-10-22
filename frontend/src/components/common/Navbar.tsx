@@ -11,7 +11,7 @@ const Navbar: React.FC = () => {
   const navLinks = [
     { name: 'Home', href: '#home', id: 'home' },
     { name: 'Features', href: '#features', id: 'features' },
-    { name: 'Examples', href: '#examples', id: 'examples' },
+    { name: 'How it works', href: '#how-it-works', id: 'how-it-works' },
     { name: 'Pricing', href: '#pricing', id: 'pricing' },
     { name: 'FAQ', href: '#faq', id: 'faq' },
     { name: 'Contact Us', href: '#contact', id: 'contact' },
@@ -33,15 +33,20 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const handleScroll = () => {
       const sections = navLinks.map(link => link.id);
-      const scrollPosition = window.scrollY + 100; // Offset for navbar height
+      const scrollPosition = window.scrollY + 150; // Offset for navbar height
 
+      let currentSection = 'home'; // Default to home
+
+      // Find the section that's currently in view
       for (let i = sections.length - 1; i >= 0; i--) {
         const section = document.getElementById(sections[i]);
         if (section && section.offsetTop <= scrollPosition) {
-          setActiveSection(sections[i]);
+          currentSection = sections[i];
           break;
         }
       }
+
+      setActiveSection(currentSection);
     };
 
     window.addEventListener('scroll', handleScroll);

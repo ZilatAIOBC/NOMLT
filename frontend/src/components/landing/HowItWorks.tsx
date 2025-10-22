@@ -2,7 +2,7 @@ import React from 'react';
 
 const HowItWorks: React.FC = () => {
   return (
-    <section className="py-24 px-6 bg-black">
+    <section id="how-it-works" className="py-24 px-6 bg-black">
       <div className="max-w-7xl mx-auto">
         {/* Header - Matching Figma exactly */}
         <div className="text-center mb-24">

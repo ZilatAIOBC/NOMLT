@@ -11,6 +11,8 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import UserManagement from './pages/Admin/UserManagement';
 import PlansAndPricing from './pages/Admin/PlansAndPricing';
 import Analytics from './pages/Admin/Analytics';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
 import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import UserProtectedRoute from './components/auth/UserProtectedRoute';
 import { Toaster, toast } from 'react-hot-toast';
@@ -46,6 +48,8 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
           
           {/* User Dashboard Routes - Protected */}
           <Route path="/dashboard/*" element={

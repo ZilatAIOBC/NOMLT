@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 const Gallery: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
   // Gallery organized in rows matching the design layout
   const galleryRows = [
@@ -33,25 +33,67 @@ const Gallery: React.FC = () => {
       { url: 'https://images.pexels.com/photos/8566473/pexels-photo-8566473.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 17', width: 'w-[14%]' },
       { url: 'https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 18', width: 'w-[12%]' },
     ],
+    // Row 4
+    [
+      { url: 'https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 19', width: 'w-[16%]' },
+      { url: 'https://images.pexels.com/photos/4974920/pexels-photo-4974920.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 20', width: 'w-[19%]' },
+      { url: 'https://images.pexels.com/photos/6899260/pexels-photo-6899260.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 21', width: 'w-[17%]' },
+      { url: 'https://images.pexels.com/photos/7194730/pexels-photo-7194730.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 22', width: 'w-[15%]' },
+      { url: 'https://images.pexels.com/photos/3945313/pexels-photo-3945313.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 23', width: 'w-[18%]' },
+      { url: 'https://images.pexels.com/photos/8566473/pexels-photo-8566473.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 24', width: 'w-[13%]' },
+    ],
+    // Row 5
+    [
+      { url: 'https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 25', width: 'w-[14%]' },
+      { url: 'https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 26', width: 'w-[20%]' },
+      { url: 'https://images.pexels.com/photos/4974920/pexels-photo-4974920.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 27', width: 'w-[16%]' },
+      { url: 'https://images.pexels.com/photos/6899260/pexels-photo-6899260.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 28', width: 'w-[18%]' },
+      { url: 'https://images.pexels.com/photos/7194730/pexels-photo-7194730.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 29', width: 'w-[15%]' },
+      { url: 'https://images.pexels.com/photos/3945313/pexels-photo-3945313.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 30', width: 'w-[15%]' },
+    ],
+    // Row 6
+    [
+      { url: 'https://images.pexels.com/photos/8566473/pexels-photo-8566473.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 31', width: 'w-[13%]' },
+      { url: 'https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 32', width: 'w-[21%]' },
+      { url: 'https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 33', width: 'w-[17%]' },
+      { url: 'https://images.pexels.com/photos/4974920/pexels-photo-4974920.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 34', width: 'w-[19%]' },
+      { url: 'https://images.pexels.com/photos/6899260/pexels-photo-6899260.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 35', width: 'w-[14%]' },
+      { url: 'https://images.pexels.com/photos/7194730/pexels-photo-7194730.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 36', width: 'w-[14%]' },
+    ],
+    // Row 7
+    [
+      { url: 'https://images.pexels.com/photos/3945313/pexels-photo-3945313.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 37', width: 'w-[15%]' },
+      { url: 'https://images.pexels.com/photos/8566473/pexels-photo-8566473.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 38', width: 'w-[18%]' },
+      { url: 'https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 39', width: 'w-[20%]' },
+      { url: 'https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 40', width: 'w-[16%]' },
+      { url: 'https://images.pexels.com/photos/4974920/pexels-photo-4974920.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 41', width: 'w-[17%]' },
+      { url: 'https://images.pexels.com/photos/6899260/pexels-photo-6899260.jpeg?auto=compress&cs=tinysrgb&w=600', alt: 'AI Generated 42', width: 'w-[12%]' },
+    ],
   ];
 
   useEffect(() => {
     const handleScroll = () => {
-      if (!sectionRef.current) return;
+      if (!sectionRef.current || !galleryRef.current) return;
 
       const section = sectionRef.current;
+      const gallery = galleryRef.current;
       const rect = section.getBoundingClientRect();
       const sectionHeight = section.offsetHeight;
       const windowHeight = window.innerHeight;
 
       // Calculate scroll progress through the section
-      // When section enters viewport (rect.top = windowHeight) progress = 0
-      // When section exits viewport (rect.top = -sectionHeight) progress = 1
       const scrollDistance = windowHeight + sectionHeight;
       const currentScroll = windowHeight - rect.top;
       const progress = Math.max(0, Math.min(1, currentScroll / scrollDistance));
 
-      setScrollProgress(progress);
+      // Calculate gallery internal scroll progress
+      // When section enters viewport, start scrolling gallery content
+      // When section exits viewport, gallery scroll should be complete
+      const galleryScrollDistance = gallery.scrollHeight - gallery.clientHeight;
+      const galleryScroll = Math.min(progress * galleryScrollDistance, galleryScrollDistance);
+      
+      // Apply the scroll to the gallery container
+      gallery.scrollTop = galleryScroll;
     };
 
     window.addEventListener('scroll', handleScroll);
@@ -61,10 +103,19 @@ const Gallery: React.FC = () => {
   }, []);
 
   return (
-    <section className="py-20 md:py-24 px-4 bg-black relative overflow-hidden">
-      <div className="max-w-7xl mx-auto">
+    <section id="gallery" ref={sectionRef} className="py-20 md:py-24 px-4 bg-black relative overflow-hidden w-full">
+        <div className="w-full">
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">
+          {/* Decorative lines with "Gallery" */}
+          <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 mb-4">
+            <div className="w-8 sm:w-12 md:w-16 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
+            <h3 className="text-white text-xs sm:text-sm md:text-sm font-medium tracking-[0.1em] uppercase">
+              Gallery
+            </h3>
+            <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
+          </div>
+          
           <h2 className="text-white text-3xl md:text-5xl font-bold mb-4">
             NOLMT GALLERY
           </h2>
@@ -74,28 +125,33 @@ const Gallery: React.FC = () => {
         </div>
 
         {/* Gallery Rows */}
-        <div className="space-y-2">
-          {galleryRows.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex gap-2 w-full">
-              {row.map((image, imgIndex) => (
-                <div
-                  key={imgIndex}
-                  className={`${image.width} relative group cursor-pointer overflow-hidden transition-all duration-300`}
-                >
-                  <div className="relative w-full h-48 md:h-56 lg:h-64">
-                    <img
-                      src={image.url}
-                      alt={image.alt}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    />
-                    
-                    {/* Subtle hover overlay */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
+        <div 
+          ref={galleryRef}
+          className="h-[500px] overflow-y-auto hide-scrollbar relative w-full"
+        >
+          <div className="space-y-2 min-h-full">
+            {galleryRows.map((row, rowIndex) => (
+              <div key={rowIndex} className="flex gap-2 w-full">
+                {row.map((image, imgIndex) => (
+                  <div
+                    key={imgIndex}
+                    className={`${image.width} relative group cursor-pointer overflow-hidden transition-all duration-300`}
+                  >
+                    <div className="relative w-full h-48 md:h-56 lg:h-64">
+                      <img
+                        src={image.url}
+                        alt={image.alt}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      />
+                      
+                      {/* Subtle hover overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ))}
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

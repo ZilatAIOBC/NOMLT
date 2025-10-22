@@ -49,9 +49,32 @@ const FAQ: React.FC = () => {
   return (
     <section id="faq" className="py-24 bg-black">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+        {/* Header Section - Centered on mobile/tablet */}
+        <div className="text-center lg:hidden mb-12">
+          {/* Decorative lines with "FAQ" */}
+          <div className="flex items-center justify-center lg:justify-start gap-3 sm:gap-4 md:gap-6 mb-4">
+            <div className="w-8 sm:w-12 md:w-16 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
+            <h3 className="text-white text-xs sm:text-sm md:text-sm font-medium tracking-[0.1em] uppercase">
+              FAQ
+            </h3>
+            <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
+          </div>
+          
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
+            <span className="block leading-none mb-1 md:mb-3">Frequently</span>
+            <span className="block leading-none mb-1 md:mb-3">Asked</span>
+            <span className="block leading-none">Questions</span>
+          </h2>
+          <p className="mt-6 text-base md:text-lg text-gray-400 max-w-sm mx-auto lg:mx-0">
+            Find answers to common questions about NOLMT AI including features, usage,
+            pricing, safety, and how to get support.
+          </p>
+        </div>
+
+        {/* Desktop Layout - Two Column Grid */}
+        <div className="hidden lg:grid grid-cols-12 gap-16 items-start">
           {/* Left: Heading and copy */}
-          <div className="lg:col-span-5">
+          <div className="col-span-5">
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white">
               <span className="block leading-none mb-1 md:mb-3">Frequently</span>
               <span className="block leading-none mb-1 md:mb-3">Asked</span>
@@ -64,7 +87,7 @@ const FAQ: React.FC = () => {
           </div>
 
           {/* Right: Accordion */}
-          <div className="lg:col-span-7">
+          <div className="col-span-7">
             <div className="space-y-2">
               {faqs.slice(0, 6).map((faq) => {
                 const isOpen = openItems.includes(faq.id);
@@ -104,8 +127,49 @@ const FAQ: React.FC = () => {
                 );
               })}
             </div>
+          </div>
+        </div>
 
-       
+        {/* Mobile/Tablet Layout - Single Column */}
+        <div className="lg:hidden">
+          <div className="space-y-2">
+            {faqs.slice(0, 6).map((faq) => {
+              const isOpen = openItems.includes(faq.id);
+
+              return (
+                <div
+                  key={faq.id}
+                  className="rounded-xl border border-white/5 hover:border-white/10 transition-colors"
+                >
+                  <button
+                    onClick={() => toggleItem(faq.id)}
+                    aria-expanded={isOpen}
+                    className="w-full px-4 sm:px-5 py-3 sm:py-4 text-left flex items-center justify-between gap-4 rounded-xl bg-[#8A3FFC0D] hover:bg-[#8A3FFC1A] transition-colors"
+                  >
+                    <h3 className="text-[15px] sm:text-base font-medium text-white pr-4">
+                      {faq.question}
+                    </h3>
+                    <span className="flex-shrink-0 inline-flex items-center justify-center rounded-md border border-white/10 w-6 h-6">
+                      {isOpen ? (
+                        <Minus className="w-4 h-4 text-white" />
+                      ) : (
+                        <Plus className="w-4 h-4 text-white/80" />
+                      )}
+                    </span>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-5 sm:px-6 pb-6">
+                      <div className="border-t border-white/5 pt-4">
+                        <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

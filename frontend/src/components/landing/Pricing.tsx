@@ -59,6 +59,15 @@ const Pricing: React.FC = () => {
       <section className="py-16 md:py-24 bg-black">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-12">
+            {/* Decorative lines with "Pricing" */}
+            <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 mb-4">
+              <div className="w-8 sm:w-12 md:w-16 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
+              <h3 className="text-white text-xs sm:text-sm md:text-sm font-medium tracking-[0.1em] uppercase">
+                Pricing
+              </h3>
+              <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
+            </div>
+            
             <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
               Purchase a Subscription
             </h1>
@@ -120,9 +129,18 @@ const Pricing: React.FC = () => {
   // Error state
   if (error) {
     return (
-      <section className="py-16 md:py-24 bg-[#0F0F0F]">
+      <section className="py-16 md:py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
+            {/* Decorative lines with "Pricing" */}
+            <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 mb-4">
+              <div className="w-8 sm:w-12 md:w-16 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
+              <h3 className="text-white text-xs sm:text-sm md:text-sm font-medium tracking-[0.1em] uppercase">
+                Pricing
+              </h3>
+              <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
+            </div>
+            
             <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
               Purchase a Subscription
             </h1>
@@ -141,9 +159,18 @@ const Pricing: React.FC = () => {
   }
 
   return (
-    <section id="pricing" className="py-16 md:py-24 bg-[#0F0F0F]">
+    <section id="pricing" className="py-16 md:py-24 bg-black">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
+          {/* Decorative lines with "Pricing" */}
+          <div className="flex items-center justify-center gap-3 sm:gap-4 md:gap-6 mb-4">
+            <div className="w-8 sm:w-12 md:w-16 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
+            <h3 className="text-white text-xs sm:text-sm md:text-sm font-medium tracking-[0.1em] uppercase">
+              Pricing
+            </h3>
+            <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
+          </div>
+          
           <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
             Purchase a Subscription
           </h1>

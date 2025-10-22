@@ -34,13 +34,13 @@ const Hero: React.FC = () => {
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center justify-center text-center">
         {/* Main Content */}
         <div className="space-y-8 mb-16">
-          {/* Tagline with decorative lines only */}
-          <div className="flex items-center justify-center gap-4">
-            <div className="hidden md:block w-16 h-px bg-gradient-to-r from-transparent to-white/60" />
+          {/* Tagline with decorative lines */}
+          <div className="flex items-center justify-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
+            <div className="w-20 sm:w-16 md:w-20 lg:w-24 xl:w-28 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
             <p className="text-lg sm:text-xl md:text-xl text-white/90 font-medium leading-tight">
               Underground AI From China With Almost No Boundaries?
             </p>
-            <div className="hidden md:block w-16 h-px bg-gradient-to-l from-transparent to-white/60" />
+            <div className="w-20 sm:w-16 md:w-20 lg:w-24 xl:w-28 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
           </div>
           
           {/* Main Title */}
