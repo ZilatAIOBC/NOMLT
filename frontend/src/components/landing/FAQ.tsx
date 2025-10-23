@@ -1,6 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Plus, Minus } from 'lucide-react';
 import { FAQ as FAQType } from '../../types';
+
+// Accordion Item Component with animations
+const AccordionItem: React.FC<{
+  faq: FAQType;
+  isOpen: boolean;
+  onToggle: () => void;
+}> = ({ faq, isOpen, onToggle }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState<number>(0);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="rounded-xl border border-white/5 hover:border-white/10 transition-all duration-300 hover:scale-[1.02]">
+      <button
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        className="w-full px-4 sm:px-5 py-3 sm:py-4 text-left flex items-center justify-between gap-4 rounded-xl bg-[#8A3FFC0D] hover:bg-[#8A3FFC1A] transition-all duration-300"
+      >
+        <h3 className="text-[15px] sm:text-base font-medium text-white pr-4">
+          {faq.question}
+        </h3>
+        <span className="flex-shrink-0 inline-flex items-center justify-center rounded-md border border-white/10 w-6 h-6 transition-transform duration-300">
+          <Plus 
+            className={`w-4 h-4 text-white/80 transition-all duration-300 ${
+              isOpen ? 'rotate-45 opacity-0' : 'rotate-0 opacity-100'
+            }`} 
+          />
+          <Minus 
+            className={`w-4 h-4 text-white absolute transition-all duration-300 ${
+              isOpen ? 'rotate-0 opacity-100' : '-rotate-45 opacity-0'
+            }`} 
+          />
+        </span>
+      </button>
+
+      <div
+        className="overflow-hidden transition-all duration-300 ease-in-out"
+        style={{
+          height: isOpen ? `${contentHeight}px` : '0px',
+          opacity: isOpen ? 1 : 0,
+        }}
+      >
+        <div 
+          ref={contentRef}
+          className="px-5 sm:px-6 pb-6"
+        >
+          <div className="border-t border-white/5 pt-4">
+            <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
+              {faq.answer}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const FAQ: React.FC = () => {
   const [openItems, setOpenItems] = useState<string[]>([]);
@@ -91,39 +152,13 @@ const FAQ: React.FC = () => {
             <div className="space-y-2">
               {faqs.slice(0, 6).map((faq) => {
                 const isOpen = openItems.includes(faq.id);
-
                 return (
-                  <div
+                  <AccordionItem
                     key={faq.id}
-                    className="rounded-xl border border-white/5 hover:border-white/10 transition-colors"
-                  >
-                    <button
-                      onClick={() => toggleItem(faq.id)}
-                      aria-expanded={isOpen}
-                      className="w-full px-4 sm:px-5 py-3 sm:py-4 text-left flex items-center justify-between gap-4 rounded-xl bg-[#8A3FFC0D] hover:bg-[#8A3FFC1A] transition-colors"
-                    >
-                      <h3 className="text-[15px] sm:text-base font-medium text-white pr-4">
-                        {faq.question}
-                      </h3>
-                      <span className="flex-shrink-0 inline-flex items-center justify-center rounded-md border border-white/10 w-6 h-6">
-                        {isOpen ? (
-                          <Minus className="w-4 h-4 text-white" />
-                        ) : (
-                          <Plus className="w-4 h-4 text-white/80" />
-                        )}
-                      </span>
-                    </button>
-
-                    {isOpen && (
-                      <div className="px-5 sm:px-6 pb-6">
-                        <div className="border-t border-white/5 pt-4">
-                          <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
-                            {faq.answer}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    faq={faq}
+                    isOpen={isOpen}
+                    onToggle={() => toggleItem(faq.id)}
+                  />
                 );
               })}
             </div>
@@ -135,39 +170,13 @@ const FAQ: React.FC = () => {
           <div className="space-y-2">
             {faqs.slice(0, 6).map((faq) => {
               const isOpen = openItems.includes(faq.id);
-
               return (
-                <div
+                <AccordionItem
                   key={faq.id}
-                  className="rounded-xl border border-white/5 hover:border-white/10 transition-colors"
-                >
-                  <button
-                    onClick={() => toggleItem(faq.id)}
-                    aria-expanded={isOpen}
-                    className="w-full px-4 sm:px-5 py-3 sm:py-4 text-left flex items-center justify-between gap-4 rounded-xl bg-[#8A3FFC0D] hover:bg-[#8A3FFC1A] transition-colors"
-                  >
-                    <h3 className="text-[15px] sm:text-base font-medium text-white pr-4">
-                      {faq.question}
-                    </h3>
-                    <span className="flex-shrink-0 inline-flex items-center justify-center rounded-md border border-white/10 w-6 h-6">
-                      {isOpen ? (
-                        <Minus className="w-4 h-4 text-white" />
-                      ) : (
-                        <Plus className="w-4 h-4 text-white/80" />
-                      )}
-                    </span>
-                  </button>
-
-                  {isOpen && (
-                    <div className="px-5 sm:px-6 pb-6">
-                      <div className="border-t border-white/5 pt-4">
-                        <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
-                          {faq.answer}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  faq={faq}
+                  isOpen={isOpen}
+                  onToggle={() => toggleItem(faq.id)}
+                />
               );
             })}
           </div>

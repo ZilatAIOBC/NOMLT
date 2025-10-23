@@ -41,12 +41,12 @@ const SidebarSectionList: React.FC<Props> = ({
         <img
           src={`/${item.icon}.svg`}
           alt={String(item.icon)}
-          className={`${active ? 'brightness-0 invert' : ''} ${sizeClass}`}
+          className={`${active ? 'brightness-0 invert' : ''} ${sizeClass} transition-opacity hover:opacity-80`}
         />
       );
     }
     const IconComp = item.icon as IconComponent;
-    return <IconComp className={`${sizeClass} ${active ? 'text-white' : item.color}`} />;
+    return <IconComp className={`${sizeClass} ${active ? 'text-white' : item.color} transition-opacity hover:opacity-80`} />;
   };
   return (
     <>
@@ -62,11 +62,13 @@ const SidebarSectionList: React.FC<Props> = ({
               <NavLink
                 key={item.name}
                 to={item.href}
-                className={({ isActive }) => `flex items-center gap-3 ${isCollapsible && !isExpanded ? 'px-2 py-3' : 'px-3 py-3'} rounded-lg text-sm font-medium transition-colors ${
+                className={({ isActive }) => `flex items-center gap-3 ${isCollapsible && !isExpanded ? 'px-3 py-3' : 'px-3 py-3'} rounded-lg text-sm font-medium ${
                   isActive
                     ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white'
-                    : 'text-white hover:bg-white/5'
-                } ${isCollapsible && !isExpanded ? 'justify-center' : ''}`}
+                    : (isCollapsible && !isExpanded)
+                      ? 'text-white hover:bg-gradient-to-r hover:from-[#4057EB] hover:via-[#823AEA] hover:to-[#2C60EB] hover:text-white'
+                      : 'text-white hover:bg-white/10'
+                } ${isCollapsible && !isExpanded ? 'justify-start' : ''}`}
                 onClick={handleNavClick}
                 title={isCollapsible && !isExpanded ? item.name : undefined}
               >

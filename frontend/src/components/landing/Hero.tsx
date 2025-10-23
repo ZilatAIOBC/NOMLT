@@ -1,64 +1,9 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import HeroBackground from '../common/HeroBackground';
 
-// Animated diagonal lines component
-type LineDirection = 'down-right' | 'down-left';
-const AnimatedLines: React.FC<{ direction?: LineDirection }> = ({ direction = 'down-right' }) => {
-  const lines = Array.from({ length: 40 }, (_, i) => ({
-    id: i,
-    left: Math.random() * 100,
-    height: Math.random() * 120 + 60,
-    rotation: Math.random() * 15 + 12,
-    delay: Math.random() * 8,
-    duration: Math.random() * 6 + 8,
-  }));
 
-  return (
-    <div
-      className="absolute inset-0 overflow-hidden pointer-events-none"
-      style={{
-        '--startX': direction === 'down-right' ? '-10vw' : '10vw',
-        '--endX': direction === 'down-right' ? '10vw' : '-10vw',
-      } as React.CSSProperties}
-    >
-      <style>{`
-        @keyframes slideDiag {
-          0% {
-            transform: translate(var(--startX), -200px, 200px) rotate(var(--rotation));
-            opacity: 0;
-          }
-          10% {
-            opacity: 0.3;
-          }
-          90% {
-            opacity: 0.3;
-          }
-          100% {
-            transform: translate(var(--endX), calc(100vh + 150px)) rotate(var(--rotation));
-            opacity: 0;
-          }
-        }
-        .animated-line { animation: slideDiag linear infinite; }
-      `}</style>
-      {lines.map((line) => (
-        <div
-          key={line.id}
-          className="animated-line absolute w-[2px] bg-gradient-to-b from-transparent via-white/30 to-transparent"
-          style={{
-            left: `${line.left}%`,
-            height: `${line.height}px`,
-            '--rotation': `${line.rotation}deg`,
-            transform: `rotate(${line.rotation}deg)`,
-            animationDelay: `${line.delay}s`,
-            animationDuration: `${line.duration}s`,
-            top: '-150px',
-          } as React.CSSProperties}
-        />
-      ))}
-    </div>
-  );
-};
 
 const Hero: React.FC = () => {
   const navigate = useNavigate();
@@ -80,19 +25,8 @@ const Hero: React.FC = () => {
 
   return (
     <section id="home" className="relative min-h-screen flex flex-col justify-center items-center overflow-hidden">
-      {/* Background SVG */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src="/herobg2.svg" 
-          alt="Hero background" 
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* Animated Lines */}
-      <div className="absolute inset-0 z-1">
-        <AnimatedLines />
-      </div>
+      {/* Custom Background */}
+      <HeroBackground />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col items-center justify-center text-center">
         {/* Main Content */}
@@ -100,14 +34,14 @@ const Hero: React.FC = () => {
           {/* Tagline with decorative lines */}
           <div className="flex items-center justify-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
             <div className="w-20 sm:w-16 md:w-20 lg:w-24 xl:w-28 h-px opacity-50 bg-gradient-to-r from-[#0F0F0F] to-[#9333EA]"></div>
-            <p className="text-lg sm:text-xl md:text-xl text-white/90 font-medium leading-tight">
+            <p className="text-lg sm:text-xl md:text-lg text-white/90 font-medium leading-tight">
               Underground AI From China With Almost No Boundaries?
             </p>
             <div className="w-20 sm:w-16 md:w-20 lg:w-24 xl:w-28 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
           </div>
           
           {/* Main Title */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-relaxed mt-4 tracking-widest">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-widest mt-4 tracking-widest">
               MEET NOLMT.ai
             </h1>
           

@@ -108,7 +108,7 @@ const Contact: React.FC = () => {
                   type="submit"
                   variant="primary"
                   size="md"
-                  className="w-full h-[42px] rounded-[5px] bg-gradient-to-r from-[#763AF5] to-[#A604F2] hover:!from-[#763AF5] hover:!to-[#A604F2] transition-all duration-200 ease-out hover:brightness-110 hover:saturate-125 hover:shadow-[0_8px_24px_-8px_rgba(166,4,242,0.45)] active:scale-[0.99] shadow-none"
+                  className="w-full h-[42px] rounded-[4px] bg-gradient-to-r from-[#763AF5] to-[#A604F2] hover:!from-[#763AF5] hover:!to-[#A604F2] transition-all duration-200 ease-out hover:brightness-110 hover:saturate-125 hover:shadow-[0_8px_24px_-8px_rgba(166,4,242,0.45)] active:scale-[0.99] shadow-none"
                 >
                   Send Email
                 </Button>

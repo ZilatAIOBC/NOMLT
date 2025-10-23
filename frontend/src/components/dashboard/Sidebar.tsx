@@ -25,15 +25,18 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const checkDeviceType = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
+      const mobile = width < 768;
+      const tablet = width >= 768 && width < 1024;
+      const expanded = width >= 1024;
       
-      // On mobile and tablet, start collapsed
-      if (width < 1024) {
-        setIsExpanded(false);
-      } else {
-        setIsExpanded(true);
-      }
+      console.log('width', width);
+      console.log('Setting isMobile to:', mobile);
+      console.log('Setting isTablet to:', tablet);
+      console.log('Setting isExpanded to:', expanded);
+      
+      setIsMobile(mobile);
+      setIsTablet(tablet);
+      setIsExpanded(expanded);
     };
 
     checkDeviceType();
@@ -76,8 +79,6 @@ const Sidebar: React.FC = () => {
     },
   ], []);
 
-  // NavLink will handle active state; no custom matcher needed
-
   const handleSignOut = async () => {
     try {
       setIsSigningOut(true);
@@ -107,23 +108,29 @@ const Sidebar: React.FC = () => {
 
   const renderHomeItem = useCallback(() => {
     const Icon = homeItem.icon;
+    const isCollapsed = isCollapsible && !isExpanded;
+    
     return (
       <NavLink
         key={homeItem.name}
         to={homeItem.href}
         end
-        className={({ isActive }) => `flex items-center gap-3 ${isCollapsible && !isExpanded ? 'px-2 py-3' : 'px-3 py-3'} rounded-lg text-sm font-medium transition-colors ${
+        className={({ isActive }) => `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${
           isActive
             ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white'
-            : 'text-white hover:bg-white/5'
-        } ${isCollapsible && !isExpanded ? 'justify-center' : ''}`}
+            : isCollapsed 
+              ? 'text-white hover:bg-gradient-to-r hover:from-[#4057EB] hover:via-[#823AEA] hover:to-[#2C60EB] hover:text-white'
+              : 'text-white hover:bg-white/10'
+        } ${isCollapsed ? 'justify-start' : ''}`}
         onClick={handleNavClick}
-        title={isCollapsible && !isExpanded ? homeItem.name : undefined}
+        title={isCollapsed ? homeItem.name : undefined}
       >
         {({ isActive }) => (
           <>
-            <Icon className={`${(isCollapsible && !isExpanded) || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'} ${isActive ? 'text-white' : homeItem.color}`} />
-            {(!isCollapsible || isExpanded) && <span className="whitespace-nowrap">{homeItem.name}</span>}
+            <span className={`inline-flex ${isCollapsed ? 'hover:opacity-80' : ''} transition-opacity`}>
+              <Icon className={`${isCollapsed || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'} ${isActive ? 'text-white' : homeItem.color}`} />
+            </span>
+            {(!isCollapsible || isExpanded) && <span className="whitespace-nowrap hover:opacity-80 transition-opacity">{homeItem.name}</span>}
           </>
         )}
       </NavLink>
@@ -132,16 +139,16 @@ const Sidebar: React.FC = () => {
 
   const memoizedHomeItem = useMemo(() => renderHomeItem(), [renderHomeItem]);
 
-  // ItemIcon moved into SidebarSectionList
-
   return (
     <>
       {/* Sidebar */}
       <div className={`
         flex flex-col h-screen bg-[#0F0F0F] border-r border-white/10 fixed left-0 top-0 transition-all duration-300 z-40
-        ${isCollapsible 
-          ? (isExpanded ? 'w-64' : 'w-16')
-          : 'w-64'
+        ${isMobile 
+          ? (isExpanded ? 'w-64' : 'w-16 sidebar-mobile-collapsed')
+          : isTablet 
+            ? (isExpanded ? 'w-64' : 'w-16')
+            : 'w-64'
         }
       `}>
         {/* Logo */}
@@ -178,14 +185,16 @@ const Sidebar: React.FC = () => {
           />
         </nav>
 
-        {/* Mobile/Tablet Toggle Section - Centered */}
+        {/* Mobile/Tablet Toggle Section */}
         {isCollapsible && (
           <div className="border-t border-white/10 p-4 flex justify-center">
             <button
               onClick={handleToggleExpanded}
-              className="p-3 text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="p-3 text-white rounded-lg"
             >
-              {isExpanded ? <ChevronLeft className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+              <span className="inline-flex hover:opacity-80 transition-opacity">
+                {isExpanded ? <ChevronLeft className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+              </span>
             </button>
           </div>
         )}
@@ -196,16 +205,18 @@ const Sidebar: React.FC = () => {
             onClick={handleSignOut} 
             disabled={isSigningOut}
             className={`flex items-center gap-3 ${
-              isCollapsible && !isExpanded ? 'justify-center px-2' : 'px-3'
-            } py-3 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full ${
+              isCollapsible && !isExpanded ? 'justify-start px-3' : 'px-3'
+            } py-3 rounded-lg text-sm font-medium text-red-400 w-full ${
               isSigningOut ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            <LogOut className={`${(isCollapsible && !isExpanded) || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'} ${
-              isSigningOut ? 'animate-pulse' : ''
-            }`} />
+            <span className={`inline-flex ${isCollapsible && !isExpanded ? 'hover:opacity-80' : ''} transition-opacity`}>
+              <LogOut className={`${(isCollapsible && !isExpanded) || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'} ${
+                isSigningOut ? 'animate-pulse' : ''
+              }`} />
+            </span>
             {(!isCollapsible || isExpanded) && (
-              <span className="whitespace-nowrap">
+              <span className="whitespace-nowrap hover:opacity-80 transition-opacity">
                 {isSigningOut ? 'Signing out...' : 'Sign Out'}
               </span>
             )}

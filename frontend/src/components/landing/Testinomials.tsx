@@ -139,8 +139,8 @@ const TestimonialsSection: React.FC = () => {
             </h3>
             <div className="w-10 h-px rounded-full bg-gradient-to-l from-[#8A3FFC] to-transparent"></div>
           </div>
-          <h2 className="text-white text-[40px] font-semibold leading-[44px] whitespace-nowrap">
-            About NOLMT AI  Generator
+          <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-[40px] font-semibold leading-tight sm:leading-[44px] text-center px-4">
+            About NOLMT AI Generator
           </h2>
         </div>
       </div>

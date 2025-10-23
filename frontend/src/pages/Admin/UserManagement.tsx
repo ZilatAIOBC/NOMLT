@@ -134,17 +134,19 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8 flex justify-between items-start">
+      <div className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
-          <p className="text-gray-400">Manage users, roles, and permissions.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">User Management</h1>
+          <p className="text-gray-400 text-sm md:text-base">Manage users, roles, and permissions.</p>
         </div>
       </div>
 
       {/* Users Table */}
       <div className="bg-[#0F0F0F] rounded-lg border border-white/10 overflow-hidden">
+        {/* Horizontal scroll container for tablet and mobile */}
+        <div className="overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
@@ -155,57 +157,57 @@ export default function UserManagement() {
             <p className="text-gray-500 text-sm">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <table className="w-full">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-[#0F0F0F] border-b border-white/10">
               <tr>
-                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">NAME</th>
-                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">EMAIL</th>
-                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">ROLE</th>
-                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">STATUS</th>
-                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">PLAN</th>
-                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">CREDITS</th>
-                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">JOIN DATE</th>
-                <th className="text-left px-6 py-4 text-gray-400 font-medium text-sm">ACTIONS</th>
+                <th className="text-left px-3 md:px-6 py-4 text-gray-400 font-medium text-sm min-w-[120px]">NAME</th>
+                <th className="text-left px-3 md:px-6 py-4 text-gray-400 font-medium text-sm min-w-[180px]">EMAIL</th>
+                <th className="text-left px-3 md:px-6 py-4 text-gray-400 font-medium text-sm min-w-[80px]">ROLE</th>
+                <th className="text-left px-3 md:px-6 py-4 text-gray-400 font-medium text-sm min-w-[80px]">STATUS</th>
+                <th className="text-left px-3 md:px-6 py-4 text-gray-400 font-medium text-sm min-w-[80px]">PLAN</th>
+                <th className="text-left px-3 md:px-6 py-4 text-gray-400 font-medium text-sm min-w-[80px]">CREDITS</th>
+                <th className="text-left px-3 md:px-6 py-4 text-gray-400 font-medium text-sm min-w-[100px]">JOIN DATE</th>
+                <th className="text-left px-3 md:px-6 py-4 text-gray-400 font-medium text-sm min-w-[80px]">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
                 <tr key={user.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="px-6 py-4">
+                  <td className="px-3 md:px-6 py-4">
                     <div className="flex items-center gap-2">
                       {user.profilePicture ? (
                         <img 
                           src={user.profilePicture} 
                           alt={user.name}
-                          className="w-8 h-8 rounded-full"
+                          className="w-6 h-6 md:w-8 md:h-8 rounded-full"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-sm font-medium">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-xs md:text-sm font-medium">
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <div className="text-white font-medium">{user.name}</div>
+                      <div className="text-white font-medium text-sm md:text-base truncate">{user.name}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-400">{user.email}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                  <td className="px-3 md:px-6 py-4 text-gray-400 text-sm md:text-base truncate">{user.email}</td>
+                  <td className="px-3 md:px-6 py-4">
+                    <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                       {capitalizeFirst(user.role)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                  <td className="px-3 md:px-6 py-4">
+                    <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
                       {capitalizeFirst(user.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPlanColor(user.plan)}`}>
+                  <td className="px-3 md:px-6 py-4">
+                    <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getPlanColor(user.plan)}`}>
                       {capitalizeFirst(user.plan)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-white">{user.credits.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-gray-400">{formatDate(user.joinDate)}</td>
-                  <td className="px-6 py-4 relative">
+                  <td className="px-3 md:px-6 py-4 text-white text-sm md:text-base">{user.credits.toLocaleString()}</td>
+                  <td className="px-3 md:px-6 py-4 text-gray-400 text-sm md:text-base">{formatDate(user.joinDate)}</td>
+                  <td className="px-3 md:px-6 py-4 relative">
                     <button 
                       onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
                       className="p-2 hover:bg-white/10 rounded text-gray-400 hover:text-white" 
@@ -266,21 +268,22 @@ export default function UserManagement() {
             </tbody>
           </table>
         )}
+        </div>
       </div>
 
       {/* Pagination */}
       {!loading && users.length > 0 && (
-        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="text-gray-400 text-sm">
+        <div className="mt-4 md:mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="text-gray-400 text-xs md:text-sm">
             Showing {((pagination.page - 1) * pagination.limit) + 1} to{' '}
             {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
             {pagination.total} users
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1 md:gap-2 overflow-x-auto">
             <button
               onClick={() => handlePageChange(pagination.page - 1)}
               disabled={pagination.page === 1}
-              className="px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 md:px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
             >
               Previous
             </button>
@@ -302,7 +305,7 @@ export default function UserManagement() {
                 <button
                   key={pageNum}
                   onClick={() => handlePageChange(pageNum)}
-                  className={`px-4 py-2 rounded text-white ${
+                  className={`px-3 md:px-4 py-2 rounded text-white text-sm whitespace-nowrap ${
                     pagination.page === pageNum
                       ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB]'
                       : 'bg-[#0F0F0F] border border-white/10 hover:bg-white/5'
@@ -316,7 +319,7 @@ export default function UserManagement() {
             <button
               onClick={() => handlePageChange(pagination.page + 1)}
               disabled={pagination.page === pagination.totalPages}
-              className="px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 md:px-4 py-2 bg-[#0F0F0F] border border-white/10 rounded text-white hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed text-sm whitespace-nowrap"
             >
               Next
             </button>

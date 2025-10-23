@@ -18,16 +18,24 @@ export default function AdminSidebar() {
   useEffect(() => {
     const checkDeviceType = () => {
       const width = window.innerWidth;
-      setIsMobile(width < 768);
-      setIsTablet(width >= 768 && width < 1024);
-      setIsExpanded(width >= 1024);
+      const mobile = width < 768;
+      const tablet = width >= 768 && width < 1024;
+      const expanded = width >= 1024;
+      
+      console.log('AdminSidebar - width', width);
+      console.log('AdminSidebar - Setting isMobile to:', mobile);
+      console.log('AdminSidebar - Setting isTablet to:', tablet);
+      console.log('AdminSidebar - Setting isExpanded to:', expanded);
+      
+      setIsMobile(mobile);
+      setIsTablet(tablet);
+      setIsExpanded(expanded);
     };
     checkDeviceType();
     window.addEventListener('resize', checkDeviceType);
     return () => window.removeEventListener('resize', checkDeviceType);
   }, []);
 
-  const isCollapsible = isMobile || isTablet;
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleToggleExpanded = useCallback(() => {
@@ -73,72 +81,75 @@ export default function AdminSidebar() {
     <>
     <div
       className={`fixed top-0 left-0 h-screen bg-[#0F0F0F] border-r border-white/10 flex flex-col transition-all duration-300 z-40 ${
-        isCollapsible ? (isExpanded ? 'w-64' : 'w-16') : 'w-64'
+        isMobile ? (isExpanded ? 'w-64' : 'w-16 sidebar-mobile-collapsed') : 
+        isTablet ? (isExpanded ? 'w-64' : 'w-16') : 'w-64'
       }`}
     >
       {/* Logo */}
       <div className="p-6 border-b border-white/10">
-        <Link to="/admin/dashboard" className={`flex items-center ${isCollapsible ? 'justify-center' : 'justify-start'}`}>
+        <Link to="/admin/dashboard" className={`flex items-center ${(isMobile || isTablet) && !isExpanded ? 'justify-start' : 'justify-start'}`}>
           <img
-            src={isCollapsible ? '/videogenerations.svg' : '/logo.svg'}
+            src={(isMobile || isTablet) && !isExpanded ? '/videogenerations.svg' : '/logo.svg'}
             alt="NOLMT.AI"
-            className={`${isCollapsible ? 'h-12 w-12' : 'h-10'}`}
-            style={{ width: isCollapsible ? '48px' : 'auto', height: isCollapsible ? '48px' : '40px' }}
+            className={`${(isMobile || isTablet) && !isExpanded ? 'h-12 w-12' : 'h-10'}`}
+            style={{ width: (isMobile || isTablet) && !isExpanded ? '48px' : 'auto', height: (isMobile || isTablet) && !isExpanded ? '48px' : '40px' }}
           />
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className={`flex-1 ${isCollapsible && !isExpanded ? 'px-2' : 'px-4'} py-6 space-y-2`}>
+      <nav className={`flex-1 ${(isMobile || isTablet) && !isExpanded ? 'px-3' : 'px-4'} py-6 space-y-2`}>
         {menuItems.map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`flex items-center gap-3 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-3 rounded-lg text-sm font-medium ${
               currentPath === item.path
                 ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white'
-                : 'text-white hover:bg-white/5'
-            } ${isCollapsible && !isExpanded ? 'justify-center px-2 py-3' : 'px-3 py-3'}`}
-            title={isCollapsible && !isExpanded ? item.label : undefined}
+                : (isMobile || isTablet) && !isExpanded
+                  ? 'text-white hover:bg-gradient-to-r hover:from-[#4057EB] hover:via-[#823AEA] hover:to-[#2C60EB] hover:text-white'
+                  : 'text-white hover:bg-white/10'
+            } ${(isMobile || isTablet) && !isExpanded ? 'justify-start px-3 py-3' : 'px-3 py-3'}`}
+            title={undefined}
           >
             <img
               src={item.iconSrc}
               alt={item.label}
-              className={` ${isCollapsible && !isExpanded ? 'w-6 h-6' : 'w-5 h-5'} ${
+              className={` ${(isMobile || isTablet) && !isExpanded ? 'w-6 h-6' : 'w-5 h-5'} ${
                 currentPath === item.path ? 'brightness-0 invert' : ''
-              }`}
+              } transition-opacity hover:opacity-80`}
             />
-            {(!isCollapsible || isExpanded) && <span className="whitespace-nowrap">{item.label}</span>}
+            {!((isMobile || isTablet) && !isExpanded) && <span className="whitespace-nowrap">{item.label}</span>}
           </Link>
         ))}
       </nav>
 
       {/* Toggle (only on mobile/tablet) */}
-      {isCollapsible && (
+      {(isMobile || isTablet) && (
         <div className="border-t border-white/10 p-4 flex justify-center">
           <button
             onClick={handleToggleExpanded}
-            className="p-3 text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="p-3 text-white rounded-lg"
             aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
           >
-            {isExpanded ? <ChevronLeft className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+            {isExpanded ? <ChevronLeft className="w-6 h-6 transition-opacity hover:opacity-80" /> : <ChevronRight className="w-6 h-6 transition-opacity hover:opacity-80" />}
           </button>
         </div>
       )}
 
       {/* Bottom Section */}
-      <div className="border-t border-white/10 space-y-2 p-2">
+      <div className="border-t border-white/10 space-y-2 p-3">
         <button 
           onClick={handleSignOut} 
           disabled={isSigningOut}
           className={`flex items-center gap-3 ${
-            isCollapsible && !isExpanded ? 'justify-center px-2' : 'px-3'
-          } py-3 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors w-full ${
+            (isMobile || isTablet) && !isExpanded ? 'justify-start px-3' : 'px-3'
+          } py-3 rounded-lg text-sm font-medium text-red-400 w-full ${
             isSigningOut ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
-          <LogOut className={`${(isCollapsible && !isExpanded) || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'}`} />
-          {(!isCollapsible || isExpanded) && (
+          <LogOut className={`${(isMobile || isTablet) && !isExpanded ? 'w-6 h-6' : 'w-5 h-5'} transition-opacity hover:opacity-80`} />
+          {!((isMobile || isTablet) && !isExpanded) && (
             <span className="whitespace-nowrap">
               {isSigningOut ? 'Signing out...' : 'Sign Out'}
             </span>
@@ -147,7 +158,7 @@ export default function AdminSidebar() {
       </div>
     </div>
 
-    {/* Mobile overlay */}
+    {/* Mobile overlay - only show when sidebar is expanded on mobile */}
     {isMobile && isExpanded && (
       <div className="fixed inset-0 bg-black/50 z-30" onClick={handleToggleExpanded} />
     )}

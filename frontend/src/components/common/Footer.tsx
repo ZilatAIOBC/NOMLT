@@ -1,16 +1,35 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+
+// Handle navigation
+const handleLinkClick = (id: string, location: any) => {
+  if (location.pathname !== '/') {
+    // If not on home page, navigate to home page first
+    window.location.href = '/';
+  } else {
+    // If on home page, scroll smoothly to section
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  }
+};
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const location = useLocation();
 
   const homeLinks = [
-    { name: 'Features', href: '/#features' },
-    { name: 'How it works', href: '/#how-it-works' },
-    { name: 'Benefits', href: '/#benefits' },
-    { name: 'Pricing', href: '/pricing' },
-    { name: 'Testimonials', href: '/#testimonials' },
-    { name: 'FAQs', href: '/#faqs' },
+    { name: 'Home', href: '#home', id: 'home' },
+    { name: 'Features', href: '#features', id: 'features' },
+    { name: 'How it works', href: '#how-it-works', id: 'how-it-works' },
+    { name: 'Pricing', href: '#pricing', id: 'pricing' },
+    { name: 'Testimonials', href: '#testimonials', id: 'testimonials' },
+    { name: 'FAQs', href: '#faqs', id: 'faqs' },
+    { name: 'Contact', href: '#contact', id: 'contact' },
   ];
 
   return (
@@ -25,13 +44,16 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 md:[grid-template-columns:2.6fr_0.4fr_0.4fr] items-start gap-10 md:gap-16 lg:gap-20">
           {/* Left: Logo + Disclaimer */}
           <div className="space-y-4 md:pr-6">
-            <Link to="/" className="inline-block">
+            <button
+              onClick={() => handleLinkClick('home', location)}
+              className="inline-block cursor-pointer"
+            >
               <img
                 src="/logo.svg"
                 alt="NOLMT.ai"
                 className="h-10 w-auto"
               />
-            </Link>
+            </button>
             <div className="text-gray-400 text-[13px] leading-6 max-w-2xl">
               <p>
                 <span className="text-white">Disclaimer.</span> By accessing or subscribing to this service, you
@@ -47,16 +69,16 @@ const Footer: React.FC = () => {
 
           {/* Middle: Home links */}
           <div>
-            <h3 className="text-white font-semibold text-[15px] mb-4">Home</h3>
+            <h3 className="text-white font-semibold text-[15px] mb-4">Quick Links</h3>
             <div className="space-y-1">
               {homeLinks.map((link) => (
-                <Link
+                <button
                   key={link.name}
-                  to={link.href}
-                  className="text-gray-400 hover:text-[#8A3FFC]  font-medium gap-3  text-sm block transition-colors"
+                  onClick={() => handleLinkClick(link.id, location)}
+                  className="text-gray-400 hover:text-[#8A3FFC] font-medium gap-3 text-sm block transition-colors text-left w-full"
                 >
                   {link.name}
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -65,6 +87,14 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-white font-semibold text-[15px] mb-4">Contact Us</h3>
             <ul className="space-y-1 text-sm">
+              <li>
+                <button
+                  onClick={() => handleLinkClick('contact', location)}
+                  className="text-gray-400 hover:text-[#8A3FFC] font-medium gap-3 text-sm block transition-colors text-left w-full"
+                >
+                  Contact Form
+                </button>
+              </li>
               <li>
                 <a href="mailto:help@NOLMT.com" className="text-gray-400 hover:text-[#8A3FFC]  font-medium gap-3  text-sm block transition-colors">
                   help@NOLMT.com

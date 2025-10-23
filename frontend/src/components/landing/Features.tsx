@@ -116,7 +116,7 @@ const Features = (): JSX.Element => {
       <div className="inline-flex flex-col items-start pt-0 pb-6 sm:pb-7 md:pb-8 px-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center md:inline-flex md:items-center md:justify-center gap-4 sm:gap-6 md:gap-10">
           <div className="inline-flex flex-col items-start">
-            <h2 className="[font-family:'Microsoft_YaHei-Regular',Helvetica] font-normal text-white text-2xl sm:text-3xl md:text-[47.6px] tracking-[0] leading-8 sm:leading-10 md:leading-[72px] whitespace-nowrap">
+            <h2 className="[font-family:'Microsoft_YaHei-Regular',Helvetica] font-normal text-white text-2xl sm:text-3xl md:text-4xl lg:text-[47.6px] tracking-[0] leading-8 sm:leading-10 md:leading-12 lg:leading-[72px]">
               {currentFeature.title}
             </h2>
           </div>

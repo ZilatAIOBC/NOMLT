@@ -17,7 +17,7 @@ const Landing: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0F0F0F] scroll-smooth">
       <Navbar />
-      <main>
+      <main >
         <Hero />
         <Features />
         <VideoSection />
