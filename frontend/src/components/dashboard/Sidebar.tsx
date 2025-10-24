@@ -115,7 +115,7 @@ const Sidebar: React.FC = () => {
         key={homeItem.name}
         to={homeItem.href}
         end
-        className={({ isActive }) => `flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${
+        className={({ isActive }) => `flex ${isMobile && isExpanded ? 'w-[199px]' : ''} items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium ${
           isActive
             ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white'
             : isCollapsed 
@@ -152,22 +152,15 @@ const Sidebar: React.FC = () => {
         }
       `}>
         {/* Logo */}
-        <div className="hidden lg:block">
-          <div className="flex items-center justify-start p-6">
-            <Link to="/" className="flex items-center">
-              <img 
-                src="/logo.svg" 
-                alt="NOLMT.AI" 
-                className={`${
-                  (!isCollapsible || isExpanded) ? 'h-10' : 'h-12 w-12'
-                }`}
-                style={{ 
-                  width: (!isCollapsible || isExpanded) ? 'auto' : '48px',
-                  height: (!isCollapsible || isExpanded) ? '40px' : '48px'
-                }}
-              />
-            </Link>
-          </div>
+        <div className="p-6 border-b border-white/10">
+          <Link to="/dashboard" className={`flex items-center ${isCollapsible && !isExpanded ? 'justify-start' : 'justify-start'}`}>
+            <img
+              src={isCollapsible && !isExpanded ? '/videogenerations.svg' : '/logo.svg'}
+              alt="NOLMT.AI"
+              className={`${isCollapsible && !isExpanded ? 'h-12 w-12' : 'h-10'}`}
+              style={{ width: isCollapsible && !isExpanded ? '48px' : 'auto', height: isCollapsible && !isExpanded ? '48px' : '40px' }}
+            />
+          </Link>
         </div>
 
         {/* Navigation */}

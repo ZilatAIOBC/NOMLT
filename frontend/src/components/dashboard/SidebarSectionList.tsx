@@ -62,7 +62,7 @@ const SidebarSectionList: React.FC<Props> = ({
               <NavLink
                 key={item.name}
                 to={item.href}
-                className={({ isActive }) => `flex items-center gap-3 ${isCollapsible && !isExpanded ? 'px-3 py-3' : 'px-3 py-3'} rounded-lg text-sm font-medium ${
+                className={({ isActive }) => `flex ${isMobile && isExpanded ? 'w-[199px]' : ''} items-center gap-3 ${isCollapsible && !isExpanded ? 'px-3 py-3' : 'px-3 py-3'} rounded-lg text-sm font-medium ${
                   isActive
                     ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white'
                     : (isCollapsible && !isExpanded)

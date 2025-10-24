@@ -103,11 +103,11 @@ export default function AdminSidebar() {
           <Link
             key={item.path}
             to={item.path}
-            className={`flex items-center gap-3 rounded-lg text-sm font-medium ${
+            className={`flex ${isMobile && isExpanded ? 'w-[199px]' : ''} items-center gap-3 rounded-lg text-sm font-medium ${
               currentPath === item.path
                 ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white'
                 : (isMobile || isTablet) && !isExpanded
-                  ? 'text-white hover:bg-gradient-to-r hover:from-[#4057EB] hover:via-[#823AEA] hover:to-[#2C60EB] hover:text-white'
+                  ? 'text-white hover:bg-gradient-to-r hover:from-[#4057EB]  hover:via-[#823AEA] hover:to-[#2C60EB] hover:text-white'
                   : 'text-white hover:bg-white/10'
             } ${(isMobile || isTablet) && !isExpanded ? 'justify-start px-3 py-3' : 'px-3 py-3'}`}
             title={undefined}
