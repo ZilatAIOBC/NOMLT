@@ -2,11 +2,15 @@
 # Documentation Files
 # ===========================
 *.md
+# Allow migration documentation
+!migrations/README.md
 
 # ===========================
 # SQL Files
 # ===========================
 *.sql
+# Allow migration files (important for database setup)
+!migrations/*.sql
 
 # ===========================
 # Dependencies
