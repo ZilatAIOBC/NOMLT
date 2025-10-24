@@ -71,7 +71,7 @@ export const ActiveUsers = () => {
               initials={getInitials(user.name)}
               name={user.name}
               email={user.email}
-              credits={user.credits_balance}
+              credits={user.total_credits_spent}
               tier={user.plan_name}
             />
           ))}
