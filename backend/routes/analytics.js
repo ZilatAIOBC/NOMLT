@@ -284,6 +284,13 @@ router.get('/admin/dashboard-stats', auth, requireAdmin, async (req, res) => {
 
     console.log('✅ Dashboard stats:', stats);
 
+    // Set cache control headers to prevent stale data
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     res.status(200).json({
       success: true,
       data: stats
@@ -474,6 +481,13 @@ router.get('/admin/daily-trends', auth, requireAdmin, async (req, res) => {
 
     const trends = Object.values(trendsByDate);
 
+    // Set cache control headers to prevent stale data
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -558,6 +572,13 @@ router.get('/admin/feature-usage', auth, requireAdmin, async (req, res) => {
     featureUsage.sort((a, b) => b.credits - a.credits);
 
     console.log('✅ Feature usage stats:', featureUsage);
+
+    // Set cache control headers to prevent stale data
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
 
     res.status(200).json({
       success: true,
@@ -681,6 +702,13 @@ router.get('/admin/cost-per-feature', auth, requireAdmin, async (req, res) => {
 
     console.log('✅ Cost per feature stats:', costPerFeature);
 
+    // Set cache control headers to prevent stale data
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -721,6 +749,11 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
     const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
+    console.log('📊 Monthly Trends Calculation:');
+    console.log(`Current Month Start: ${currentMonthStart.toISOString()}`);
+    console.log(`Previous Month Start: ${previousMonthStart.toISOString()}`);
+    console.log(`Previous Month End: ${previousMonthEnd.toISOString()}`);
+
     // 1. Calculate Revenue Growth (from subscriptions)
     const { data: allSubscriptions } = await client
       .from('subscriptions')
@@ -754,6 +787,8 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
       ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
       : currentMonthRevenue > 0 ? 100 : 0;
 
+    console.log(`Revenue Growth - Current: $${currentMonthRevenue}, Previous: $${previousMonthRevenue}, Growth: ${revenueGrowth}%`);
+
     // 2. Calculate User Growth
     const { count: currentMonthUsers } = await client
       .from('profiles')
@@ -772,11 +807,14 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
       ? ((currentMonthUsers - previousMonthUsers) / previousMonthUsers) * 100
       : currentMonthUsers > 0 ? 100 : 0;
 
+    console.log(`User Growth - Current: ${currentMonthUsers}, Previous: ${previousMonthUsers}, Growth: ${userGrowth}%`);
+
     // 3. Calculate Usage Growth (credits spent)
+    // Use daily summaries and aggregate by month
     const { data: currentMonthUsage } = await client
       .from('usage_summaries')
       .select('total_credits_spent')
-      .eq('period_type', 'monthly')
+      .eq('period_type', 'daily')
       .gte('period_start', currentMonthStart.toISOString());
 
     const currentMonthCredits = (currentMonthUsage || []).reduce(
@@ -787,7 +825,7 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
     const { data: previousMonthUsage } = await client
       .from('usage_summaries')
       .select('total_credits_spent')
-      .eq('period_type', 'monthly')
+      .eq('period_type', 'daily')
       .gte('period_start', previousMonthStart.toISOString())
       .lt('period_start', currentMonthStart.toISOString());
 
@@ -799,6 +837,8 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
     const usageGrowth = previousMonthCredits > 0
       ? ((currentMonthCredits - previousMonthCredits) / previousMonthCredits) * 100
       : currentMonthCredits > 0 ? 100 : 0;
+
+    console.log(`Usage Growth - Current: ${currentMonthCredits}, Previous: ${previousMonthCredits}, Growth: ${usageGrowth}%`);
 
     const trends = {
       revenue_growth: Number(revenueGrowth.toFixed(1)),
@@ -817,6 +857,13 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
     };
 
     console.log('✅ Monthly trends:', trends);
+
+    // Set cache control headers to prevent stale data
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
 
     res.status(200).json({
       success: true,
