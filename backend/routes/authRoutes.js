@@ -485,20 +485,37 @@ router.post("/validate-token", auth, (req, res) => {
 // Google OAuth via Supabase - start flow
 router.get('/oauth/google', async (req, res) => {
   try {
+    console.log('Google OAuth request received');
+    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+    
+    if (!process.env.FRONTEND_URL) {
+      console.error('FRONTEND_URL not set in environment variables');
+      return res.status(500).json({ 
+        message: 'Server configuration error: FRONTEND_URL not set',
+        hint: 'Please set FRONTEND_URL in your .env file'
+      });
+    }
+    
     const redirectTo = `${process.env.FRONTEND_URL.replace(/\/$/, '')}/auth/callback`;
+    console.log('Redirect to:', redirectTo);
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo
       }
     });
+    
     if (error) {
+      console.error('Supabase OAuth error:', error);
       return res.status(400).json({ message: error.message });
     }
+    
+    console.log('OAuth URL:', data.url);
     return res.redirect(data.url);
   } catch (e) {
     console.error('Google OAuth init error:', e);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: e.message });
   }
 });
 
