@@ -14,6 +14,7 @@ interface ChartDataPoint {
 
 export default function UsageTimelineChart({ className = "" }: UsageTimelineChartProps) {
   const [data, setData] = useState<ChartDataPoint[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDailyTrends();
@@ -21,6 +22,7 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
 
   const fetchDailyTrends = async () => {
     try {
+      setLoading(true);
       const response = await getDailyTrends(30);
 
       // Helper: format a JS Date to YYYY-MM-DD using UTC parts (avoid TZ shift)
@@ -36,6 +38,7 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
       (response.trends || []).forEach((t) => {
         const key = (t.date || '').split('T')[0]; // backend already returns YYYY-MM-DD
         creditsByDate[key] = (t.total_credits_spent || 0);
+        console.log('📊 Timeline data:', { date: t.date, key, credits: t.total_credits_spent });
       });
 
       // Build days 1..30 for the CURRENT MONTH (so x=9 means the 9th of this month)
@@ -43,10 +46,15 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
       const now = new Date();
       const year = now.getUTCFullYear();
       const month = now.getUTCMonth(); // 0-based
+      console.log('📅 Chart: Creating days for year:', year, 'month:', month);
       for (let dayNum = 1; dayNum <= 30; dayNum++) {
         const d = new Date(Date.UTC(year, month, dayNum, 0, 0, 0));
         const iso = formatDateUTC(d);
         const displayDate = new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        if (dayNum >= 20 && dayNum <= 30) {
+          console.log(`📅 Day ${dayNum}: ISO=${iso}, credits=${creditsByDate[iso] || 0}`);
+        }
 
         days.push({
           day: String(dayNum),
@@ -72,6 +80,8 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
         });
       }
       setData(fallback);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,6 +96,31 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
     }
     return null;
   };
+
+  if (loading) {
+    return (
+      <div className={`w-full ${className}`}>
+        {/* Skeleton Chart */}
+        <div className="relative h-64 mt-4 border border-white/10 bg-[#0F0F0F]">
+          <div className="w-full h-full flex items-end justify-between px-4 py-2">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+              <div key={i} className="flex-1 mx-0.5">
+                <div 
+                  className="w-full bg-white/10 rounded-t animate-pulse" 
+                  style={{ height: `${Math.random() * 60 + 20}%` }}
+                ></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center mt-4">
+          <div className="h-8 w-32 bg-white/5 rounded-lg animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`w-full ${className}`}>

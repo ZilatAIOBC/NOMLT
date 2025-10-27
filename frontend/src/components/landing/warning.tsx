@@ -1,4 +1,5 @@
 import { Button } from "../ui/button";
+import { Link } from "react-router-dom";
 
 const bulletPoints = [
   "It often doesn't censor your ideas, it doesn't hold you back, and it doesn't stop at \"good enough.\"",
@@ -16,22 +17,26 @@ export const WarningSection = (): JSX.Element => {
         <div className="absolute top-[120px] lg:top-[120px] md:top-[20px] left-[calc(50%_-_395px)] lg:left-[calc(50%_-_395px)] md:left-[calc(50%_-_300px)] w-[789px] lg:w-[789px] md:w-[600px] h-[450px] lg:h-[450px] md:h-[450px] rounded-[44px] border border-solid border-white blur-[4.85px] bg-[linear-gradient(310deg,rgba(12,5,21,1)_0%,rgba(138,63,252,0)_34%)]" />
 
         <div className="absolute top-[520px] lg:top-[520px] md:top-[410px] left-[calc(50%_-_158px)] lg:left-[calc(50%_-_158px)] md:left-[calc(50%_-_150px)] flex gap-[18px] z-10">
-          <Button
-            variant="outline"
-            className="h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 lg:px-4 md:px-3 rounded-lg border border-solid border-[#8a3ffc] bg-transparent shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/10"
-          >
-            <span className="[font-family:'Inter',Helvetica] font-normal text-white text-sm lg:text-sm md:text-xs sm:text-xs tracking-[0] leading-6 whitespace-nowrap">
-              Learn More
-            </span>
-            <img src="/arrow.svg" alt="arrow" className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 md:w-3 md:h-3 sm:w-2.5 sm:h-2.5" />
-          </Button>
+          <Link to="/terms-and-conditions" target="_blank" rel="noopener noreferrer">
+            <Button
+              variant="outline"
+              className="h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 lg:px-4 md:px-3 rounded-lg border border-solid border-[#8a3ffc] bg-transparent shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/10"
+            >
+              <span className="[font-family:'Inter',Helvetica] font-normal text-white text-sm lg:text-sm md:text-xs sm:text-xs tracking-[0] leading-6 whitespace-nowrap">
+                Learn More
+              </span>
+              <img src="/arrow.svg" alt="arrow" className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 md:w-3 md:h-3 sm:w-2.5 sm:h-2.5" />
+            </Button>
+          </Link>
 
-          <Button className="h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 lg:px-4 md:px-3 sm:px-2 bg-[#8a3ffc] rounded-lg shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/90">
-            <span className="[font-family:'Inter',Helvetica] font-normal text-[#f0f0f0] text-sm lg:text-sm md:text-xs sm:text-xs tracking-[0] leading-6 whitespace-nowrap">
-              Start Generating
-            </span>
-            <img src="/arrow.svg" alt="arrow" className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 md:w-3 md:h-3 sm:w-2.5 sm:h-2.5" />
-          </Button>
+          <Link to="/signin">
+            <Button className="h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 lg:px-4 md:px-3 sm:px-2 bg-[#8a3ffc] rounded-lg shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/90">
+              <span className="[font-family:'Inter',Helvetica] font-normal text-[#f0f0f0] text-sm lg:text-sm md:text-xs sm:text-xs tracking-[0] leading-6 whitespace-nowrap">
+                Start Generating
+              </span>
+              <img src="/arrow.svg" alt="arrow" className="w-3.5 h-3.5 lg:w-3.5 lg:h-3.5 md:w-3 md:h-3 sm:w-2.5 sm:h-2.5" />
+            </Button>
+          </Link>
         </div>
 
         {/* Desktop bullet points - only show on large screens */}
@@ -41,7 +46,7 @@ export const WarningSection = (): JSX.Element => {
             className="hidden lg:block absolute left-[calc(50%_-_354px)] w-[708px] flex items-start gap-2 [font-family:'Inter',Helvetica] text-white z-10"
             style={{ top: `${320 + index * 45}px` }}
           >
-            <span className="text-base font-medium leading-none mt-0">●</span>
+            <span className="text-base font-medium leading-none mt-0">● </span>
             <span className="text-[15px] font-medium leading-relaxed">
               {text}
             </span>
@@ -55,7 +60,7 @@ export const WarningSection = (): JSX.Element => {
             className="hidden md:block lg:hidden absolute left-[calc(50%_-_280px)] w-[560px] flex items-start gap-2 [font-family:'Inter',Helvetica] text-white z-10"
             style={{ top: `${210 + index * 45}px` }}
           >
-            <span className="text-sm font-medium leading-none mt-0">●</span>
+            <span className="text-sm font-medium leading-none mt-0">● </span>
             <span className="text-sm font-medium leading-relaxed">
               {text}
             </span>
@@ -69,7 +74,7 @@ export const WarningSection = (): JSX.Element => {
             className="block md:hidden lg:hidden absolute left-[calc(50%_-_170px)] w-[340px] flex items-start gap-2 [font-family:'Inter',Helvetica] text-white z-10"
             style={{ top: `${350 + index * 35}px` }}
           >
-            <span className="text-sm font-medium leading-none mt-0">●</span>
+            <span className="text-sm font-medium leading-none mt-0">● </span>
             <span className="text-sm font-medium leading-relaxed">
               {text}
             </span>
@@ -185,21 +190,25 @@ export const WarningSection = (): JSX.Element => {
 
             {/* Buttons */}
             <div className="flex gap-3 justify-center mt-24">
-              <button
-                className="flex-1 h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 rounded-lg border border-solid border-[#8a3ffc] bg-transparent shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/10"
-              >
-                <span className="[font-family:'Inter',Helvetica] font-normal text-white text-sm tracking-[0] leading-6 whitespace-nowrap">
-                  Learn More
-                </span>
-                <img src="/arrow.svg" alt="arrow" className="w-3.5 h-3.5" />
-              </button>
+              <Link to="/terms-and-conditions" target="_blank" rel="noopener noreferrer">
+                <button
+                  className="flex-1 h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 rounded-lg border border-solid border-[#8a3ffc] bg-transparent shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/10"
+                >
+                  <span className="[font-family:'Inter',Helvetica] font-normal text-white text-sm tracking-[0] leading-6 whitespace-nowrap">
+                    Learn More
+                  </span>
+                  <img src="/arrow.svg" alt="arrow" className="w-3.5 h-3.5" />
+                </button>
+              </Link>
 
-              <Button className="flex-1 h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 bg-[#8a3ffc] rounded-lg shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/90">
-                <span className="[font-family:'Inter',Helvetica] font-normal text-[#f0f0f0] text-sm tracking-[0] leading-6 whitespace-nowrap">
-                  Start Generating
-                </span>
-                <img src="/arrow.svg" alt="arrow" className="w-3.5 h-3.5" />
-              </Button>
+              <Link to="/signin">
+                <Button className="flex-1 h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 bg-[#8a3ffc] rounded-lg shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/90">
+                  <span className="[font-family:'Inter',Helvetica] font-normal text-[#f0f0f0] text-sm tracking-[0] leading-6 whitespace-nowrap">
+                    Start Generating
+                  </span>
+                  <img src="/arrow.svg" alt="arrow" className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

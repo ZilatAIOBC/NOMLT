@@ -66,27 +66,31 @@ export default function Analytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Credits Burned"
-          value={loading ? "Loading..." : stats ? formatNumber(stats.total_credits_used) : "0"}
+          value={stats ? formatNumber(stats.total_credits_used) : "0"}
           change={error ? error : "All-time credit usage"}
           icon={<Zap size={20} />}
+          loading={loading}
         />
         <StatCard
           title="Platform Revenue"
-          value={loading ? "Loading..." : stats ? formatCurrency(stats.total_revenue) : "$0"}
+          value={stats ? formatCurrency(stats.total_revenue) : "$0"}
           change={error ? error : "All-time revenue"}
           icon={<DollarSign size={20} />}
+          loading={loading}
         />
         <StatCard
           title="Active Users"
-          value={loading ? "Loading..." : stats ? formatNumber(stats.total_users) : "0"}
+          value={stats ? formatNumber(stats.total_users) : "0"}
           change={error ? error : "All registered users"}
           icon={<Users size={20} />}
+          loading={loading}
         />
         <StatCard
           title="Avg Usage/User"
-          value={loading ? "Loading..." : stats ? formatNumber(avgCreditsPerUser) : "0"}
+          value={stats ? formatNumber(avgCreditsPerUser) : "0"}
           change={error ? error : "Average credits per user"}
           icon={<BarChart3 size={20} />}
+          loading={loading}
         />
       </div>
 

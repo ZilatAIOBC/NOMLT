@@ -96,6 +96,7 @@ app.use("/api/admin/credits", require("./routes/adminCredits"));
 app.use("/api/admin/users", require("./routes/adminUsers"));
 app.use("/api/admin/models", require("./routes/adminModels"));
 app.use("/api/webhooks", require("./routes/webhooks"));
+app.use("/api/rate-limiter", require("./routes/rateLimiter"));
 
 // Schedule background jobs
 try {

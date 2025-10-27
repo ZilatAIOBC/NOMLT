@@ -187,9 +187,41 @@ export default function CreditPricing() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 text-[#8A3FFC] animate-spin" />
-        <span className="ml-3 text-gray-400">Loading pricing...</span>
+      <div className="space-y-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="h-7 w-64 bg-white/10 rounded animate-pulse mb-2"></div>
+            <div className="h-4 w-96 bg-white/5 rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        <div
+          className="rounded-lg border border-white/10 p-6"
+          style={{ background: 'linear-gradient(135deg, #0F0F0F 0%, #0D131F 100%)' }}
+        >
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-4 rounded-lg border border-white/10 bg-black/20"
+              >
+                <div className="flex-1 space-y-2">
+                  <div className="h-6 w-48 bg-white/10 rounded animate-pulse"></div>
+                  <div className="h-4 w-72 bg-white/5 rounded animate-pulse"></div>
+                  <div className="h-3 w-40 bg-white/5 rounded animate-pulse"></div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-20 h-10 bg-white/10 rounded animate-pulse"></div>
+                  <div className="w-16 h-6 bg-white/5 rounded animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex gap-3">
+            <div className="flex-1 h-12 bg-white/10 rounded animate-pulse"></div>
+          </div>
+        </div>
       </div>
     );
   }

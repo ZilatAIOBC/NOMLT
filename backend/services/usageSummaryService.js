@@ -125,10 +125,18 @@ async function updateUsageSummaryAfterGeneration(userId, generationData) {
     });
 
     // Update daily summary (NO lifetime fields for daily!)
-    const today = new Date(createdAt || new Date());
-    today.setHours(0, 0, 0, 0);
+    // Use UTC to avoid timezone issues - get the date in UTC
+    const createdDate = createdAt ? new Date(createdAt) : new Date();
+    const todayUTC = new Date(Date.UTC(
+      createdDate.getUTCFullYear(),
+      createdDate.getUTCMonth(),
+      createdDate.getUTCDate(),
+      0, 0, 0, 0
+    ));
     
-    await updateSummaryRecord(userId, 'daily', today.toISOString(), {
+    console.log(`📅 Date debug - createdAt: ${createdAt}, createdDate UTC: ${createdDate.toISOString()}, todayUTC: ${todayUTC.toISOString()}`);
+    
+    await updateSummaryRecord(userId, 'daily', todayUTC.toISOString(), {
       [countField]: 1,
       [creditsField]: creditsUsed,
       [successField]: status === 'completed' ? 1 : 0,
@@ -239,11 +247,16 @@ async function updateUsageSummaryAfterCreditsAdded(userId, amount, type) {
       lifetime_credits_spent: userCredits?.lifetime_spent || 0
     });
 
-    // Update today's summary
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Update today's summary - use UTC to avoid timezone issues
+    const now = new Date();
+    const todayUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0, 0, 0, 0
+    ));
     
-    await updateSummaryRecord(userId, 'daily', today.toISOString(), {
+    await updateSummaryRecord(userId, 'daily', todayUTC.toISOString(), {
       credits_earned_in_period: amount,
       credits_balance: userCredits?.balance || 0
     });
@@ -263,8 +276,14 @@ async function createDailySummariesForAllUsers() {
     console.log('📊 Creating daily usage summaries for all users...');
     
     const client = supabaseAdmin || supabase;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Use UTC to avoid timezone issues
+    const now = new Date();
+    const today = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0, 0, 0, 0
+    ));
 
     // Get all users with activity in last 30 days
     const { data: activeUsers } = await client

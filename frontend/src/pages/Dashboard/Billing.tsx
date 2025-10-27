@@ -198,16 +198,10 @@ const Billing: React.FC = () => {
           <div className="rounded-2xl border border-white/10 bg-[#0D131F] p-5 sm:p-6 max-w-2xl">
             <div className="text-lg font-semibold mb-4">Active Subscription</div>
             {loading ? (
-              <div className="space-y-5">
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gray-600/20 border border-white/10 flex items-center justify-center">
-                    <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
-                  </div>
-                  <div>
-                    <div className="text-sm text-white/80">Loading...</div>
-                    <div className="text-white/90">Please wait</div>
-                  </div>
-                </div>
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+                <div className="text-sm text-white/80">Loading billing information...</div>
+              
               </div>
             ) : error ? (
               <div className="text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">
@@ -339,9 +333,9 @@ const Billing: React.FC = () => {
             <div className="text-lg font-semibold mb-4">Transaction History</div>
             {loading ? (
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0D131F] p-8">
-                <div className="flex items-center justify-center">
-                  <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
-                  <span className="ml-2 text-white/70">Loading transactions...</span>
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+                  <span className="text-white/70">Loading transactions...</span>
                 </div>
               </div>
             ) : transactions.length > 0 ? (

@@ -73,8 +73,20 @@ const TopUsersByUsage = () => {
       >
         <h2 className="text-xl font-bold text-white mb-2">Top Users by Usage</h2>
         <p className="text-gray-400 text-sm mb-6">Highest credit consumption this month</p>
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5">
+              <div className="w-8 h-8 bg-white/10 rounded-full animate-pulse flex-shrink-0"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-32 bg-white/10 rounded animate-pulse"></div>
+                <div className="h-3 w-24 bg-white/5 rounded animate-pulse"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-20 bg-white/10 rounded animate-pulse"></div>
+                <div className="h-6 w-16 bg-white/10 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

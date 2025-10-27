@@ -65,9 +65,58 @@ const Credits: React.FC = () => {
           <p className="text-white/70 max-w-2xl mb-8">Manage your credits for AI model usage. Credits are used to access and run AI models on the platform.</p>
 
           {loading && (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-            </div>
+            <>
+              {/* Skeleton for Balance + CTA row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-8">
+                {/* Skeleton Balance card */}
+                <div className="rounded-2xl border border-white/10 bg-[#0B0B0B] px-5 py-6 sm:px-6 sm:py-7">
+                  <div className="h-4 w-32 bg-white/10 rounded animate-pulse mb-4"></div>
+                  <div className="h-12 w-40 bg-white/10 rounded animate-pulse mb-6"></div>
+                  <div className="pt-4 border-t border-white/10 space-y-3">
+                    <div className="h-4 w-full bg-white/5 rounded animate-pulse"></div>
+                    <div className="h-4 w-full bg-white/5 rounded animate-pulse"></div>
+                  </div>
+                </div>
+
+                {/* Skeleton CTA card */}
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-6 sm:px-6 sm:py-7">
+                  <div className="h-6 w-48 bg-white/10 rounded animate-pulse mb-3"></div>
+                  <div className="h-4 w-64 bg-white/10 rounded animate-pulse mb-4"></div>
+                  <div className="h-10 w-32 bg-white/10 rounded animate-pulse"></div>
+                </div>
+              </div>
+
+              {/* Skeleton for Transactions */}
+              <div className="rounded-2xl border border-white/10 overflow-hidden bg-[#0B0B0B]">
+                <div className="px-6 py-5 border-b border-white/10">
+                  <div className="h-6 w-48 bg-white/10 rounded animate-pulse mb-2"></div>
+                  <div className="h-4 w-64 bg-white/5 rounded animate-pulse"></div>
+                </div>
+                <div className="overflow-x-auto">
+                  <div className="px-4 py-3 border-b border-white/5">
+                    <div className="flex gap-4">
+                      <div className="h-4 w-24 bg-white/10 rounded animate-pulse"></div>
+                      <div className="h-4 w-40 bg-white/10 rounded animate-pulse"></div>
+                      <div className="h-4 w-24 bg-white/10 rounded animate-pulse ml-auto"></div>
+                      <div className="h-4 w-24 bg-white/10 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="px-4 py-4 border-b border-white/5">
+                      <div className="flex gap-4">
+                        <div className="h-4 w-28 bg-white/5 rounded animate-pulse"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-40 bg-white/5 rounded animate-pulse"></div>
+                          <div className="h-3 w-32 bg-white/5 rounded animate-pulse"></div>
+                        </div>
+                        <div className="h-4 w-24 bg-white/5 rounded animate-pulse"></div>
+                        <div className="h-4 w-24 bg-white/5 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
 
           {error && (

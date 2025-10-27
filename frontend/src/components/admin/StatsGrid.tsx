@@ -52,27 +52,31 @@ export const StatsGrid = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       <StatCard
         title="Total Users"
-        value={loading ? "Loading..." : stats ? formatNumber(stats.total_users) : "0"}
+        value={stats ? formatNumber(stats.total_users) : "0"}
         change={error ? error : "All registered users"}
         icon={<Users size={20} />}
+        loading={loading}
       />
       <StatCard
         title="Active Subscriptions"
-        value={loading ? "Loading..." : stats ? formatNumber(stats.active_subscriptions) : "0"}
+        value={stats ? formatNumber(stats.active_subscriptions) : "0"}
         change={error ? error : "Users with active plans"}
         icon={<CreditCard size={20} />}
+        loading={loading}
       />
       <StatCard
         title="Total Credits Used"
-        value={loading ? "Loading..." : stats ? formatNumber(stats.total_credits_used) : "0"}
+        value={stats ? formatNumber(stats.total_credits_used) : "0"}
         change={error ? error : "All-time credit usage"}
         icon={<Zap size={20} />}
+        loading={loading}
       />
       <StatCard
         title="Monthly Revenue (MRR)"
-        value={loading ? "Loading..." : stats ? formatCurrency(stats.mrr) : "$0"}
+        value={stats ? formatCurrency(stats.mrr) : "$0"}
         change={error ? error : "Monthly Recurring Revenue"}
         icon={<DollarSign size={20} />}
+        loading={loading}
       />
      
       <StatCard
@@ -80,12 +84,14 @@ export const StatsGrid = () => {
         value="4/4"
         change="All features enabled"
         icon={<Activity size={20} />}
+        loading={false}
       />
       <StatCard
         title="Avg Credits/User"
-        value={loading ? "Loading..." : stats ? formatNumber(avgCreditsPerUser) : "0"}
+        value={stats ? formatNumber(avgCreditsPerUser) : "0"}
         change={error ? error : "Average usage per user"}
         icon={<TrendingUp size={20} />}
+        loading={loading}
       />
     </div>
   );

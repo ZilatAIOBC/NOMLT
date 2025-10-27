@@ -2,6 +2,7 @@
 
 const axios = require("axios");
 const dotenv = require("dotenv");
+const { videoLimiter, pollLimiter } = require("./rateLimiterService");
 
 dotenv.config();
 
@@ -27,12 +28,17 @@ async function createImageToVideoJob(requestBody) {
   try {
     console.log('Backend: Creating image-to-video job with payload:', JSON.stringify(requestBody, null, 2));
     
-    const response = await axios.post(IMAGE_TO_VIDEO_API_URL, requestBody, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${IMAGE_TO_VIDEO_API_KEY}`,
-      },
-      timeout: 60_000,
+    // Schedule request through rate limiter
+    console.log('🔄 [Video Limiter] Request scheduled through rate limiter');
+    const response = await videoLimiter.schedule(async () => {
+      console.log('✅ [Video Limiter] Executing API request');
+      return await axios.post(IMAGE_TO_VIDEO_API_URL, requestBody, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${IMAGE_TO_VIDEO_API_KEY}`,
+        },
+        timeout: 60_000,
+      });
     });
 
     const data = response.data;
@@ -73,9 +79,13 @@ async function getImageToVideoResult(resultUrl, maxAttempts = 40, intervalMs = 6
 
   while (attempts < maxAttempts) {
     try {
-      const response = await axios.get(resultUrl, {
-        headers: { Authorization: `Bearer ${IMAGE_TO_VIDEO_API_KEY}` },
-        timeout: 60_000,
+      // Schedule poll request through rate limiter
+      const response = await pollLimiter.schedule(async () => {
+        console.log(`🔄 [Poll Limiter] Poll attempt ${attempts + 1} executing`);
+        return await axios.get(resultUrl, {
+          headers: { Authorization: `Bearer ${IMAGE_TO_VIDEO_API_KEY}` },
+          timeout: 60_000,
+        });
       });
 
       const data = response.data;

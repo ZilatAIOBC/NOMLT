@@ -111,7 +111,7 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
         <div className="flex flex-col justify-center items-center min-h-[500px] py-16">
           <div className="relative">
             {/* Loading Spinner */}
-            <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
           </div>
           <p className="text-white font-medium text-lg mb-2">Loading your generations</p>
           <p className="text-white/70 text-sm font-medium">Discovering your creative content</p>

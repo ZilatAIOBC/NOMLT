@@ -58,9 +58,9 @@ const Navbar: React.FC = () => {
   // removed scroll state: background remains constant across scroll
 
   return (
-    <nav className={`fixed top-0 inset-x-0 z-50 transition-colors bg-transparent`}>
+    <nav className={`fixed top-0 inset-x-0 z-50 transition-colors bg-transparent pt-2 sm:pt-0`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
-        <div className={`${isOpen ? 'mt-4 mb-[-3px]' : 'mt-4 mb-4'}` }>
+        <div className={`${isOpen ? 'mt-2 sm:mt-4 mb-[-3px]' : 'mt-2 sm:mt-4 mb-4'}` }>
           <div className={`flex items-center justify-between h-14 rounded-2xl border border-[#8A3FFC66] bg-[#111215B2] backdrop-blur-md px-3 sm:px-4 lg:px-6 ${isOpen ? 'rounded-b-none border-b-0 shadow-none' : 'shadow-[0_0_0_1px_rgba(255,255,255,0.05)]'}` }>
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 flex-shrink-0">
@@ -121,7 +121,7 @@ const Navbar: React.FC = () => {
         {/* Mobile Navigation */}
         {isOpen && (
           <div className="lg:hidden pb-0">
-            <div className="-mt-[3px] rounded-2xl rounded-t-none border border-t-0 border-[#8A3FFC66] bg-[#111215B2] backdrop-blur-md px-2 pt-2 pb-3 sm:px-3">
+            <div className="-mt-[3px] rounded-2xl rounded-t-none border border-t-0 border-[#8A3FFC66] bg-[#111215B2] backdrop-blur-md px-2 pt-4 pb-3 sm:px-3">
               {navLinks.map((link) => (
                 <button
                   key={link.name}

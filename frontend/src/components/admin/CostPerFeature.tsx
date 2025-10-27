@@ -50,7 +50,14 @@ const CostPerFeature = () => {
       <p className="text-gray-400 text-sm mb-6">Total cost in USD (Usage × AI Model Price)</p>
 
       {loading ? (
-        <div className="text-gray-400 text-center py-8">Loading cost data...</div>
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5">
+              <div className="h-4 w-32 bg-white/10 rounded animate-pulse"></div>
+              <div className="h-6 w-20 bg-white/10 rounded-full animate-pulse"></div>
+            </div>
+          ))}
+        </div>
       ) : error ? (
         <div className="text-red-400 text-center py-8">{error}</div>
       ) : features.length === 0 ? (

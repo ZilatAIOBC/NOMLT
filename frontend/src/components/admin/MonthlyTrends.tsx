@@ -63,9 +63,9 @@ const MonthlyTrends = () => {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-gray-800/50 border border-gray-700/50 animate-pulse">
-              <div className="h-4 w-24 bg-gray-700 rounded"></div>
-              <div className="h-6 w-16 bg-gray-700 rounded-full"></div>
+            <div key={i} className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/5">
+              <div className="h-4 w-32 bg-white/10 rounded animate-pulse"></div>
+              <div className="h-6 w-16 bg-white/10 rounded-full animate-pulse"></div>
             </div>
           ))}
         </div>

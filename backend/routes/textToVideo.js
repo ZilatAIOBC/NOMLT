@@ -133,7 +133,7 @@ router.get("/result", auth, async (req, res) => {
         generationType: 'text-to-video',
         creditsUsed: creditCost,
         status: 'completed',
-        createdAt: new Date().toISOString()
+        createdAt: generation.created_at
       }).catch(err => console.error('Failed to update usage summary:', err));
         
     } catch (creditError) {

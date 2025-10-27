@@ -52,7 +52,16 @@ export const TopUsedFeatures = () => {
       <p className="text-gray-400 text-sm mb-6">Feature usage breakdown</p>
       
       {loading ? (
-        <div className="text-gray-400 text-center py-8">Loading feature usage...</div>
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col gap-3">
+              <div className="h-4 w-48 bg-white/10 rounded animate-pulse"></div>
+              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full w-1/4 bg-white/10 animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : error ? (
         <div className="text-red-400 text-center py-8">{error}</div>
       ) : features.length === 0 ? (

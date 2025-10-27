@@ -65,8 +65,9 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
       <div className="p-4 sm:p-6">
         <div className="max-w-full">
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Recent Generations</h2>
-          <div className="flex items-center justify-center py-12">
-            <div className="w-8 h-8 border-4 border-purple-400 border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
+            <div className="text-sm text-white/80">Loading recent generations...</div>
           </div>
         </div>
       </div>
