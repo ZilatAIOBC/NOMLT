@@ -18,13 +18,32 @@ app.use(fileUpload({ limits: { fileSize: 100 * 1024 * 1024 } }));
 //allow all origins
 // app.use(cors());
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5000',
+  'http://localhost:8080',
+  'https://nolmt.ai',
+  'https://www.nolmt.ai',
+ 
+ 
+  'https://api.nolmt.ai',
+  
+];
+
 const corsOptions = {
   origin: (origin, callback) => {
+    // Allow non-browser requests (like Postman, mobile apps, etc.)
     if (!origin) {
-      // Allow non-browser requests (like Postman)
       return callback(null, true);
     }
-    callback(null, origin); // Allow all origins dynamicall
+    
+    // Check if the origin is in the allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
   },
   credentials: true, // Allow credentials (cookies, authentication, etc.)
 };
