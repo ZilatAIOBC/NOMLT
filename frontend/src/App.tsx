@@ -1,22 +1,25 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import Landing from './pages/Landingpage /Landing';
-import SignUp from './pages/auth/SignUp';
-import SignIn from './pages/auth/SignIn';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
-import AuthCallback from './pages/auth/AuthCallback';
-import Dashboard from './pages/Dashboard/Dashboard';
-import AdminLayout from './pages/Admin/AdminLayout';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import UserManagement from './pages/Admin/UserManagement';
-import PlansAndPricing from './pages/Admin/PlansAndPricing';
-import Analytics from './pages/Admin/Analytics';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsAndConditions from './pages/TermsAndConditions';
-import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
-import UserProtectedRoute from './components/auth/UserProtectedRoute';
+import { lazy, Suspense } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { useEffect, useRef } from 'react';
+import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
+import UserProtectedRoute from './components/auth/UserProtectedRoute';
+
+// Lazy load components for code splitting
+const Landing = lazy(() => import('./pages/Landingpage /Landing'));
+const SignUp = lazy(() => import('./pages/auth/SignUp'));
+const SignIn = lazy(() => import('./pages/auth/SignIn'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
+const AuthCallback = lazy(() => import('./pages/auth/AuthCallback'));
+const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard'));
+const AdminLayout = lazy(() => import('./pages/Admin/AdminLayout'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
+const UserManagement = lazy(() => import('./pages/Admin/UserManagement'));
+const PlansAndPricing = lazy(() => import('./pages/Admin/PlansAndPricing'));
+const Analytics = lazy(() => import('./pages/Admin/Analytics'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'));
 
 function VerifiedToastListener() {
   const location = useLocation();
@@ -41,35 +44,41 @@ function App() {
       <VerifiedToastListener />
       <Toaster position="top-right" />
       <div className="min-h-screen bg-gray-900">
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-          
-          {/* User Dashboard Routes - Protected */}
-          <Route path="/dashboard/*" element={
-            <UserProtectedRoute>
-              <Dashboard />
-            </UserProtectedRoute>
-          } />
-          
-          {/* Admin Routes - Protected */}
-          <Route path="/admin" element={
-            <AdminProtectedRoute>
-              <AdminLayout />
-            </AdminProtectedRoute>
-          }>
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="plans" element={<PlansAndPricing />} />
-            <Route path="analytics" element={<Analytics />} />
-          </Route>
-        </Routes>
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          </div>
+        }>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+            
+            {/* User Dashboard Routes - Protected */}
+            <Route path="/dashboard/*" element={
+              <UserProtectedRoute>
+                <Dashboard />
+              </UserProtectedRoute>
+            } />
+            
+            {/* Admin Routes - Protected */}
+            <Route path="/admin" element={
+              <AdminProtectedRoute>
+                <AdminLayout />
+              </AdminProtectedRoute>
+            }>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="users" element={<UserManagement />} />
+              <Route path="plans" element={<PlansAndPricing />} />
+              <Route path="analytics" element={<Analytics />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </div>
     </Router>
   );
