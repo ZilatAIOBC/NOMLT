@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
 import RecentGenerations from '../../components/dashboard/RecentGenerations';
@@ -10,7 +11,21 @@ import { fetchUsageSummary } from '../../services/usageService';
 import { useCreditCost } from '../../hooks/useCreditCost';
 
 const TextToImage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [prompt, setPrompt] = useState('');
+
+  // Auto-fill prompt from URL params
+  useEffect(() => {
+    const urlPrompt = searchParams.get('prompt');
+    if (urlPrompt) {
+      setPrompt(decodeURIComponent(urlPrompt));
+      // Clean up URL after extracting prompt
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('prompt');
+      const newUrl = window.location.pathname + (newSearchParams.toString() ? `?${newSearchParams.toString()}` : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
   // These flags are fixed to false per API requirements
   const [status, setStatus] = useState<'idle' | 'generating' | 'completed'>('idle');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
