@@ -10,6 +10,10 @@ dotenv.config();
 
 const app = express();
 
+// IMPORTANT: Webhook endpoint needs raw body for Stripe signature verification
+// Add this BEFORE any body parsing middleware
+app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
+
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(fileUpload({ limits: { fileSize: 100 * 1024 * 1024 } }));
