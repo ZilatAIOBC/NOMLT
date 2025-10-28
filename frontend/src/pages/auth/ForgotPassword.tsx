@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Button from '../../components/common/Button';
 import { authService } from '../../services/authService';
 import { Mail } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -29,52 +28,68 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center px-4 sm:px-6 lg:px-8" style={{ backgroundImage: 'url(/authbg.png)' }}>
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-block mb-6">
-            <img 
-              src="/logo.svg" 
-              alt="NOLMT.AI" 
-              className="h-10 mx-auto"
-            />
-          </Link>
-          <h2 className="text-3xl font-bold text-white mb-2">Forgot your password?</h2>
-          <p className="text-gray-400">Enter your email to receive a reset link</p>
-        </div>
+        {/* Form Container with Glow Effect */}
+        <div className="bg-black/20 backdrop-blur-md border rounded-2xl p-8 shadow-[0_0_30px_rgba(138,63,252,0.4)]" style={{ borderColor: '#8A3FFC' }}>
+          {/* Logo */}
+          <div className="text-center mb-6">
+            <Link to="/" className="inline-block">
+              <img 
+                src="/logo.svg" 
+                alt="NOLMT.AI" 
+                className="h-8 mx-auto"
+              />
+            </Link>
+          </div>
 
-        <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-white mb-1">Forgot your password?</h2>
+            <p className="text-gray-400 text-sm">Enter your email to receive a reset link</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address
+                Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="email"
                   id="email"
                   name="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 bg-gray-700/50 border rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors ${
-                    error ? 'border-red-500 focus:ring-red-500' : 'border-gray-600 focus:ring-blue-500 focus:border-transparent'
+                  className={`w-full pl-10 pr-4 py-2.5 bg-gray-900/50 border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-colors text-sm ${
+                    error 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-600 focus:border-transparent'
                   }`}
-                  placeholder="john@example.com"
+                  style={!error ? { '--tw-ring-color': '#8A3FFC' } as React.CSSProperties : {}}
+                  placeholder="Email"
                 />
               </div>
-              {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
+              {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
             </div>
 
-            <Button type="submit" variant="primary" size="lg" className="w-full" disabled={loading}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ marginTop: '2rem' }}
+            >
               {loading ? 'Sending...' : 'Send reset link'}
-            </Button>
+            </button>
           </form>
 
+          {/* Sign In Link */}
           <div className="mt-6 text-center">
-            <p className="text-gray-400">
+            <p className="text-white text-sm">
               Remembered your password?{' '}
-              <Link to="/signin" className="text-blue-400 hover:text-blue-300 font-medium">
+              <Link to="/signin" className="font-medium hover:opacity-80" style={{ color: '#8A3FFC' }}>
                 Sign in
               </Link>
             </p>

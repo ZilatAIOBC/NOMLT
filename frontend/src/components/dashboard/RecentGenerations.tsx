@@ -92,18 +92,32 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
       <div className="p-4 sm:p-6">
         <div className="max-w-full">
           <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Recent Generations</h2>
-          <div className="bg-white/5 border border-white/10 rounded-lg p-8 sm:p-12 text-center">
-            <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-4">
+          <div className="flex flex-col justify-center items-center h-80 py-12">
+            {/* Icon */}
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mb-6">
               {isVideoGeneration(generationType) ? (
-                <Play className="w-8 h-8 text-gray-400" />
+                <Play className="w-8 h-8 text-white/60" />
               ) : (
-                <ImageIcon className="w-8 h-8 text-gray-400" />
+                <ImageIcon className="w-8 h-8 text-white/60" />
               )}
             </div>
-            <p className="text-gray-400 text-base sm:text-lg mb-2">No recent generations yet</p>
-            <p className="text-gray-500 text-sm">
-              Start creating amazing {isVideoGeneration(generationType) ? 'videos' : 'images'} and they'll appear here!
+            
+            {/* Main Heading */}
+            <h3 className="text-white text-2xl font-semibold mb-3">
+              No recent generations yet
+            </h3>
+            
+            {/* Subheading */}
+            <p className="text-white/80 text-base mb-6 text-center max-w-md">
+              Start creating to see your AI-generated {isVideoGeneration(generationType) ? 'videos' : 'images'} here
             </p>
+            
+            {/* Simple Guide Message */}
+            <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+              <p className="text-white/80 text-sm text-center">
+                Create your first {generationType.replace('-', ' ')} to see it here
+              </p>
+            </div>
           </div>
         </div>
       </div>
