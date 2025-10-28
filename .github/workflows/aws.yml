@@ -36,7 +36,7 @@ on:
 env:
   AWS_REGION: eu-west-1                   # set this to your preferred AWS region, e.g. us-west-1
   ECR_REPOSITORY: nolmt-backend           # set this to your Amazon ECR repository name
-  ECS_SERVICE: nolmt-backend-service                 # set this to your Amazon ECS service name
+  ECS_SERVICE: nolmt-backend-task-service                 # set this to your Amazon ECS service name
   ECS_CLUSTER: nolmt-backend                # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION: .github/workflows/nolmt-backend-task-revision1.json # set this to the path to your Amazon ECS task definition
                                                # file, e.g. .aws/task-definition.json
