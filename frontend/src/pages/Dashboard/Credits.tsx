@@ -19,7 +19,7 @@ const Credits: React.FC = () => {
       const data = await getCreditSummary();
       setCreditData(data);
     } catch (err) {
-      console.error('Error fetching credit data:', err);
+      // Removed console for production
       setError('Failed to load credit information');
     } finally {
       setLoading(false);

@@ -65,11 +65,9 @@ async function getOrCreateUsageSummary(userId, periodType = 'all_time', periodSt
       throw new Error(`Failed to create usage summary: ${createError.message}`);
     }
 
-    console.log(`Usage Summary: Created new ${periodType} summary for user ${userId}`);
     return newSummary;
 
   } catch (error) {
-    console.error('Usage Summary Service: Error getting/creating summary:', error);
     throw error;
   }
 }
@@ -89,7 +87,6 @@ async function updateUsageSummaryAfterGeneration(userId, generationData) {
       createdAt
     } = generationData;
 
-    console.log(`📊 Updating usage summary for ${userId} - ${generationType}, ${creditsUsed} credits, status: ${status}`);
 
     const client = supabaseAdmin || supabase;
 
@@ -134,7 +131,6 @@ async function updateUsageSummaryAfterGeneration(userId, generationData) {
       0, 0, 0, 0
     ));
     
-    console.log(`📅 Date debug - createdAt: ${createdAt}, createdDate UTC: ${createdDate.toISOString()}, todayUTC: ${todayUTC.toISOString()}`);
     
     await updateSummaryRecord(userId, 'daily', todayUTC.toISOString(), {
       [countField]: 1,
@@ -151,10 +147,8 @@ async function updateUsageSummaryAfterGeneration(userId, generationData) {
       // Note: lifetime_* fields are ONLY for all_time records
     });
 
-    console.log(`✅ Usage summary updated for ${generationType}`);
 
   } catch (error) {
-    console.error('Usage Summary Service: Error updating after generation:', error);
     // Don't throw - generation already succeeded
   }
 }
@@ -215,7 +209,6 @@ async function updateSummaryRecord(userId, periodType, periodStart, increments) 
     }
 
   } catch (error) {
-    console.error('Usage Summary Service: Error updating record:', error);
     throw error;
   }
 }
@@ -228,7 +221,6 @@ async function updateSummaryRecord(userId, periodType, periodStart, increments) 
  */
 async function updateUsageSummaryAfterCreditsAdded(userId, amount, type) {
   try {
-    console.log(`📊 Updating usage summary after credits added: ${amount} (${type})`);
 
     const client = supabaseAdmin || supabase;
 
@@ -262,7 +254,6 @@ async function updateUsageSummaryAfterCreditsAdded(userId, amount, type) {
     });
 
   } catch (error) {
-    console.error('Usage Summary Service: Error updating after credits added:', error);
     // Don't throw - credits already added
   }
 }
@@ -273,7 +264,6 @@ async function updateUsageSummaryAfterCreditsAdded(userId, amount, type) {
  */
 async function createDailySummariesForAllUsers() {
   try {
-    console.log('📊 Creating daily usage summaries for all users...');
     
     const client = supabaseAdmin || supabase;
     // Use UTC to avoid timezone issues
@@ -299,16 +289,13 @@ async function createDailySummariesForAllUsers() {
         await getOrCreateUsageSummary(user.user_id, 'daily', today.toISOString());
         created++;
       } catch (error) {
-        console.error(`Failed to create daily summary for user ${user.user_id}:`, error);
         errors++;
       }
     }
 
-    console.log(`✅ Daily summaries created: ${created}, Errors: ${errors}`);
     return { created, errors };
 
   } catch (error) {
-    console.error('Usage Summary Service: Error creating daily summaries:', error);
     throw error;
   }
 }
@@ -345,7 +332,6 @@ async function getUserUsageSummary(userId, periodType = 'all_time', periodStart 
     return data;
 
   } catch (error) {
-    console.error('Usage Summary Service: Error getting summary:', error);
     return null;
   }
 }
@@ -376,7 +362,6 @@ async function getUserUsageTrend(userId, periodType = 'daily', limit = 30) {
     return data || [];
 
   } catch (error) {
-    console.error('Usage Summary Service: Error getting trend:', error);
     return [];
   }
 }
@@ -454,7 +439,6 @@ async function getAggregatedStats(periodType = 'all_time', periodStart = null) {
     return aggregated;
 
   } catch (error) {
-    console.error('Usage Summary Service: Error getting aggregated stats:', error);
     throw error;
   }
 }
@@ -466,7 +450,6 @@ async function getAggregatedStats(periodType = 'all_time', periodStart = null) {
  */
 async function recalculateUsageSummary(userId, periodType = 'all_time') {
   try {
-    console.log(`🔄 Recalculating ${periodType} usage summary for user ${userId}...`);
     
     const client = supabaseAdmin || supabase;
 
@@ -549,11 +532,9 @@ async function recalculateUsageSummary(userId, periodType = 'all_time') {
       throw new Error(`Failed to recalculate: ${error.message}`);
     }
 
-    console.log(`✅ Recalculated ${periodType} summary for user ${userId}`);
     return stats;
 
   } catch (error) {
-    console.error('Usage Summary Service: Error recalculating:', error);
     throw error;
   }
 }

@@ -14,7 +14,6 @@ async function getUserId(req) {
         return user.id;
       }
     } catch (err) {
-      console.error('Error validating token:', err);
     }
   }
 
@@ -84,7 +83,6 @@ router.get('/', async (req, res) => {
     res.json(transactions);
 
   } catch (error) {
-    console.error('Error fetching transactions:', error);
     res.status(500).json({ error: error.message });
   }
 });

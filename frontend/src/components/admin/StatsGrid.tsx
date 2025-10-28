@@ -19,7 +19,6 @@ export const StatsGrid = () => {
       setStats(data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching dashboard stats:', err);
       setError('Failed to load dashboard statistics');
     } finally {
       setLoading(false);

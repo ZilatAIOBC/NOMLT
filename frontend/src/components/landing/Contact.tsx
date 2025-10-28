@@ -20,7 +20,7 @@ const Contact: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Contact form:', formData);
+    // Removed console for production
     setFormData({ firstName: '', lastName: '', email: '', phone: '', message: '' });
   };
 

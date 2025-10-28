@@ -78,9 +78,9 @@ export default function PlansAndPricing() {
   const handleSave = async (payload: Partial<{ display_name: string; price_monthly: number; credits_included: number; features: string[] }>) => {
     if (!selectedPlanData) return;
     const planId = selectedPlanData.id;
-    console.log('Sending update to API:', { planId, updatePayload: payload });
+    // Removed console for production
     const result = await adminPlansService.updatePlan(planId, payload);
-    console.log('Update result from API:', result);
+    // Removed console for production
     setPlans(prev => prev.map(p => {
       if (p.id !== planId) return p;
       return {

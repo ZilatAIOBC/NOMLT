@@ -60,7 +60,6 @@ router.post('/manual-adjust', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in manual credit adjustment:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to adjust credits',
@@ -130,7 +129,6 @@ router.get('/failed-generations', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching failed generations:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch failed generations',
@@ -187,7 +185,6 @@ router.post('/refund-failed/:generationId', auth, requireAdmin, async (req, res)
     });
 
   } catch (error) {
-    console.error('Error refunding failed generation:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to refund credits',
@@ -263,7 +260,6 @@ router.post('/bulk-refund-failed', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in bulk refund:', error);
     res.status(500).json({
       success: false,
       error: 'Bulk refund failed',
@@ -330,7 +326,6 @@ router.get('/stats', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching credit stats:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch credit statistics',

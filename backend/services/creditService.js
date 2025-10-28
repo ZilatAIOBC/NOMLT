@@ -28,7 +28,6 @@ async function getUserCredits(userId) {
     if (error) {
       // If user has no credit record, create one with 0 balance
       if (error.code === 'PGRST116') {
-        console.log(`Credit Service: Creating credit record for user ${userId}`);
         
         const { data: newCredit, error: createError } = await client
           .from('user_credits')
@@ -58,7 +57,6 @@ async function getUserCredits(userId) {
 
     return data;
   } catch (error) {
-    console.error('Credit Service: Error getting user credits:', error);
     throw error;
   }
 }
@@ -74,7 +72,6 @@ async function hasEnoughCredits(userId, amount) {
     const credits = await getUserCredits(userId);
     return credits.balance >= amount;
   } catch (error) {
-    console.error('Credit Service: Error checking credits:', error);
     return false;
   }
 }
@@ -91,7 +88,6 @@ async function hasEnoughCredits(userId, amount) {
  */
 async function deductCredits(userId, amount, generationType, generationId) {
   try {
-    console.log(`Credit Service: Deducting ${amount} credits from user ${userId} for ${generationType}`);
     
     const client = supabaseAdmin || supabase;
     
@@ -106,7 +102,6 @@ async function deductCredits(userId, amount, generationType, generationId) {
         .maybeSingle();
 
       if (existingTransaction) {
-        console.log(`Credit Service: Credits already deducted for generation ${generationId}, skipping (idempotent)`);
         return {
           amount_deducted: existingTransaction.amount,
           new_balance: existingTransaction.balance_after,
@@ -137,7 +132,6 @@ async function deductCredits(userId, amount, generationType, generationId) {
     // Get updated balance
     const updatedCredits = await getUserCredits(userId);
     
-    console.log(`Credit Service: Successfully deducted ${amount} credits. New balance: ${updatedCredits.balance}`);
     
     return {
       amount_deducted: amount,
@@ -146,7 +140,6 @@ async function deductCredits(userId, amount, generationType, generationId) {
       idempotent: false
     };
   } catch (error) {
-    console.error('Credit Service: Error deducting credits:', error);
     throw error;
   }
 }
@@ -164,7 +157,6 @@ async function deductCredits(userId, amount, generationType, generationId) {
  */
 async function addCredits(userId, amount, type = 'earned', description = 'Credits added', referenceId = null, referenceType = null) {
   try {
-    console.log(`Credit Service: Adding ${amount} credits to user ${userId} - Type: ${type}`);
     
     const client = supabaseAdmin || supabase;
     
@@ -185,7 +177,6 @@ async function addCredits(userId, amount, type = 'earned', description = 'Credit
     // Get updated balance
     const updatedCredits = await getUserCredits(userId);
     
-    console.log(`Credit Service: Successfully added ${amount} credits. New balance: ${updatedCredits.balance}`);
     
     return {
       amount_added: amount,
@@ -193,7 +184,6 @@ async function addCredits(userId, amount, type = 'earned', description = 'Credit
       lifetime_earned: updatedCredits.lifetime_earned
     };
   } catch (error) {
-    console.error('Credit Service: Error adding credits:', error);
     throw error;
   }
 }
@@ -210,7 +200,6 @@ async function addCredits(userId, amount, type = 'earned', description = 'Credit
  */
 async function spendCredits(userId, amount, description = 'Credits spent', referenceId = null, referenceType = null) {
   try {
-    console.log(`Credit Service: Spending ${amount} credits for user ${userId} - ${description}`);
 
     const client = supabaseAdmin || supabase;
 
@@ -235,7 +224,6 @@ async function spendCredits(userId, amount, description = 'Credits spent', refer
       lifetime_spent: updatedCredits.lifetime_spent
     };
   } catch (error) {
-    console.error('Credit Service: Error spending credits:', error);
     throw error;
   }
 }
@@ -252,7 +240,6 @@ async function spendCredits(userId, amount, description = 'Credits spent', refer
  */
 async function refundCredits(userId, amount, generationType, generationId, reason = 'Generation failed') {
   try {
-    console.log(`Credit Service: Refunding ${amount} credits to user ${userId} - Reason: ${reason}`);
     
     const client = supabaseAdmin || supabase;
     
@@ -267,7 +254,6 @@ async function refundCredits(userId, amount, generationType, generationId, reaso
         .maybeSingle();
 
       if (existingRefund) {
-        console.log(`Credit Service: Credits already refunded for generation ${generationId}, skipping (idempotent)`);
         return {
           amount_refunded: existingRefund.amount,
           new_balance: existingRefund.balance_after,
@@ -294,7 +280,6 @@ async function refundCredits(userId, amount, generationType, generationId, reaso
     // Get updated balance
     const updatedCredits = await getUserCredits(userId);
     
-    console.log(`Credit Service: Successfully refunded ${amount} credits. New balance: ${updatedCredits.balance}`);
     
     return {
       amount_refunded: amount,
@@ -303,7 +288,6 @@ async function refundCredits(userId, amount, generationType, generationId, reaso
       idempotent: false
     };
   } catch (error) {
-    console.error('Credit Service: Error refunding credits:', error);
     throw error;
   }
 }
@@ -330,7 +314,6 @@ async function checkCreditsForGeneration(userId, generationType) {
       balanceAfter: hasEnough ? credits.balance - cost : credits.balance
     };
   } catch (error) {
-    console.error('Credit Service: Error checking credits for generation:', error);
     throw error;
   }
 }
@@ -345,7 +328,6 @@ async function checkCreditsForGeneration(userId, generationType) {
  */
 async function resetCredits(userId, amount, description = 'Credits reset') {
   try {
-    console.log(`Credit Service: Resetting credits for user ${userId} to ${amount}`);
     
     const client = supabaseAdmin || supabase;
     
@@ -377,7 +359,6 @@ async function resetCredits(userId, amount, description = 'Credits reset') {
         reference_type: 'subscription'
       });
 
-    console.log(`Credit Service: Successfully reset credits to ${amount}`);
     
     return {
       old_balance: currentCredits.balance,
@@ -385,7 +366,6 @@ async function resetCredits(userId, amount, description = 'Credits reset') {
       difference: amount - currentCredits.balance
     };
   } catch (error) {
-    console.error('Credit Service: Error resetting credits:', error);
     throw error;
   }
 }
@@ -422,9 +402,7 @@ async function safeDeductCreditsWithRefund(userId, amount, generationType, gener
     if (creditsDeducted && generationId) {
       try {
         await refundCredits(userId, amount, generationType, generationId, 'Generation processing failed');
-        console.log(`Credit Service: Auto-refunded ${amount} credits due to failure`);
       } catch (refundError) {
-        console.error('Credit Service: Failed to auto-refund credits:', refundError);
         // Log but don't throw - we want to show the original error
       }
     }
@@ -468,11 +446,9 @@ async function handleGenerationFailure(userId, generationId, amount, generationT
     // If credits were deducted, refund them
     if (deductionRecord) {
       await refundCredits(userId, deductionRecord.amount, generationType, generationId, reason);
-      console.log(`Credit Service: Refunded ${deductionRecord.amount} credits for failed generation ${generationId}`);
     }
 
   } catch (error) {
-    console.error('Credit Service: Error handling generation failure:', error);
     throw error;
   }
 }

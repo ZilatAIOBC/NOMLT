@@ -75,12 +75,10 @@ async function fetchCreditCostsFromDB() {
       .order('sort_order');
 
     if (error) {
-      console.error('Error fetching credit costs from ai_models:', error);
       return null;
     }
 
     if (!data || data.length === 0) {
-      console.warn('No AI models found in database, using fallback costs');
       return null;
     }
 
@@ -97,13 +95,11 @@ async function fetchCreditCostsFromDB() {
 
     // If we didn't find all categories, return null to use fallback
     if (Object.keys(costs).length < 4) {
-      console.warn('Not all categories found in ai_models, using fallback costs');
       return null;
     }
 
     return costs;
   } catch (error) {
-    console.error('Unexpected error fetching credit costs from ai_models:', error);
     return null;
   }
 }
@@ -131,7 +127,6 @@ async function getAllCreditCostsWithCache() {
   }
 
   // Fallback to hardcoded costs
-  console.warn('Using fallback credit costs');
   return FALLBACK_CREDIT_COSTS;
 }
 
@@ -167,7 +162,6 @@ async function getCreditCost(generationType) {
 function invalidateCreditCostsCache() {
   creditCostsCache = null;
   cacheTimestamp = null;
-  console.log('Credit costs cache invalidated');
 }
 
 /**

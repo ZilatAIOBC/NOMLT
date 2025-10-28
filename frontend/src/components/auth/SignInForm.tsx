@@ -53,17 +53,12 @@ const SignInForm: React.FC = () => {
         password: formData.password,
       });
 
-      console.log('SignInForm: Login response:', response);
-      console.log('SignInForm: User role:', response.user?.role);
-
       toast.success('Logged in successfully');
       
       // Redirect based on user role
       if (response.user?.role === 'admin') {
-        console.log('SignInForm: Redirecting to admin dashboard');
         navigate('/admin/dashboard');
       } else {
-        console.log('SignInForm: Redirecting to user dashboard');
         navigate('/dashboard');
       }
     } catch (error: any) {

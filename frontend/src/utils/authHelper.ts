@@ -43,9 +43,9 @@ class AuthHelper {
 
       // Final fallback
       const sbSimple = localStorage.getItem('sb-access-token');
-      if (sbSimple) return sbSimple;
+      if (sbSimple)       return sbSimple;
     } catch (error) {
-      console.error('Error getting access token:', error);
+      // Silently fail if can't get token
     }
     return null;
   }
@@ -57,7 +57,6 @@ class AuthHelper {
     try {
       return localStorage.getItem('refreshToken');
     } catch (error) {
-      console.error('Error getting refresh token:', error);
       return null;
     }
   }
@@ -90,7 +89,6 @@ class AuthHelper {
     try {
       const refreshToken = this.getRefreshToken();
       if (!refreshToken) {
-        console.warn('No refresh token available');
         return false;
       }
 
@@ -101,7 +99,6 @@ class AuthHelper {
       });
 
       if (!response.ok) {
-        console.warn('Token refresh failed:', response.status);
         return false;
       }
 
@@ -113,17 +110,14 @@ class AuthHelper {
           if (data.refreshToken) {
             localStorage.setItem('refreshToken', data.refreshToken);
           }
-          console.log('Token refreshed successfully');
           return true;
         } catch (storageError) {
-          console.error('Failed to store refreshed tokens:', storageError);
           return false;
         }
       }
 
       return false;
     } catch (error) {
-      console.error('Error refreshing token:', error);
       return false;
     }
   }
@@ -137,7 +131,7 @@ class AuthHelper {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
     } catch (error) {
-      console.error('Error clearing localStorage:', error);
+      // Silently fail if can't clear
     }
 
     // Avoid multiple redirects in rapid succession
@@ -184,7 +178,6 @@ class AuthHelper {
 
     // If 401, try to refresh token and retry once
     if (response.status === 401) {
-      console.warn('Received 401, attempting token refresh...');
       const refreshed = await this.tryRefreshToken();
       
       if (refreshed) {
@@ -194,7 +187,6 @@ class AuthHelper {
 
       // If still 401 after refresh, force logout
       if (response.status === 401) {
-        console.error('Session expired, logging out...');
         this.forceLogoutAndRedirect('expired');
       }
     }
@@ -231,7 +223,6 @@ class AuthHelper {
       if (!authUser) return null;
       return JSON.parse(authUser);
     } catch (error) {
-      console.error('Error getting current user:', error);
       return null;
     }
   }

@@ -18,7 +18,6 @@ export const ActiveUsers = () => {
       const data = await getTopUsers(4, 'credits'); // Get top 4 users by credits spent
       setTopUsers(data.top_users);
     } catch (err) {
-      console.error('Error fetching top users:', err);
       setError('Failed to load top users');
     } finally {
       setLoading(false);

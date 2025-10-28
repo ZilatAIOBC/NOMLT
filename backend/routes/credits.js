@@ -48,7 +48,6 @@ router.get('/costs', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching credit costs:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch credit costs',
@@ -86,7 +85,6 @@ router.get('/costs/:generationType', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching credit cost:', error);
     res.status(400).json({
       success: false,
       error: 'Failed to fetch credit cost',
@@ -158,7 +156,6 @@ router.get('/balance', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching credit balance:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch credit balance',
@@ -211,7 +208,6 @@ router.get('/transactions', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching credit transactions:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch credit transactions',
@@ -273,7 +269,6 @@ router.get('/summary', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching credit summary:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch credit summary',

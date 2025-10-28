@@ -90,8 +90,6 @@ export default function CreditPricing() {
       setModelsUpdated(counts);
 
     } catch (error: any) {
-      console.error('Error fetching pricing:', error);
-      
       // Don't show error toast for auth issues - component will use fallback pricing
       if (!error.message?.includes('authentication') && !error.message?.includes('Unauthorized')) {
         toast.error('Could not load pricing from database. Using default values.');
@@ -163,12 +161,10 @@ export default function CreditPricing() {
         });
         setModelsUpdated(counts);
       } else {
-        toast.error('Some updates failed. Check console for details.');
-        console.error('Update errors:', result.errors);
+        toast.error('Some updates failed.');
       }
 
     } catch (error: any) {
-      console.error('Error saving pricing:', error);
       toast.error(error.message || 'Failed to update pricing');
     } finally {
       setSaving(false);

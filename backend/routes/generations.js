@@ -9,7 +9,7 @@ const {
   deleteGeneration,
   getUserGenerationStats,
 } = require("../models/Generation");
-const { getSignedS3Url } = require("../services/s3Service");
+const { getSignedS3Url, deleteFromS3 } = require("../services/s3Service");
 
 /**
  * GET /api/generations
@@ -26,8 +26,6 @@ router.get("/", verifyToken, async (req, res) => {
       orderDirection = "desc",
     } = req.query;
 
-    console.log('Generations Route: User requesting generations:', userId);
-    console.log('Generations Route: Query params:', { type, limit, offset, orderBy, orderDirection });
 
     const generations = await getUserGenerations(userId, {
       generationType: type,
@@ -38,7 +36,6 @@ router.get("/", verifyToken, async (req, res) => {
     });
 
     // Generate fresh signed URLs for all generations (24-hour expiry)
-    console.log(`Generations Route: Generating fresh signed URLs for ${generations.length} generations`);
     const generationsWithFreshUrls = await Promise.all(
       generations.map(async (gen) => {
         try {
@@ -48,13 +45,11 @@ router.get("/", verifyToken, async (req, res) => {
             s3_url: freshSignedUrl, // Replace old expired URL with fresh one
           };
         } catch (error) {
-          console.error(`Generations Route: Failed to generate signed URL for ${gen.id}:`, error.message);
           return gen; // Return original if signing fails
         }
       })
     );
 
-    console.log(`Generations Route: Returning ${generationsWithFreshUrls.length} generations with fresh URLs for user ${userId}`);
     
     res.status(200).json({
       success: true,
@@ -62,7 +57,6 @@ router.get("/", verifyToken, async (req, res) => {
       generations: generationsWithFreshUrls,
     });
   } catch (error) {
-    console.error("Generations Route: Error fetching generations:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch generations",
@@ -85,7 +79,6 @@ router.get("/stats", verifyToken, async (req, res) => {
       stats,
     });
   } catch (error) {
-    console.error("Generations Route: Error fetching stats:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch generation statistics",
@@ -118,7 +111,6 @@ router.get("/:id", verifyToken, async (req, res) => {
       const freshSignedUrl = await getSignedS3Url(generation.s3_key, 86400); // 24 hours
       generation.s3_url = freshSignedUrl;
     } catch (error) {
-      console.error(`Generations Route: Failed to generate signed URL for ${generation.id}:`, error.message);
       // Continue with old URL if signing fails
     }
 
@@ -127,7 +119,6 @@ router.get("/:id", verifyToken, async (req, res) => {
       generation,
     });
   } catch (error) {
-    console.error("Generations Route: Error fetching generation:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch generation",
@@ -164,7 +155,6 @@ router.get("/:id/signed-url", verifyToken, async (req, res) => {
       expiresIn,
     });
   } catch (error) {
-    console.error("Generations Route: Error generating signed URL:", error);
     res.status(500).json({
       success: false,
       message: "Failed to generate signed URL",
@@ -182,10 +172,27 @@ router.delete("/:id", verifyToken, async (req, res) => {
     const userId = req.user._id || req.user.id || req.supabaseUser.id;
     const generationId = req.params.id;
 
-    // TODO: Also delete from S3 if needed
-    // const generation = await getGenerationById(generationId);
-    // await deleteFromS3(generation.s3_key);
+    // Get generation details before deleting
+    const generation = await getGenerationById(generationId);
 
+    // Verify ownership
+    if (generation.user_id !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
+
+    // Delete from S3 bucket first
+    try {
+      if (generation.s3_key) {
+        await deleteFromS3(generation.s3_key);
+      }
+    } catch (s3Error) {
+      // Continue with database deletion even if S3 deletion fails
+    }
+
+    // Delete from database
     await deleteGeneration(generationId, userId);
 
     res.status(200).json({
@@ -193,7 +200,6 @@ router.delete("/:id", verifyToken, async (req, res) => {
       message: "Generation deleted successfully",
     });
   } catch (error) {
-    console.error("Generations Route: Error deleting generation:", error);
     res.status(500).json({
       success: false,
       message: "Failed to delete generation",

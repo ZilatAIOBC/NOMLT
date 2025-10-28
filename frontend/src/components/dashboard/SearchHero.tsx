@@ -12,7 +12,7 @@ const SearchHero: React.FC<Props> = ({ onGenerate }) => {
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4">Describe your ideas and generate</h1>
           <p className="text-white text-sm sm:text-base lg:text-lg">
-            Transform your words into visual masterpieces: Leverage AI technology to craft breathtaking videos.
+            Transform your words into visual masterpieces: Leverage AI technology to craft breathtaking visuals.
           </p>
         </div>
         <div className="bg-[#1A1A1A57] backdrop-blur-sm rounded-3xl p-2 sm:p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full max-w-md sm:max-w-2xl lg:max-w-4xl mx-auto">

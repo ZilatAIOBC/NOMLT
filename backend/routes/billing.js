@@ -15,7 +15,6 @@ async function getUserId(req) {
         return user.id;
       }
     } catch (err) {
-      console.error('Error validating token:', err);
     }
   }
 
@@ -68,13 +67,6 @@ router.get('/subscription', async (req, res) => {
     }
 
     // Log what we're returning
-    console.log('GET /api/billing/subscription - Returning:', {
-      id: subscription.id,
-      stripe_subscription_id: subscription.stripe_subscription_id,
-      current_period_start: subscription.current_period_start,
-      current_period_end: subscription.current_period_end,
-      cancel_at_period_end: subscription.cancel_at_period_end
-    });
 
     res.json({
       id: subscription.id,
@@ -90,7 +82,6 @@ router.get('/subscription', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching subscription:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -137,7 +128,6 @@ router.get('/data', async (req, res) => {
         };
       }
     } catch (subError) {
-      console.log('No active subscription found:', subError.message);
     }
 
     // Get payment transactions - Generate mock data from subscription
@@ -183,7 +173,6 @@ router.get('/data', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching billing data:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -238,7 +227,6 @@ router.post('/subscription/cancel', async (req, res) => {
       .eq('id', subscription.id);
 
     if (updateError) {
-      console.error('Error updating subscription in database:', updateError);
       // Don't fail the request since Stripe was updated successfully
     }
 
@@ -255,7 +243,6 @@ router.post('/subscription/cancel', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error canceling subscription:', error);
     res.status(500).json({ 
       error: error.message || 'Failed to cancel subscription' 
     });
@@ -296,12 +283,6 @@ router.post('/subscription/reactivate', async (req, res) => {
     const reactivatedStripeSubscription = await reactivateSubscription(subscription.stripe_subscription_id);
 
     // Log the Stripe response for debugging
-    console.log('Reactivated subscription data:', {
-      id: reactivatedStripeSubscription.id,
-      current_period_start: reactivatedStripeSubscription.current_period_start,
-      current_period_end: reactivatedStripeSubscription.current_period_end,
-      status: reactivatedStripeSubscription.status
-    });
 
     // Prepare update data
     const updateData = {
@@ -319,7 +300,6 @@ router.post('/subscription/reactivate', async (req, res) => {
       updateData.current_period_end = new Date(reactivatedStripeSubscription.current_period_end * 1000).toISOString();
     }
 
-    console.log('Updating database with:', updateData);
 
     // Update subscription in database with current period dates from Stripe
     const { error: updateError } = await client
@@ -328,7 +308,6 @@ router.post('/subscription/reactivate', async (req, res) => {
       .eq('id', subscription.id);
 
     if (updateError) {
-      console.error('Error updating subscription in database:', updateError);
       throw updateError;
     }
 
@@ -339,7 +318,6 @@ router.post('/subscription/reactivate', async (req, res) => {
       .eq('id', subscription.id)
       .single();
     
-    console.log('Database after update:', updatedSub);
 
     res.json({
       success: true,
@@ -354,7 +332,6 @@ router.post('/subscription/reactivate', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error reactivating subscription:', error);
     res.status(500).json({ 
       error: error.message || 'Failed to reactivate subscription' 
     });
@@ -440,7 +417,6 @@ router.post('/subscription/change-plan', async (req, res) => {
         .eq('id', currentSubscription.id);
 
       if (updateError) {
-        console.error('Error storing pending downgrade:', updateError);
         return res.status(500).json({ error: 'Failed to schedule downgrade' });
       }
 
@@ -484,7 +460,6 @@ router.post('/subscription/change-plan', async (req, res) => {
         .eq('id', currentSubscription.id);
 
       if (updateError) {
-        console.error('Error updating subscription in database:', updateError);
       }
 
       return res.json({
@@ -502,7 +477,6 @@ router.post('/subscription/change-plan', async (req, res) => {
     }
 
   } catch (error) {
-    console.error('Error changing subscription plan:', error);
     res.status(500).json({ 
       error: error.message || 'Failed to change subscription plan' 
     });

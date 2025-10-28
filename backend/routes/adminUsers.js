@@ -54,7 +54,6 @@ router.get('/', auth, requireAdmin, async (req, res) => {
     const { data: users, error, count } = await query;
 
     if (error) {
-      console.error('Error fetching users:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to fetch users',
@@ -127,7 +126,6 @@ router.get('/', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in get users:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -201,7 +199,6 @@ router.get('/stats', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching user stats:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user statistics',
@@ -297,7 +294,6 @@ router.get('/:id', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching user details:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user details',
@@ -345,7 +341,6 @@ router.put('/:id/status', auth, requireAdmin, async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Error updating user status:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to update user status',
@@ -363,7 +358,6 @@ router.put('/:id/status', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in update user status:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -411,7 +405,6 @@ router.put('/:id/role', auth, requireAdmin, async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Error updating user role:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to update user role',
@@ -429,7 +422,6 @@ router.put('/:id/role', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in update user role:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -469,7 +461,6 @@ router.delete('/:id', auth, requireAdmin, async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Error deleting user:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to delete user',
@@ -486,7 +477,6 @@ router.delete('/:id', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in delete user:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -539,7 +529,6 @@ router.put('/bulk/update', auth, requireAdmin, async (req, res) => {
       .select();
 
     if (error) {
-      console.error('Error bulk updating users:', error);
       return res.status(500).json({
         success: false,
         message: 'Failed to bulk update users',
@@ -556,7 +545,6 @@ router.put('/bulk/update', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in bulk update users:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',

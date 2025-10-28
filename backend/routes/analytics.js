@@ -43,7 +43,6 @@ router.get('/summary', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching analytics summary:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch analytics summary',
@@ -82,7 +81,6 @@ router.get('/trends', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching analytics trends:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch trends',
@@ -128,7 +126,6 @@ router.get('/stats', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching analytics stats:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch statistics',
@@ -145,7 +142,6 @@ router.post('/recalculate', auth, async (req, res) => {
   try {
     const userId = req.user._id;
 
-    console.log(`🔄 User ${userId} requested usage summary recalculation`);
 
     const stats = await recalculateUsageSummary(userId, 'all_time');
 
@@ -156,7 +152,6 @@ router.post('/recalculate', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error recalculating summary:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to recalculate summary',
@@ -177,7 +172,6 @@ router.get('/admin/dashboard-stats', auth, requireAdmin, async (req, res) => {
   try {
     const client = supabaseAdmin; // Use admin client to avoid RLS issues
 
-    console.log('📊 Fetching admin dashboard stats...');
 
     // 1. Get total users from Supabase profiles table (excluding admins)
     const { count: totalUsers, error: usersError } = await client
@@ -186,7 +180,6 @@ router.get('/admin/dashboard-stats', auth, requireAdmin, async (req, res) => {
       .neq('role', 'admin');
 
     if (usersError && usersError.code !== 'PGRST116') {
-      console.error('Error counting users:', usersError);
     }
 
     // 2. Get all subscriptions (active and past) with plan details for revenue calculation
@@ -208,7 +201,6 @@ router.get('/admin/dashboard-stats', auth, requireAdmin, async (req, res) => {
       `);
 
     if (subsError && subsError.code !== 'PGRST116') {
-      console.error('Error fetching subscriptions:', subsError);
     }
 
 
@@ -221,7 +213,6 @@ router.get('/admin/dashboard-stats', auth, requireAdmin, async (req, res) => {
     for (const sub of allSubscriptionsData || []) {
       const planPrice = sub.plans?.price_monthly || 0;
       if (planPrice === 0) {
-        console.log(`Subscription ${sub.id} has no plan price`);
         continue;
       }
 
@@ -266,7 +257,6 @@ router.get('/admin/dashboard-stats', auth, requireAdmin, async (req, res) => {
       .eq('period_type', 'all_time');
 
     if (usageError) {
-      console.error('Error fetching usage summaries:', usageError);
     }
 
     const totalCreditsUsed = (usageSummaries || []).reduce(
@@ -282,7 +272,6 @@ router.get('/admin/dashboard-stats', auth, requireAdmin, async (req, res) => {
       mrr: mrr || 0  // Monthly Recurring Revenue
     };
 
-    console.log('✅ Dashboard stats:', stats);
 
     // Set cache control headers to prevent stale data
     res.set({
@@ -297,7 +286,6 @@ router.get('/admin/dashboard-stats', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch dashboard statistics',
@@ -314,7 +302,6 @@ router.get('/admin/platform-stats', auth, requireAdmin, async (req, res) => {
   try {
     const { period = 'all_time', periodStart = null } = req.query;
 
-    console.log(`📊 Admin requesting platform stats for ${period}`);
 
     const stats = await getAggregatedStats(period, periodStart);
 
@@ -333,7 +320,6 @@ router.get('/admin/platform-stats', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching platform stats:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch platform statistics',
@@ -426,7 +412,6 @@ router.get('/admin/top-users', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching top users:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch top users',
@@ -497,7 +482,6 @@ router.get('/admin/daily-trends', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching daily trends:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch daily trends',
@@ -514,7 +498,6 @@ router.get('/admin/feature-usage', auth, requireAdmin, async (req, res) => {
   try {
     const client = supabaseAdmin || supabase;
 
-    console.log('📊 Fetching feature usage statistics...');
 
     // Get all_time summaries from all users
     const { data: usageSummaries, error } = await client
@@ -571,7 +554,6 @@ router.get('/admin/feature-usage', auth, requireAdmin, async (req, res) => {
     // Sort by credits (descending)
     featureUsage.sort((a, b) => b.credits - a.credits);
 
-    console.log('✅ Feature usage stats:', featureUsage);
 
     // Set cache control headers to prevent stale data
     res.set({
@@ -589,7 +571,6 @@ router.get('/admin/feature-usage', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching feature usage:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch feature usage statistics',
@@ -607,7 +588,6 @@ router.get('/admin/cost-per-feature', auth, requireAdmin, async (req, res) => {
   try {
     const client = supabaseAdmin || supabase;
 
-    console.log('📊 Fetching cost per feature statistics...');
 
     // Conversion rate: $4.25 = 6000 credits
     const DOLLARS_PER_CREDIT = 4.25 / 6000; // $0.000708333...
@@ -700,7 +680,6 @@ router.get('/admin/cost-per-feature', auth, requireAdmin, async (req, res) => {
 
     const totalCostUSD = costPerFeature.reduce((sum, f) => sum + f.total_cost_usd, 0);
 
-    console.log('✅ Cost per feature stats:', costPerFeature);
 
     // Set cache control headers to prevent stale data
     res.set({
@@ -724,7 +703,6 @@ router.get('/admin/cost-per-feature', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching cost per feature:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch cost per feature statistics',
@@ -742,17 +720,12 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
   try {
     const client = supabaseAdmin || supabase;
 
-    console.log('📊 Fetching monthly trends...');
 
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
-    console.log('📊 Monthly Trends Calculation:');
-    console.log(`Current Month Start: ${currentMonthStart.toISOString()}`);
-    console.log(`Previous Month Start: ${previousMonthStart.toISOString()}`);
-    console.log(`Previous Month End: ${previousMonthEnd.toISOString()}`);
 
     // 1. Calculate Revenue Growth (from subscriptions)
     const { data: allSubscriptions } = await client
@@ -787,7 +760,6 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
       ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
       : currentMonthRevenue > 0 ? 100 : 0;
 
-    console.log(`Revenue Growth - Current: $${currentMonthRevenue}, Previous: $${previousMonthRevenue}, Growth: ${revenueGrowth}%`);
 
     // 2. Calculate User Growth
     const { count: currentMonthUsers } = await client
@@ -807,7 +779,6 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
       ? ((currentMonthUsers - previousMonthUsers) / previousMonthUsers) * 100
       : currentMonthUsers > 0 ? 100 : 0;
 
-    console.log(`User Growth - Current: ${currentMonthUsers}, Previous: ${previousMonthUsers}, Growth: ${userGrowth}%`);
 
     // 3. Calculate Usage Growth (credits spent)
     // Use daily summaries and aggregate by month
@@ -838,7 +809,6 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
       ? ((currentMonthCredits - previousMonthCredits) / previousMonthCredits) * 100
       : currentMonthCredits > 0 ? 100 : 0;
 
-    console.log(`Usage Growth - Current: ${currentMonthCredits}, Previous: ${previousMonthCredits}, Growth: ${usageGrowth}%`);
 
     const trends = {
       revenue_growth: Number(revenueGrowth.toFixed(1)),
@@ -856,7 +826,6 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
       }
     };
 
-    console.log('✅ Monthly trends:', trends);
 
     // Set cache control headers to prevent stale data
     res.set({
@@ -871,7 +840,6 @@ router.get('/admin/monthly-trends', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching monthly trends:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch monthly trends',

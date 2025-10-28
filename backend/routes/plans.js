@@ -6,7 +6,6 @@ const { auth, requireAdmin } = require("../middleware/auth");
 // GET /api/plans - Get all active subscription plans
 router.get("/", async (req, res) => {
   try {
-    console.log('Backend Route: GET /api/plans - Fetching subscription plans');
 
     const client = supabaseAdmin || supabase;
     
@@ -44,7 +43,6 @@ router.get("/", async (req, res) => {
       .order('sort_order');
 
     if (error) {
-      console.error('Backend Route: GET /api/plans - Database error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to fetch subscription plans',
@@ -52,7 +50,6 @@ router.get("/", async (req, res) => {
       });
     }
 
-    console.log(`Backend Route: GET /api/plans - Found ${data?.length || 0} active plans`);
     
     res.set('Cache-Control', 'no-store');
     res.status(200).json({
@@ -61,7 +58,6 @@ router.get("/", async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Backend Route: GET /api/plans - Unexpected error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -73,7 +69,6 @@ router.get("/", async (req, res) => {
 // GET /api/plans/admin - Get all plans including inactive ones (Admin only)
 router.get("/admin", auth, requireAdmin, async (req, res) => {
   try {
-    console.log('Backend Route: GET /api/plans/admin - Admin fetching all plans');
 
     const client = supabaseAdmin || supabase;
     
@@ -110,7 +105,6 @@ router.get("/admin", auth, requireAdmin, async (req, res) => {
       .order('sort_order');
 
     if (error) {
-      console.error('Backend Route: GET /api/plans/admin - Database error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to fetch plans',
@@ -118,7 +112,6 @@ router.get("/admin", auth, requireAdmin, async (req, res) => {
       });
     }
 
-    console.log(`Backend Route: GET /api/plans/admin - Found ${data?.length || 0} plans`);
     
     res.status(200).json({
       success: true,
@@ -126,7 +119,6 @@ router.get("/admin", auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Backend Route: GET /api/plans/admin - Unexpected error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -139,7 +131,6 @@ router.get("/admin", auth, requireAdmin, async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`Backend Route: GET /api/plans/${id} - Fetching plan`);
 
     const client = supabaseAdmin || supabase;
     
@@ -178,7 +169,6 @@ router.get("/:id", async (req, res) => {
       .single();
 
     if (error) {
-      console.error(`Backend Route: GET /api/plans/${id} - Database error:`, error);
       return res.status(404).json({
         success: false,
         error: 'Plan not found',
@@ -193,7 +183,6 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    console.log(`Backend Route: GET /api/plans/${id} - Plan found: ${data.display_name}`);
     
     res.set('Cache-Control', 'no-store');
     res.status(200).json({
@@ -202,7 +191,6 @@ router.get("/:id", async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Backend Route: GET /api/plans/${id} - Unexpected error:`, error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -214,7 +202,6 @@ router.get("/:id", async (req, res) => {
 // GET /api/plans/popular - Get the most popular plan
 router.get("/popular", async (req, res) => {
   try {
-    console.log('Backend Route: GET /api/plans/popular - Fetching popular plan');
 
     const client = supabaseAdmin || supabase;
     
@@ -255,7 +242,6 @@ router.get("/popular", async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Backend Route: GET /api/plans/popular - Database error:', error);
       return res.status(404).json({
         success: false,
         error: 'No popular plan found',
@@ -263,7 +249,6 @@ router.get("/popular", async (req, res) => {
       });
     }
 
-    console.log(`Backend Route: GET /api/plans/popular - Popular plan: ${data?.display_name || 'None'}`);
     
     res.set('Cache-Control', 'no-store');
     res.status(200).json({
@@ -272,7 +257,6 @@ router.get("/popular", async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Backend Route: GET /api/plans/popular - Unexpected error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -291,8 +275,6 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     
-    console.log(`Backend Route: PUT /api/plans/${id} - Admin updating plan`);
-    console.log('Request body received:', JSON.stringify(updates, null, 2));
 
     // Validate required fields
     const allowedFields = [
@@ -343,7 +325,7 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
           .filter(item => item.length > 0 && !seen.has(item) && (seen.add(item), true));
       } else {
         // If invalid type, drop features from update to avoid bad data
-        console.warn('Invalid features type received; expected string or array. Ignoring features update.');
+
         delete filteredUpdates.features;
       }
 
@@ -397,7 +379,6 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
       }
     }
 
-    console.log('Filtered updates to be saved:', JSON.stringify(filteredUpdates, null, 2));
 
     // Add updated_at timestamp
     filteredUpdates.updated_at = new Date().toISOString();
@@ -412,7 +393,6 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
       .single();
 
     if (error) {
-      console.error(`Backend Route: PUT /api/plans/${id} - Database error:`, error);
       return res.status(400).json({
         success: false,
         error: 'Failed to update plan',
@@ -427,8 +407,6 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
       });
     }
 
-    console.log(`Backend Route: PUT /api/plans/${id} - Plan updated successfully: ${data.display_name}`);
-    console.log('Updated plan data from DB:', JSON.stringify(data, null, 2));
     
     res.status(200).json({
       success: true,
@@ -437,7 +415,6 @@ router.put("/:id", auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Backend Route: PUT /api/plans/${id} - Unexpected error:`, error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -451,7 +428,6 @@ router.post("/", auth, requireAdmin, async (req, res) => {
   try {
     const planData = req.body;
     
-    console.log('Backend Route: POST /api/plans - Admin creating new plan');
 
     // Validate required fields
     const requiredFields = ['name', 'display_name', 'price_monthly', 'price_yearly', 'credits_included'];
@@ -484,7 +460,6 @@ router.post("/", auth, requireAdmin, async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Backend Route: POST /api/plans - Database error:', error);
       return res.status(400).json({
         success: false,
         error: 'Failed to create plan',
@@ -492,7 +467,6 @@ router.post("/", auth, requireAdmin, async (req, res) => {
       });
     }
 
-    console.log(`Backend Route: POST /api/plans - Plan created successfully: ${data.display_name}`);
     
     res.status(201).json({
       success: true,
@@ -501,7 +475,6 @@ router.post("/", auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Backend Route: POST /api/plans - Unexpected error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -515,7 +488,6 @@ router.delete("/:id", auth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     
-    console.log(`Backend Route: DELETE /api/plans/${id} - Admin deleting plan`);
 
     const client = supabaseAdmin || supabase;
     
@@ -531,7 +503,6 @@ router.delete("/:id", auth, requireAdmin, async (req, res) => {
       .single();
 
     if (error) {
-      console.error(`Backend Route: DELETE /api/plans/${id} - Database error:`, error);
       return res.status(400).json({
         success: false,
         error: 'Failed to delete plan',
@@ -546,7 +517,6 @@ router.delete("/:id", auth, requireAdmin, async (req, res) => {
       });
     }
 
-    console.log(`Backend Route: DELETE /api/plans/${id} - Plan deactivated: ${data.display_name}`);
     
     res.status(200).json({
       success: true,
@@ -555,7 +525,6 @@ router.delete("/:id", auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Backend Route: DELETE /api/plans/${id} - Unexpected error:`, error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',

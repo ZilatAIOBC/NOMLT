@@ -70,8 +70,8 @@ export const createTextToVideoJob = async (
   const token = getSupabaseAccessToken();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  console.log('Frontend: Text-to-Video create URL:', url);
-  console.log('Frontend: Text-to-Video headers set:', Object.keys(headers));
+  // Removed console for production
+  // Removed console for production
 
   const response = await fetch(url, {
     method: "POST",
@@ -105,9 +105,9 @@ export const getTextToVideoResult = async (
   maxAttempts = 40,
   intervalMs = 6000
 ): Promise<TextToVideoResultResponse> => {
-  console.log('Frontend: Starting text-to-video result polling');
-  console.log('Frontend: Result URL:', resultUrl);
-  console.log('Frontend: Max attempts:', maxAttempts, 'Interval:', intervalMs, 'ms');
+  // Removed console for production
+  // Removed console for production
+  // Removed console for production
   let attempts = 0;
 
   while (attempts < maxAttempts) {
@@ -119,10 +119,10 @@ export const getTextToVideoResult = async (
     const headers: Record<string, string> = {};
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    console.log(`Frontend: Poll attempt ${attempts + 1}/${maxAttempts}`);
-    console.log('Frontend: Polling URL:', url);
+    // Removed console for production
+    // Removed console for production
     const response = await fetch(url, { method: "GET", headers, credentials: "include" });
-    console.log(`Frontend: Poll attempt ${attempts + 1} response status:`, response.status, response.statusText);
+    // Removed console for production
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -133,13 +133,13 @@ export const getTextToVideoResult = async (
 
     const data = (await response.json()) as any;
     const status = data?.data?.status;
-    console.log(`Frontend: Poll attempt ${attempts + 1}/${maxAttempts} - Status: ${status}`);
-    console.log('Frontend: Poll response data:', JSON.stringify(data, null, 2));
+    // Removed console for production
+    // Removed console for production
 
     if (status === "succeeded" || status === "completed") {
       // Check if this is our new S3 response format with generation info
       if (data.success && data.generation) {
-        console.log('Frontend: Received S3-enhanced response');
+        // Removed console for production
         // Transform our S3 response to match expected format
         return {
           code: data.code || 200,
@@ -157,15 +157,15 @@ export const getTextToVideoResult = async (
     }
     if (status === "failed") {
       const err = data?.data?.error || "Unknown error";
-      console.error('Frontend: Text-to-video generation failed:', err);
+      // Removed console for production
       throw new Error(`Text-to-video generation failed: ${err}`);
     }
 
-    console.log(`Frontend: Text-to-video still ${status}, waiting ${intervalMs}ms before next check...`);
+    // Removed console for production
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
     attempts++;
   }
 
-  console.error('Frontend: Text-to-video generation timed out - maximum attempts reached');
+  // Removed console for production
   throw new Error("Text-to-video generation timed out - maximum attempts reached");
 };

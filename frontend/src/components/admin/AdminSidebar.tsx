@@ -22,11 +22,6 @@ export default function AdminSidebar() {
       const tablet = width >= 768 && width < 1024;
       const expanded = width >= 1024;
       
-      console.log('AdminSidebar - width', width);
-      console.log('AdminSidebar - Setting isMobile to:', mobile);
-      console.log('AdminSidebar - Setting isTablet to:', tablet);
-      console.log('AdminSidebar - Setting isExpanded to:', expanded);
-      
       setIsMobile(mobile);
       setIsTablet(tablet);
       setIsExpanded(expanded);

@@ -38,7 +38,6 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
       (response.trends || []).forEach((t) => {
         const key = (t.date || '').split('T')[0]; // backend already returns YYYY-MM-DD
         creditsByDate[key] = (t.total_credits_spent || 0);
-        console.log('📊 Timeline data:', { date: t.date, key, credits: t.total_credits_spent });
       });
 
       // Build days 1..30 for the CURRENT MONTH (so x=9 means the 9th of this month)
@@ -46,15 +45,10 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
       const now = new Date();
       const year = now.getUTCFullYear();
       const month = now.getUTCMonth(); // 0-based
-      console.log('📅 Chart: Creating days for year:', year, 'month:', month);
       for (let dayNum = 1; dayNum <= 30; dayNum++) {
         const d = new Date(Date.UTC(year, month, dayNum, 0, 0, 0));
         const iso = formatDateUTC(d);
         const displayDate = new Date(iso + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        
-        if (dayNum >= 20 && dayNum <= 30) {
-          console.log(`📅 Day ${dayNum}: ISO=${iso}, credits=${creditsByDate[iso] || 0}`);
-        }
 
         days.push({
           day: String(dayNum),
@@ -65,7 +59,6 @@ export default function UsageTimelineChart({ className = "" }: UsageTimelineChar
 
       setData(days);
     } catch (error) {
-      console.error('Error fetching daily trends:', error);
       // Fallback: show 30 days of zeros to keep the UI intact
       const fallback: ChartDataPoint[] = [];
       const now = new Date();

@@ -40,7 +40,7 @@ const UserProtectedRoute: React.FC<UserProtectedRouteProps> = ({ children }) => 
         const userData = authHelper.getCurrentUser();
         setUser(userData);
       } catch (error) {
-        console.error('Error checking auth:', error);
+        // Removed console for production
       } finally {
         setLoading(false);
       }

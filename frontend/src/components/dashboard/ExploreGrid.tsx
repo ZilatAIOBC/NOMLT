@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { getUserGenerations, transformGeneration } from '../../services/generationsService';
+import { Trash2 } from 'lucide-react';
+import { getUserGenerations, transformGeneration, deleteGeneration } from '../../services/generationsService';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 
 type Generation = {
@@ -24,6 +26,9 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch generations from database
   useEffect(() => {
@@ -32,16 +37,13 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
         setLoading(true);
         setError(null);
         
-        console.log('ExploreGrid: Fetching generations from database...');
         const type = activeTab === 'all' ? undefined : activeTab;
         const response = await getUserGenerations(type, 100, 0);
         
-        console.log('ExploreGrid: Got generations:', response);
         const transformedGenerations = response.generations.map(transformGeneration);
         setGenerations(transformedGenerations);
         
       } catch (err) {
-        console.error('ExploreGrid: Error fetching generations:', err);
         setError(err instanceof Error ? err.message : 'Failed to load generations');
       } finally {
         setLoading(false);
@@ -80,6 +82,37 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
   };
 
   const filteredGenerations = generations; // Only show real generations, no fallback
+
+  const handleDeleteClick = (generationId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    setDeletingId(generationId);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingId) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteGeneration(deletingId);
+      // Refresh the generations list
+      const type = activeTab === 'all' ? undefined : activeTab;
+      const response = await getUserGenerations(type, 100, 0);
+      const transformedGenerations = response.generations.map(transformGeneration);
+      setGenerations(transformedGenerations);
+      setDeleteModalOpen(false);
+      setDeletingId(null);
+    } catch (error) {
+      alert('Failed to delete generation. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setDeletingId(null);
+  };
 
   // Show loading state
   if (loading) {
@@ -296,10 +329,34 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
                 )}
               </div>
             </div>
+            
+            {/* Delete button on hover */}
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <button
+                onClick={(e) => handleDeleteClick(generation.id, e)}
+                className="bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                title="Delete generation"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ))}
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Generation?"
+        message="This action cannot be undone. The file will be permanently deleted from both your account and storage."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isLoading={isDeleting}
+        type="danger"
+      />
     </div>
   );
 };

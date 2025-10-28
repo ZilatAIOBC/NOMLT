@@ -83,8 +83,8 @@ export const createTextToImageJob = async (
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  console.log('Frontend: Text-to-Image create URL:', url);
-  console.log('Frontend: Text-to-Image headers set:', Object.keys(headers));
+  // Removed console for production
+  // Removed console for production
 
   const response = await fetch(url, {
     method: 'POST',
@@ -111,9 +111,9 @@ export const getTextToImageResult = async (
   maxAttempts: number = 40,
   intervalMs: number = 6000
 ): Promise<TextToImageResultResponse> => {
-  console.log('Frontend: Starting text-to-image result polling');
-  console.log('Frontend: Result URL:', resultUrl);
-  console.log('Frontend: Max attempts:', maxAttempts, 'Interval:', intervalMs, 'ms');
+  // Removed console for production
+  // Removed console for production
+  // Removed console for production
   let attempts = 0;
 
   // Attach Supabase session token for authentication
@@ -123,31 +123,31 @@ export const getTextToImageResult = async (
 
   while (attempts < maxAttempts) {
     const url = `${BACKEND_BASE_URL}/api/text-to-image/result?url=${encodeURIComponent(resultUrl)}`;
-    console.log(`Frontend: Poll attempt ${attempts + 1}/${maxAttempts}`);
-    console.log('Frontend: Polling URL:', url);
+    // Removed console for production
+    // Removed console for production
 
     const response = await fetch(url, { 
       method: 'GET', 
       headers,
       credentials: 'include' 
     });
-    console.log(`Frontend: Poll attempt ${attempts + 1} response status:`, response.status, response.statusText);
+    // Removed console for production
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Frontend: Poll attempt ${attempts + 1} failed:`, errorText);
+      // Removed console for production
       throw new Error(`Backend result failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = (await response.json()) as any;
     const status = data?.data?.status;
-    console.log(`Frontend: Poll attempt ${attempts + 1} - Status: ${status}`);
-    console.log('Frontend: Poll response data:', JSON.stringify(data, null, 2));
+    // Removed console for production
+    // Removed console for production
 
     if (status === 'succeeded' || status === 'completed') {
       // Check if this is our new S3 response format with generation info
       if (data.success && data.generation) {
-        console.log('Frontend: Received S3-enhanced response');
+        // Removed console for production
         // Transform our S3 response to match expected format
         return {
           code: data.code || 200,
@@ -165,16 +165,16 @@ export const getTextToImageResult = async (
     }
     if (status === 'failed') {
       const err = data?.data?.error || 'Unknown error';
-      console.error('Frontend: Text-to-image generation failed:', err);
+      // Removed console for production
       throw new Error(`Text-to-image generation failed: ${err}`);
     }
 
-    console.log(`Frontend: Text-to-image still ${status}, waiting ${intervalMs}ms before next check...`);
+    // Removed console for production
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
     attempts++;
   }
 
-  console.error('Frontend: Text-to-image generation timed out - maximum attempts reached');
+  // Removed console for production
   throw new Error('Text-to-image generation timed out - maximum attempts reached');
 };
 

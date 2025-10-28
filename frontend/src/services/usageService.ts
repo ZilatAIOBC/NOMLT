@@ -38,23 +38,23 @@ export interface UsageSummaryResponse {
 export const fetchUsageSummary = async (): Promise<UsageSummaryResponse> => {
   const url = `${BACKEND_BASE_URL}/api/usage/summary`;
 
-  console.log('Frontend: Fetching usage summary from:', url);
+  // Removed console for production
 
   const res = await authHelper.authFetch(url, { 
     method: 'GET', 
     credentials: 'include' 
   });
   
-  console.log('Frontend: Usage summary status:', res.status, res.statusText);
+  // Removed console for production
 
   if (!res.ok) {
     const text = await res.text();
-    console.error('Frontend: Failed to fetch usage summary:', text);
+    // Removed console for production
     throw new Error(`Failed to fetch usage summary: ${res.status} ${res.statusText} - ${text}`);
   }
 
   const data = (await res.json()) as UsageSummaryResponse;
-  console.log('Frontend: Usage summary data:', JSON.stringify(data, null, 2));
+  // Removed console for production
   return data;
 };
 

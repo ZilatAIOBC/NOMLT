@@ -55,7 +55,6 @@ const TopUsersByUsage = () => {
         setUsers(formattedUsers);
         setError(null);
       } catch (err: any) {
-        console.error('Error fetching top users:', err);
         setError(err.message || 'Failed to load top users');
       } finally {
         setLoading(false);

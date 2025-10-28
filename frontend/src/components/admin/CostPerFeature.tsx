@@ -31,7 +31,6 @@ const CostPerFeature = () => {
         const data = await getCostPerFeature();
         setFeatures(data.features);
       } catch (err) {
-        console.error('Error fetching cost per feature:', err);
         setError('Failed to load cost per feature data');
       } finally {
         setLoading(false);

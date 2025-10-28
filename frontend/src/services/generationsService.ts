@@ -43,21 +43,14 @@ export const getUserGenerations = async (
   params.append('offset', offset.toString());
 
   const fullUrl = `${url}?${params.toString()}`;
-  
-  console.log('Frontend: Fetching generations from:', fullUrl);
 
   const response = await authHelper.authFetch(fullUrl, {
     method: 'GET',
     credentials: 'include',
   });
 
-  console.log('Frontend: Response status:', response.status);
-  console.log('Frontend: Response headers:', Object.fromEntries(response.headers.entries()));
-
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Frontend: Failed to fetch generations:', errorText);
-    console.error('Frontend: Response status:', response.status, response.statusText);
     
     if (response.status === 401) {
       throw new Error('Authentication failed. Please log in again.');
@@ -69,7 +62,6 @@ export const getUserGenerations = async (
   }
 
   const data = await response.json() as GenerationsResponse;
-  console.log(`Frontend: Successfully fetched ${data.count} generations:`, data);
   
   return data;
 };
@@ -78,8 +70,6 @@ export const getUserGenerations = async (
 export const getGenerationSignedUrl = async (generationId: string): Promise<string> => {
   const url = `${BACKEND_BASE_URL}/api/generations/${generationId}/signed-url`;
 
-  console.log('Frontend: Getting fresh signed URL for generation:', generationId);
-
   const response = await authHelper.authFetch(url, {
     method: 'GET',
     credentials: 'include',
@@ -87,14 +77,27 @@ export const getGenerationSignedUrl = async (generationId: string): Promise<stri
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error('Frontend: Failed to get signed URL:', errorText);
     throw new Error(`Failed to get signed URL: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data = await response.json() as SignedUrlResponse;
-  console.log('Frontend: Got fresh signed URL:', data.signedUrl);
   
   return data.signedUrl;
+};
+
+// Delete a generation
+export const deleteGeneration = async (generationId: string): Promise<void> => {
+  const url = `${BACKEND_BASE_URL}/api/generations/${generationId}`;
+
+  const response = await authHelper.authFetch(url, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to delete generation: ${response.status} ${response.statusText} - ${errorText}`);
+  }
 };
 
 // Transform database generation to frontend format

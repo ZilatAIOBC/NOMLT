@@ -62,7 +62,7 @@ export function useCreditCost(generationType: keyof CreditCosts) {
         setCost(result.costs[generationType]);
         
       } catch (error) {
-        console.error(`Error fetching cost for ${generationType}:`, error);
+        // Removed console for production
         // Use default/fallback cost on error
         setCost(DEFAULT_COSTS[generationType]);
       } finally {
@@ -114,7 +114,7 @@ export function useAllCreditCosts() {
         setCosts(result.costs);
         
       } catch (error) {
-        console.error('Error fetching credit costs:', error);
+        // Removed console for production
         setCosts(DEFAULT_COSTS);
       } finally {
         setLoading(false);

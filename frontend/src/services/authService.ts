@@ -76,9 +76,6 @@ export const authService = {
     // Use backend API to get user role
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
-    console.log('Frontend: Calling backend login API:', `${baseUrl}/auth/login`);
-    console.log('Frontend: Login payload:', payload);
-    
     const response = await fetch(`${baseUrl}/auth/login`, {
       method: 'POST',
       headers: {
@@ -87,27 +84,22 @@ export const authService = {
       body: JSON.stringify(payload),
     });
 
-    console.log('Frontend: Backend response status:', response.status);
-
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Frontend: Backend login error:', errorData);
       const error = new Error(errorData.message || 'Login failed');
       (error as any).status = response.status;
       throw error;
     }
 
     const data = await response.json();
-    console.log('Frontend: Backend login response:', data);
     
     // Store tokens and user data
     try {
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       localStorage.setItem('authUser', JSON.stringify(data.user));
-      console.log('Frontend: Stored user data in localStorage:', data.user);
     } catch (storageError) {
-      console.warn('Could not store auth data in localStorage:', storageError);
+      // Silently fail if can't store
     }
 
     return data;
@@ -215,7 +207,7 @@ export const authService = {
         localStorage.setItem('authUser', JSON.stringify(updatedUser));
       }
     } catch (storageError) {
-      console.warn('Could not update stored user data:', storageError);
+      // Silently fail if can't update
     }
 
     return data;

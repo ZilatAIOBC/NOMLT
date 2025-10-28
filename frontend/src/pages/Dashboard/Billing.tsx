@@ -57,7 +57,7 @@ const Billing: React.FC = () => {
         setTransactions(transactionHistory);
         
       } catch (err: any) {
-        console.error('Error loading billing data:', err);
+        // Removed console for production
         setError(err.message || 'Failed to load billing information');
       } finally {
         setLoading(false);
@@ -97,7 +97,7 @@ const Billing: React.FC = () => {
               }
             } catch (e) {
               // Non-fatal; user can refresh manually
-              console.warn('Post-checkout subscription refresh failed:', e);
+              // Removed console for production
             }
           } else if (session.payment_status === 'unpaid') {
             toast.error('Payment was not completed');
@@ -106,7 +106,7 @@ const Billing: React.FC = () => {
           // Clean up URL immediately
           window.history.replaceState({}, '', window.location.pathname);
         } catch (error: any) {
-          console.error('Error verifying checkout session:', error);
+          // Removed console for production
           toast.error('Failed to verify payment status');
         } finally {
           setVerifyingSession(false);
@@ -139,7 +139,7 @@ const Billing: React.FC = () => {
         setBillingData(updatedSubscription);
       }
     } catch (err: any) {
-      console.error('Error canceling subscription:', err);
+      // Removed console for production
       toast.error(err.message || 'Failed to cancel subscription');
     } finally {
       setCanceling(false);
@@ -159,7 +159,7 @@ const Billing: React.FC = () => {
         setBillingData(updatedSubscription);
       }
     } catch (err: any) {
-      console.error('Error reactivating subscription:', err);
+      // Removed console for production
       toast.error(err.message || 'Failed to reactivate subscription');
     } finally {
       setReactivating(false);

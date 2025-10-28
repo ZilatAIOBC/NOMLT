@@ -59,12 +59,10 @@ app.use(cors(corsOptions));
 app.use(session({ secret: "secret", resave: false, saveUninitialized: true }));
 
 
-// Middleware to log API requests and their status codes
+// Middleware - no API logging
 app.use((req, res, next) => {
   res.on("finish", () => {
-    console.log(
-      `API: ${req.method} ${req.originalUrl} - Status: ${res.statusCode}`
-    );
+    // API request completed
   });
   next();
 });

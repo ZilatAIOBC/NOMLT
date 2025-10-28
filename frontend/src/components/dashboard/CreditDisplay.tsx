@@ -26,7 +26,7 @@ const CreditDisplay: React.FC<CreditDisplayProps> = ({
       onBalanceUpdate?.(data.balance);
     } catch (err: any) {
       // Silently handle auth errors - user might not be logged in yet
-      console.warn('Could not fetch credit balance:', err.message);
+      // Removed console for production
       
       // Show 0 balance without error state
       setBalance(0);

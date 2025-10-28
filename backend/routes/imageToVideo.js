@@ -16,14 +16,12 @@ const { supabase, supabaseAdmin } = require("../utils/supabase");
 // POST /api/image-to-video
 router.post("/", auth, checkCredits('image_to_video'), async (req, res) => {
   try {
-    console.log('Backend Route: POST /api/image-to-video received request body:', JSON.stringify(req.body, null, 2));
 
     const startedAt = Date.now();
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
     const requestSizeBytes = Buffer.byteLength(JSON.stringify(req.body || {}), "utf8");
 
     const data = await createImageToVideoJob(req.body || {});
-    console.log('Backend Route: POST /api/image-to-video response:', JSON.stringify(data, null, 2));
 
     const processingTimeMs = Date.now() - startedAt;
     const client = supabaseAdmin || supabase;
@@ -54,7 +52,6 @@ router.post("/", auth, checkCredits('image_to_video'), async (req, res) => {
     }
     res.status(200).json(data);
   } catch (e) {
-    console.error('Backend Route: POST /api/image-to-video error:', e.message);
     res.status(500).json({ error: e.message || "Failed to create job" });
   }
 });
@@ -65,7 +62,6 @@ router.get("/result", auth, async (req, res) => {
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
     const { url, maxAttempts, intervalMs } = req.query;
     
-    console.log(`Image-to-Video: User ${userId} checking result for URL: ${url}`);
     
     if (!url) {
       return res.status(400).json({ error: "Missing url query parameter" });
@@ -79,7 +75,6 @@ router.get("/result", auth, async (req, res) => {
       intervalMs ? Number(intervalMs) : undefined
     );
 
-    console.log(`Image-to-Video: Got result from AI provider`);
 
     // Check if generation is complete and has video URL
     const externalVideoUrl = result.data.output || (result.data.outputs && result.data.outputs[0]);
@@ -90,7 +85,6 @@ router.get("/result", auth, async (req, res) => {
     }
 
     // Step 2: Generation is complete, save to S3
-    console.log(`Image-to-Video: Saving to S3 - External URL: ${externalVideoUrl}`);
 
     const s3Result = await saveGenerationToS3(
       externalVideoUrl,
@@ -98,7 +92,6 @@ router.get("/result", auth, async (req, res) => {
       "image-to-video"
     );
 
-    console.log(`Image-to-Video: Uploaded to S3 - Key: ${s3Result.s3Key}`);
 
     // Step 3: Save to database FIRST to get generation ID
     const generation = await createGeneration({
@@ -119,7 +112,6 @@ router.get("/result", auth, async (req, res) => {
       contentType: s3Result.contentType,
     });
 
-    console.log(`Image-to-Video: Saved to database - Generation ID: ${generation.id}`);
 
     // Step 4: Deduct credits with generation ID (enables idempotency)
     const creditCost = req.creditInfo?.cost || 80; // Default to 80 if not set
@@ -132,7 +124,6 @@ router.get("/result", auth, async (req, res) => {
         'image_to_video', 
         generation.id // Use generation ID for idempotency
       );
-      console.log(`Image-to-Video: Deducted ${creditCost} credits. New balance: ${creditResult.new_balance}`);
       
       // Update generation record with credits_used
       const client = supabaseAdmin || supabase;
@@ -151,10 +142,9 @@ router.get("/result", auth, async (req, res) => {
         creditsUsed: creditCost,
         status: 'completed',
         createdAt: generation.created_at
-      }).catch(err => console.error('Failed to update usage summary:', err));
+      }).catch(() => {});
         
     } catch (creditError) {
-      console.error(`Image-to-Video: Failed to deduct credits:`, creditError);
       // Mark generation as completed even if credit deduction fails
       try {
         const client = supabaseAdmin || supabase;
@@ -163,11 +153,9 @@ router.get("/result", auth, async (req, res) => {
           .update({ status: 'completed', completed_at: new Date().toISOString() })
           .eq('id', generation.id);
       } catch (statusError) {
-        console.error(`Image-to-Video: Failed to update status:`, statusError);
       }
     }
 
-    console.log(`Image-to-Video: Generation complete - ID: ${generation.id}, Credits used: ${creditCost}`);
 
     // Step 5: Return response with S3 URL, generation info, and credit balance
     res.status(200).json({
@@ -195,7 +183,6 @@ router.get("/result", auth, async (req, res) => {
     });
 
   } catch (e) {
-    console.error("Image-to-Video: Error in result endpoint:", e);
     res.status(500).json({ error: e.message || "Failed to get result" });
   }
 });

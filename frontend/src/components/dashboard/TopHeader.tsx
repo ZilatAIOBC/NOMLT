@@ -28,7 +28,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
         setUserInitial(name.charAt(0).toUpperCase());
       }
     } catch (error) {
-      console.error('Error loading user data:', error);
+      // Silently fail if can't load user data
     }
   }, []);
 
@@ -63,7 +63,6 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
       await authService.logout();
       navigate('/signin');
     } catch (error) {
-      console.error('Error signing out:', error);
       // Force logout even if there's an error
       localStorage.removeItem('authToken');
       localStorage.removeItem('authUser');

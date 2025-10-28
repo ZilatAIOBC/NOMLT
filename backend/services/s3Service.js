@@ -1,6 +1,6 @@
 "use strict";
 
-const { PutObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const axios = require("axios");
 const { s3Client, AWS_S3_BUCKET_NAME } = require("../config/aws");
@@ -72,8 +72,6 @@ function getContentType(extension) {
  * @returns {Promise<{buffer: Buffer, contentType: string, size: number}>}
  */
 async function downloadFile(url) {
-  console.log(`S3 Service: Downloading file from ${url}`);
-  
   try {
     const response = await axios.get(url, {
       responseType: "arraybuffer",
@@ -84,11 +82,8 @@ async function downloadFile(url) {
     const contentType = response.headers["content-type"] || "application/octet-stream";
     const size = buffer.length;
 
-    console.log(`S3 Service: Downloaded file - Size: ${(size / 1024 / 1024).toFixed(2)}MB, Type: ${contentType}`);
-
     return { buffer, contentType, size };
   } catch (error) {
-    console.error("S3 Service: Download failed:", error.message);
     throw new Error(`Failed to download file: ${error.message}`);
   }
 }
@@ -105,8 +100,6 @@ async function uploadToS3(buffer, s3Key, contentType) {
     throw new Error("AWS S3 bucket is not configured");
   }
 
-  console.log(`S3 Service: Uploading to S3 - Key: ${s3Key}, Type: ${contentType}`);
-
   try {
     const command = new PutObjectCommand({
       Bucket: AWS_S3_BUCKET_NAME,
@@ -119,11 +112,8 @@ async function uploadToS3(buffer, s3Key, contentType) {
 
     await s3Client.send(command);
 
-    console.log(`S3 Service: Upload successful - Key: ${s3Key}`);
-
     return { s3Key };
   } catch (error) {
-    console.error("S3 Service: Upload failed:", error.message);
     throw new Error(`Failed to upload to S3: ${error.message}`);
   }
 }
@@ -148,7 +138,6 @@ async function getSignedS3Url(s3Key, expiresIn = 3600) {
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });
     return signedUrl;
   } catch (error) {
-    console.error("S3 Service: Failed to generate signed URL:", error.message);
     throw new Error(`Failed to generate signed URL: ${error.message}`);
   }
 }
@@ -161,8 +150,6 @@ async function getSignedS3Url(s3Key, expiresIn = 3600) {
  * @returns {Promise<{s3Key: string, s3Url: string, fileSize: number}>}
  */
 async function saveGenerationToS3(externalUrl, userId, generationType) {
-  console.log(`S3 Service: Saving generation to S3 - User: ${userId}, Type: ${generationType}`);
-
   try {
     // Step 1: Download file from external URL
     const { buffer, contentType, size } = await downloadFile(externalUrl);
@@ -179,9 +166,6 @@ async function saveGenerationToS3(externalUrl, userId, generationType) {
     // Step 5: Generate signed URL (temporary access URL)
     const s3Url = await getSignedS3Url(s3Key, 86400); // 24 hours expiry
 
-    console.log(`S3 Service: Generation saved successfully - S3 Key: ${s3Key}`);
-    console.log(`S3 Service: Generated signed URL: ${s3Url}`);
-
     return {
       s3Key,
       s3Url,
@@ -189,8 +173,31 @@ async function saveGenerationToS3(externalUrl, userId, generationType) {
       contentType,
     };
   } catch (error) {
-    console.error("S3 Service: Failed to save generation:", error.message);
     throw error;
+  }
+}
+
+/**
+ * Delete a file from S3 bucket
+ * @param {string} s3Key - S3 key (path) of the file to delete
+ * @returns {Promise<boolean>} Success status
+ */
+async function deleteFromS3(s3Key) {
+  if (!AWS_S3_BUCKET_NAME) {
+    throw new Error("AWS S3 bucket is not configured");
+  }
+
+  try {
+    const command = new DeleteObjectCommand({
+      Bucket: AWS_S3_BUCKET_NAME,
+      Key: s3Key,
+    });
+
+    await s3Client.send(command);
+
+    return true;
+  } catch (error) {
+    throw new Error(`Failed to delete from S3: ${error.message}`);
   }
 }
 
@@ -200,5 +207,6 @@ module.exports = {
   generateS3Key,
   uploadToS3,
   downloadFile,
+  deleteFromS3,
 };
 

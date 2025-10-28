@@ -17,8 +17,6 @@ const AuthCallback: React.FC = () => {
         // Check if we have a hash with tokens
         const hash = location.hash || window.location.hash;
         
-        console.log('AuthCallback: Hash received:', hash.substring(0, 50) + '...');
-        
         // If Supabase redirected back with an error in the URL, surface it
         if (hash && hash.includes('error')) {
           const params = new URLSearchParams(hash.replace(/^#/, ''));
@@ -32,29 +30,23 @@ const AuthCallback: React.FC = () => {
 
         // If we have a hash with tokens, trigger session exchange
         if (hash && hash.includes('access_token')) {
-          console.log('AuthCallback: Found access_token in hash, setting session...');
           const { data, error } = await supabase.auth.getSession();
           if (error) {
-            console.error('Error getting session:', error);
+            // Handle error silently
           }
         }
 
         // Get the session (Supabase should have processed the hash by now)
         const { data: sessionData } = await supabase.auth.getSession();
-        console.log('AuthCallback: Session data received:', sessionData ? 'Yes' : 'No');
         const accessToken = sessionData.session?.access_token || null;
         const refreshToken = sessionData.session?.refresh_token || null;
 
         if (!accessToken) {
-          console.error('AuthCallback: No access token found in session');
-          console.log('Session data:', sessionData);
           toast.dismiss();
           toast.error('Sign-in session not found. Please try again.');
           navigate('/signin');
           return;
         }
-        
-        console.log('AuthCallback: Successfully got access token, length:', accessToken.length);
 
         // Persist tokens for our API usage
         try {
