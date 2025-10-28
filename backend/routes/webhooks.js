@@ -21,10 +21,17 @@ router.post('/stripe', async (req, res) => {
 
   try {
     const stripe = getStripeClient();
-    // For now, we'll skip signature verification to avoid the raw body issue
-    // In production, you should implement proper signature verification
-    event = req.body;
-    console.log('Webhook event received (signature verification skipped for development):', event.type);
+    
+    // Now we have raw body available from the middleware
+    // Verify the webhook signature for security
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      console.log('Webhook signature verified successfully:', event.type);
+    } catch (sigErr) {
+      console.error('❌ Webhook signature verification failed:', sigErr.message);
+      console.error('Make sure STRIPE_WEBHOOK_SECRET matches your Stripe Dashboard webhook secret');
+      return res.status(400).send(`Webhook Error: ${sigErr.message}`);
+    }
   } catch (err) {
     console.error('Webhook processing failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -151,14 +158,19 @@ async function handleCheckoutSessionCompleted(session) {
       trial_end: subscription.trial_end
     });
     
-    // Extract user ID from session metadata
-    const userId = session.metadata?.user_id;
-    const planId = session.metadata?.plan_id;
-    const isUpgrade = session.metadata?.is_upgrade === 'true';
-    const oldSubscriptionId = session.metadata?.old_subscription_id;
+    // Extract user ID and plan ID from session metadata, fallback to subscription metadata
+    const userId = session.metadata?.user_id || subscription.metadata?.user_id;
+    const planId = session.metadata?.plan_id || subscription.metadata?.plan_id;
+    const isUpgrade = session.metadata?.is_upgrade === 'true' || subscription.metadata?.is_upgrade === 'true';
+    const oldSubscriptionId = session.metadata?.old_subscription_id || subscription.metadata?.old_subscription_id;
+    
+    console.log('Extracted metadata:', { userId, planId, isUpgrade, oldSubscriptionId });
     
     if (!userId || !planId) {
-      console.error('Missing user_id or plan_id in session metadata:', session.metadata);
+      console.error('❌ CRITICAL: Missing user_id or plan_id in metadata');
+      console.error('Session metadata:', session.metadata);
+      console.error('Subscription metadata:', subscription.metadata);
+      console.error('This subscription will NOT be saved to the database!');
       return;
     }
 
@@ -167,6 +179,7 @@ async function handleCheckoutSessionCompleted(session) {
       user_id: userId,
       plan_id: planId,
       stripe_subscription_id: subscription.id,
+      stripe_customer_id: subscription.customer,
       status: subscription.status,
       current_period_start: subscription.current_period_start ? new Date(subscription.current_period_start * 1000).toISOString() : null,
       current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
