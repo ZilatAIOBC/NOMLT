@@ -32,29 +32,52 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
     }
   }, []);
 
-  // Click outside handler to close dropdown
+  // Close dropdown on outside click (mouse/touch/pen) and on Escape
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const targetNode = event.target as Node | null;
+      // Ignore clicks on the profile toggle buttons themselves
       if (
-        profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(event.target as Node)
+        targetNode instanceof Element &&
+        (targetNode.closest('[data-profile-toggle="true"]') as Element | null)
       ) {
-        setIsProfileOpen(false);
+        return;
       }
-      if (
+      const clickedOutsideDesktop =
+        profileDropdownRef.current &&
+        targetNode &&
+        !profileDropdownRef.current.contains(targetNode);
+      const clickedOutsideMobile =
         mobileProfileDropdownRef.current &&
-        !mobileProfileDropdownRef.current.contains(event.target as Node)
-      ) {
+        targetNode &&
+        !mobileProfileDropdownRef.current.contains(targetNode);
+
+      if (clickedOutsideDesktop || clickedOutsideMobile) {
         setIsProfileOpen(false);
       }
     };
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsProfileOpen(false);
+      }
+    };
+
+    const handleScroll = () => {
+      // On mobile/tablet, scrolling should dismiss the dropdown to avoid overlay issues
+      setIsProfileOpen(false);
+    };
+
     if (isProfileOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('pointerdown', handlePointerDown, { passive: true });
+      document.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('scroll', handleScroll, { passive: true });
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('pointerdown', handlePointerDown as EventListener);
+      document.removeEventListener('keydown', handleKeyDown as EventListener);
+      window.removeEventListener('scroll', handleScroll as EventListener);
     };
   }, [isProfileOpen]);
 
@@ -102,13 +125,16 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
             <button
               onClick={() => setIsProfileOpen((v) => !v)}
               className="flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              aria-haspopup="menu"
+              aria-expanded={isProfileOpen}
+              data-profile-toggle="true"
             >
               <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">{userInitial}</div>
               <span className="hidden sm:inline text-sm text-white/90">{userName}</span>
               <ChevronDown className={`w-4 h-4 text-white/80 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
             </button>
             {isProfileOpen && (
-              <div className="absolute left-0 mt-2 w-48 rounded-lg bg-[#121212] border border-white/10 shadow-xl overflow-hidden z-10">
+              <div className="absolute left-0 mt-2 w-40 rounded-lg bg-[#121212] border border-white/10 shadow-xl overflow-hidden z-10">
                 <button 
                   onClick={handleNavigateToSettings}
                   className="w-full text-left block px-4 py-2 text-sm text-white/90 hover:bg-white/5 transition-colors"
@@ -144,7 +170,26 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
             className="absolute left-0 right-0 top-full bottom-0 z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="absolute right-0 top-full mt-2 z-50 w-80 max-w-[calc(100vw-1rem)] p-3 rounded-lg border border-white/10 bg-[#0F0F0F]/95 backdrop-blur shadow-xl space-y-3 md:inset-x-0 md:w-full md:max-w-none md:rounded-none md:border-x-0 md:border-b md:mt-0 md:p-4">
+          <div
+            className="absolute right-0 top-full mt-2 z-50 w-80 max-w-[calc(100vw-1rem)] p-3 rounded-lg border border-white/10 bg-[#0F0F0F]/95 backdrop-blur shadow-xl space-y-3 md:inset-x-0 md:w-full md:max-w-none md:rounded-none md:border-x-0 md:border-b md:mt-0 md:p-4"
+            onClickCapture={(e) => {
+              if (!isProfileOpen) return;
+              const target = e.target as Node;
+              // Ignore clicks on the toggle button
+              if (
+                target instanceof Element &&
+                (target.closest('[data-profile-toggle="true"]') as Element | null)
+              ) {
+                return;
+              }
+              if (
+                mobileProfileDropdownRef.current &&
+                !mobileProfileDropdownRef.current.contains(target)
+              ) {
+                setIsProfileOpen(false);
+              }
+            }}
+          >
             <div className="w-full flex justify-center">
               <CreditDisplay variant="full" refreshTrigger={creditRefreshTrigger} />
             </div>
@@ -162,6 +207,9 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
               <button
                 onClick={() => setIsProfileOpen((v) => !v)}
                 className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                aria-haspopup="menu"
+                aria-expanded={isProfileOpen}
+                data-profile-toggle="true"
               >
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">{userInitial}</div>
