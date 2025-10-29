@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
 import RecentGenerations from '../../components/dashboard/RecentGenerations';
@@ -10,7 +11,21 @@ import { fetchUsageSummary } from '../../services/usageService';
 import { useCreditCost } from '../../hooks/useCreditCost';
 
 const TextToImage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [prompt, setPrompt] = useState('');
+
+  // Auto-fill prompt from URL params
+  useEffect(() => {
+    const urlPrompt = searchParams.get('prompt');
+    if (urlPrompt) {
+      setPrompt(decodeURIComponent(urlPrompt));
+      // Clean up URL after extracting prompt
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('prompt');
+      const newUrl = window.location.pathname + (newSearchParams.toString() ? `?${newSearchParams.toString()}` : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [searchParams]);
   // These flags are fixed to false per API requirements
   const [status, setStatus] = useState<'idle' | 'generating' | 'completed'>('idle');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -55,8 +70,6 @@ const TextToImage: React.FC = () => {
         size: `${width}*${height}`
       };
       
-      console.log('Text-to-Image Request Body:', JSON.stringify(requestBody, null, 2));
-      
       // Step 2: Create the text-to-image generation job
       const createResult = await callTextToImageAPI(requestBody);
       
@@ -65,7 +78,6 @@ const TextToImage: React.FC = () => {
         throw new Error('No result URL found in API response');
       }
       
-      console.log('Text-to-Image Result URL:', createResult.data.urls.get);
       setGenerationProgress('Text-to-image generation in progress...');
       
       // Step 3: Get the result using the dynamic URL from first API response
@@ -74,17 +86,6 @@ const TextToImage: React.FC = () => {
       
       // Step 4: Extract image URL
       if (result.data.outputs && result.data.outputs.length > 0) {
-        console.log('Text-to-Image Final URL:', result.data.outputs[0]);
-        console.log('Text-to-Image Full Response:', result);
-        
-        // Check if we got S3 generation info (optional logging)
-        const s3Info = (result as any).generation;
-        if (s3Info) {
-          console.log('S3 Generation Info:', s3Info);
-          console.log('S3 URL:', s3Info.s3Url);
-          console.log('Generation ID:', s3Info.id);
-        }
-        
         setGeneratedImage(result.data.outputs[0]);
         setStatus('completed');
         setGenerationProgress('');
@@ -92,22 +93,16 @@ const TextToImage: React.FC = () => {
         // Refresh credit balance after successful generation
         setCreditRefreshTrigger(prev => prev + 1);
         
-        // Fetch and log enhanced usage summary
+        // Fetch usage summary
         try {
-          const summary = await fetchUsageSummary();
-          console.log('📊 Usage Summary:', summary);
-          console.log('💰 Credit Balance:', summary.credit_balance);
-          console.log('📈 Credits Spent by Type:', summary.credits_spent_by_type);
-       
+          await fetchUsageSummary();
         } catch (e) {
-          console.warn('Failed to fetch usage summary:', e);
+          // Silently fail
         }
       } else {
         throw new Error('No image URL found in result outputs');
       }
     } catch (error: any) {
-      console.error('Generation failed:', error);
-      
       // Handle insufficient credits error (402)
       if (error.response?.status === 402 || error.message?.includes('Insufficient credits')) {
         const errorData = error.response?.data;

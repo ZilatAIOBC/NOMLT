@@ -17,7 +17,6 @@ const MonthlyTrends = () => {
       setTrendsData(data);
       setError(null);
     } catch (err) {
-      console.error('Error fetching monthly trends:', err);
       setError('Failed to load trends');
     } finally {
       setLoading(false);

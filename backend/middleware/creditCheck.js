@@ -44,14 +44,12 @@ function checkCredits(generationType) {
         });
       }
 
-      console.log(`Credit Check: User ${userId} attempting ${generationType} (cost: ${cost} credits)`);
 
       // 3. Check if user has enough credits
       let creditCheck;
       try {
         creditCheck = await checkCreditsForGeneration(userId, generationType);
       } catch (error) {
-        console.error('Credit Check: Error checking credits:', error);
         return res.status(500).json({
           success: false,
           error: 'Failed to check credits',
@@ -61,7 +59,6 @@ function checkCredits(generationType) {
 
       // 4. If insufficient credits, return 402 Payment Required
       if (!creditCheck.hasEnough) {
-        console.log(`Credit Check: Insufficient credits for user ${userId}. Balance: ${creditCheck.currentBalance}, Required: ${creditCheck.required}, Shortfall: ${creditCheck.shortfall}`);
         
         return res.status(402).json({
           success: false,
@@ -78,7 +75,6 @@ function checkCredits(generationType) {
       }
 
       // 5. User has enough credits - attach info to request and continue
-      console.log(`Credit Check: User ${userId} has sufficient credits. Balance: ${creditCheck.currentBalance}, Cost: ${cost}, Balance after: ${creditCheck.balanceAfter}`);
       
       // Attach credit information to request for use in route handler
       req.creditInfo = {
@@ -92,7 +88,6 @@ function checkCredits(generationType) {
       next();
 
     } catch (error) {
-      console.error('Credit Check: Unexpected error:', error);
       return res.status(500).json({
         success: false,
         error: 'Credit check failed',
@@ -121,14 +116,12 @@ function checkCreditsWithCustomCost(customCost) {
       const userId = req.user._id;
       const { getUserCredits } = require('../services/creditService');
 
-      console.log(`Credit Check: User ${userId} attempting operation with custom cost: ${customCost} credits`);
 
       // Get user's current balance
       const credits = await getUserCredits(userId);
 
       // Check if user has enough
       if (credits.balance < customCost) {
-        console.log(`Credit Check: Insufficient credits for user ${userId}. Balance: ${credits.balance}, Required: ${customCost}`);
         
         return res.status(402).json({
           success: false,
@@ -152,7 +145,6 @@ function checkCreditsWithCustomCost(customCost) {
       next();
 
     } catch (error) {
-      console.error('Credit Check: Error with custom cost:', error);
       return res.status(500).json({
         success: false,
         error: 'Credit check failed',
@@ -168,7 +160,6 @@ function checkCreditsWithCustomCost(customCost) {
  */
 function skipCreditsForAdmin(req, res, next) {
   if (req.user && req.user.role === 'admin') {
-    console.log(`Credit Check: Skipping for admin user ${req.user._id}`);
     req.creditInfo = {
       cost: 0,
       currentBalance: Infinity,

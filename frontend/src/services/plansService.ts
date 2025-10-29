@@ -1,6 +1,6 @@
 // Plans service for fetching subscription plans from the backend API
 
-export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
+export type BillingCycle = 'monthly' | 'yearly';
 
 export interface PlanFeature {
   currency: string;
@@ -11,7 +11,6 @@ export interface PlanFeature {
 
 export interface PlanPriceByCycle {
   monthly: PlanFeature;
-  quarterly: PlanFeature;
   yearly: PlanFeature;
 }
 
@@ -21,7 +20,6 @@ export interface Plan {
   display_name: string;
   description: string;
   price_monthly: number;
-  price_quarterly?: number; // Optional - can be calculated
   price_yearly: number;
   stripe_price_id_monthly?: string;
   stripe_price_id_yearly?: string;
@@ -45,7 +43,7 @@ export interface Plan {
   updated_at: string;
 }
 
-export interface PlanWithPricing extends Omit<Plan, 'price_monthly' | 'price_quarterly' | 'price_yearly'> {
+export interface PlanWithPricing extends Omit<Plan, 'price_monthly' | 'price_yearly'> {
   priceByCycle: PlanPriceByCycle;
 }
 
@@ -88,7 +86,6 @@ class PlansService {
 
       return result.data;
     } catch (error) {
-      console.error('Error fetching plans:', error);
       throw error;
     }
   }
@@ -109,12 +106,6 @@ class PlansService {
             cadenceLabel: '/ month',
             billedLabel: 'billed monthly'
           },
-          quarterly: {
-            currency: 'USD',
-            amount: plan.price_quarterly?.toString() || (plan.price_monthly * 3 * 0.85).toFixed(2), // 15% discount if not set
-            cadenceLabel: '/ quarter',
-            billedLabel: 'billed quarterly'
-          },
           yearly: {
             currency: 'USD',
             amount: plan.price_yearly?.toString() || '0',
@@ -124,7 +115,6 @@ class PlansService {
         }
       }));
     } catch (error) {
-      console.error('Error in getPlansWithPricing:', error);
       throw error;
     }
   }
@@ -156,7 +146,6 @@ class PlansService {
 
       return result.data;
     } catch (error) {
-      console.error('Error fetching plan by ID:', error);
       return null;
     }
   }
@@ -188,7 +177,6 @@ class PlansService {
 
       return result.data;
     } catch (error) {
-      console.error('Error fetching popular plan:', error);
       return null;
     }
   }

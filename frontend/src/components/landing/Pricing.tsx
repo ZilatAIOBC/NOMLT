@@ -38,7 +38,7 @@ const Pricing: React.FC = () => {
         const plansData = await plansService.getPlansWithPricing();
         setPlans(plansData);
       } catch (err) {
-        console.error('Error fetching data:', err);
+        // Removed console for production
         setError('Failed to load subscription plans. Please try again later.');
       } finally {
         setLoading(false);

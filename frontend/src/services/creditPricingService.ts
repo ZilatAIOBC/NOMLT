@@ -49,7 +49,7 @@ export const getCategoryPricing = async (): Promise<CategoryPricingData> => {
     });
     return response.data.data;
   } catch (error: any) {
-    console.error('Error fetching category pricing:', error);
+    // Removed console for production
     throw new Error(error.response?.data?.error || 'Failed to fetch category pricing');
   }
 };
@@ -83,7 +83,7 @@ export const updateCategoryPricing = async (
     );
     return response.data.data;
   } catch (error: any) {
-    console.error(`Error updating pricing for ${category}:`, error);
+    // Removed console for production
     throw new Error(error.response?.data?.error || 'Failed to update category pricing');
   }
 };
@@ -120,7 +120,7 @@ export const bulkUpdateCategoryPricing = async (
     );
     return response.data;
   } catch (error: any) {
-    console.error('Error bulk updating category pricing:', error);
+    // Removed console for production
     throw new Error(error.response?.data?.error || 'Failed to bulk update category pricing');
   }
 };

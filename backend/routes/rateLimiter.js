@@ -27,7 +27,6 @@ router.get('/stats', auth, requireAdmin, async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error fetching rate limiter stats:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch rate limiter statistics',
@@ -61,7 +60,6 @@ router.get('/stats/:type', auth, requireAdmin, async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error(`Error fetching ${req.params.type} rate limiter stats:`, error);
     res.status(500).json({
       success: false,
       error: `Failed to fetch ${req.params.type} rate limiter statistics`,

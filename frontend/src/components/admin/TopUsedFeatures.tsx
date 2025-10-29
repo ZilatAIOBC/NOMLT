@@ -33,7 +33,6 @@ export const TopUsedFeatures = () => {
         const data = await getFeatureUsageStats();
         setFeatures(data.features);
       } catch (err) {
-        console.error('Error fetching feature usage:', err);
         setError('Failed to load feature usage data');
       } finally {
         setLoading(false);

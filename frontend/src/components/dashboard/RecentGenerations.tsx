@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Image as ImageIcon } from 'lucide-react';
-import { getUserGenerations, getGenerationSignedUrl, GenerationFromDB } from '../../services/generationsService';
+import { Play, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { getUserGenerations, getGenerationSignedUrl, deleteGeneration, GenerationFromDB } from '../../services/generationsService';
+import ConfirmationModal from '../common/ConfirmationModal';
 
 interface RecentGenerationsProps {
   generationType: 'text-to-video' | 'text-to-image' | 'image-to-video' | 'image-to-image';
@@ -15,6 +16,9 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchRecentGenerations();
@@ -35,7 +39,6 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
             const freshUrl = await getGenerationSignedUrl(gen.id);
             return { id: gen.id, url: freshUrl };
           } catch (err) {
-            console.warn(`Failed to get signed URL for generation ${gen.id}:`, err);
             return { id: gen.id, url: gen.s3_url }; // Fallback to old URL
           }
         });
@@ -48,7 +51,6 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
         setSignedUrls(urlMap);
       }
     } catch (err: any) {
-      console.error('Failed to fetch recent generations:', err);
       setError(err.message || 'Failed to load recent generations');
     } finally {
       setLoading(false);
@@ -59,6 +61,39 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
     return type.includes('video');
   };
 
+  const handleDeleteClick = (generationId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    setDeletingId(generationId);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingId) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteGeneration(deletingId);
+      // Remove from local state
+      setGenerations(prev => prev.filter(gen => gen.id !== deletingId));
+      // Remove from signedUrls
+      setSignedUrls(prev => {
+        const updated = { ...prev };
+        delete updated[deletingId];
+        return updated;
+      });
+      setDeleteModalOpen(false);
+      setDeletingId(null);
+    } catch (error) {
+      alert('Failed to delete generation. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setDeletingId(null);
+  };
 
   if (loading) {
     return (
@@ -187,11 +222,34 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
                   />
                 )}
                 
+                {/* Delete button on hover */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => handleDeleteClick(generation.id, e)}
+                    className="bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                    title="Delete generation"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Generation?"
+        message="This action cannot be undone. The file will be permanently deleted from both your account and storage."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isLoading={isDeleting}
+        type="danger"
+      />
     </div>
   );
 };

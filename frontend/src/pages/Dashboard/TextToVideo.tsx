@@ -58,8 +58,6 @@ const TextToVideo: React.FC = () => {
         seed: seed === -1 ? undefined : seed
       };
       
-      console.log('Text-to-Video Request Body:', JSON.stringify(requestBody, null, 2));
-      
       // Step 2: Create the text-to-video generation job
       const createResult = await callTextToVideoAPI(requestBody);
       
@@ -68,7 +66,6 @@ const TextToVideo: React.FC = () => {
         throw new Error('No result URL found in API response');
       }
       
-      console.log('Text-to-Video Result URL:', createResult.data.urls.get);
       setGenerationProgress('Text-to-video generation in progress...');
       
       // Step 3: Get the result using the dynamic URL from first API response
@@ -77,17 +74,6 @@ const TextToVideo: React.FC = () => {
       
       // Step 4: Extract video URL
       if (result.data.outputs && result.data.outputs.length > 0) {
-        console.log('Text-to-Video Final URL:', result.data.outputs[0]);
-        console.log('Text-to-Video Full Response:', result);
-        
-        // Check if we got S3 generation info (optional logging)
-        const s3Info = (result as any).generation;
-        if (s3Info) {
-          console.log('S3 Generation Info:', s3Info);
-          console.log('S3 URL:', s3Info.s3Url);
-          console.log('Generation ID:', s3Info.id);
-        }
-        
         setGeneratedVideo(result.data.outputs[0]);
         setStatus('completed');
         setGenerationProgress('');
@@ -95,23 +81,16 @@ const TextToVideo: React.FC = () => {
         // Refresh credit balance after successful generation
         setCreditRefreshTrigger(prev => prev + 1);
         
-        // Fetch and log enhanced usage summary
+        // Fetch usage summary
         try {
-          const summary = await fetchUsageSummary();
-          console.log('📊 Usage Summary (Text-to-Video):', summary);
-          console.log('💰 Credit Balance:', summary.credit_balance);
-          console.log('📈 Credits Spent by Type:', summary.credits_spent_by_type);
-      
-          
+          await fetchUsageSummary();
         } catch (e) {
-          console.warn('Failed to fetch usage summary:', e);
+          // Silently fail
         }
       } else {
         throw new Error('No video URL found in result outputs');
       }
     } catch (error: any) {
-      console.error('Generation failed:', error);
-      
       // Handle insufficient credits error (402)
       if (error.response?.status === 402 || error.message?.includes('Insufficient credits')) {
         const errorData = error.response?.data;

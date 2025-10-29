@@ -27,15 +27,12 @@ async function getModelCreditCost(modelId) {
       .single();
 
     if (error || !data) {
-      console.warn(`Model ${modelId} not found in database, using static pricing`);
       // Fallback to static pricing based on category
       return null;
     }
 
-    console.log(`Model ${data.display_name}: ${data.cost_per_generation} credits`);
     return data.cost_per_generation;
   } catch (error) {
-    console.error('Error fetching model credit cost from database:', error);
     return null;
   }
 }
@@ -75,13 +72,11 @@ async function getAllModelCosts() {
       .order('sort_order');
 
     if (error) {
-      console.error('Error fetching all model costs:', error);
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error('Error in getAllModelCosts:', error);
     return [];
   }
 }
@@ -103,13 +98,11 @@ async function getModelsByCategory(category) {
       .order('sort_order');
 
     if (error) {
-      console.error('Error fetching models by category:', error);
       return [];
     }
 
     return data || [];
   } catch (error) {
-    console.error('Error in getModelsByCategory:', error);
     return [];
   }
 }
@@ -133,14 +126,11 @@ async function updateModelCreditCost(modelName, newCost) {
       .eq('name', modelName);
 
     if (error) {
-      console.error('Error updating model credit cost:', error);
       return false;
     }
 
-    console.log(`Updated ${modelName} credit cost to ${newCost}`);
     return true;
   } catch (error) {
-    console.error('Error in updateModelCreditCost:', error);
     return false;
   }
 }

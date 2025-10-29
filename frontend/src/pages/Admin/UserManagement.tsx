@@ -29,7 +29,6 @@ export default function UserManagement() {
       setPagination(response.pagination);
     } catch (error: any) {
       toast.error(error.message || 'Failed to fetch users');
-      console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
     }
@@ -57,7 +56,6 @@ export default function UserManagement() {
   // Handle page change - Currently disabled, using sample data
   const handlePageChange = (_newPage: number) => {
     // TODO: Enable when backend is ready
-    console.log('Pagination will be enabled when backend is ready');
   };
 
   // Handle status update

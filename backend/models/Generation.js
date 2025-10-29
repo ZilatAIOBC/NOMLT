@@ -9,7 +9,6 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn("Missing Supabase configuration for Generation model");
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -51,14 +50,11 @@ async function createGeneration(generationData) {
       .single();
 
     if (error) {
-      console.error("Generation Model: Failed to create generation:", error);
       throw new Error(`Failed to save generation to database: ${error.message}`);
     }
 
-    console.log(`Generation Model: Created generation record - ID: ${data.id}`);
     return data;
   } catch (error) {
-    console.error("Generation Model: Error creating generation:", error.message);
     throw error;
   }
 }
@@ -93,13 +89,11 @@ async function getUserGenerations(userId, options = {}) {
     const { data, error } = await query;
 
     if (error) {
-      console.error("Generation Model: Failed to fetch generations:", error);
       throw new Error(`Failed to fetch generations: ${error.message}`);
     }
 
     return data || [];
   } catch (error) {
-    console.error("Generation Model: Error fetching generations:", error.message);
     throw error;
   }
 }
@@ -118,13 +112,11 @@ async function getGenerationById(generationId) {
       .single();
 
     if (error) {
-      console.error("Generation Model: Failed to fetch generation:", error);
       throw new Error(`Failed to fetch generation: ${error.message}`);
     }
 
     return data;
   } catch (error) {
-    console.error("Generation Model: Error fetching generation:", error.message);
     throw error;
   }
 }
@@ -144,14 +136,11 @@ async function deleteGeneration(generationId, userId) {
       .eq("user_id", userId);
 
     if (error) {
-      console.error("Generation Model: Failed to delete generation:", error);
       throw new Error(`Failed to delete generation: ${error.message}`);
     }
 
-    console.log(`Generation Model: Deleted generation - ID: ${generationId}`);
     return true;
   } catch (error) {
-    console.error("Generation Model: Error deleting generation:", error.message);
     throw error;
   }
 }
@@ -185,7 +174,6 @@ async function getUserGenerationStats(userId) {
 
     return stats;
   } catch (error) {
-    console.error("Generation Model: Error fetching stats:", error.message);
     throw error;
   }
 }

@@ -8,9 +8,7 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase env vars missing: SUPABASE_URL or SUPABASE_ANON_KEY');
 } else {
-  console.log('Supabase configured with URL:', supabaseUrl);
 }
 
 // Client for end-user operations (verifying JWTs via getUser, sign-in/up)

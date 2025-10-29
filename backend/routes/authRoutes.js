@@ -21,12 +21,10 @@ router.post(
   ],
   async (req, res) => {
     try {
-      console.log('Registration attempt for:', req.body.email);
       
       // Validate input
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        console.log('Validation errors:', errors.array());
         return res.status(400).json({ errors: errors.array() });
       }
       const { name, email, password } = req.body;
@@ -43,7 +41,6 @@ router.post(
       });
 
       if (error) {
-        console.error('Supabase signUp error:', error);
         return res.status(400).json({ message: error.message });
       }
 
@@ -54,7 +51,6 @@ router.post(
         userId: data.user?.id
       });
   } catch (err) {
-      console.error("Error during registration:", err);
       if (err?.name === 'ValidationError' && err?.errors) {
         const errors = Object.keys(err.errors).map((key) => ({
           msg: err.errors[key]?.message || 'Invalid value',
@@ -85,7 +81,6 @@ router.post("/resend-verification", async (req, res) => {
     }
     return res.status(200).json({ message: "Verification email sent." });
   } catch (error) {
-    console.error("Error resending verification email:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -106,7 +101,6 @@ router.post("/login", async (req, res) => {
         // Fetch user role from profiles table using service role to bypass RLS
         let userRole = "user"; // default role
         try {
-          console.log('Looking for user profile with ID:', data.user?.id);
           
           // Use service role to bypass RLS policies
           const { supabaseAdmin } = require("../utils/supabase");
@@ -118,16 +112,12 @@ router.post("/login", async (req, res) => {
             .eq('id', data.user?.id)
             .single();
 
-          console.log('Profile lookup result:', { profile, profileError });
           
           if (!profileError && profile) {
             userRole = profile.role || "user";
-            console.log('Found user role:', userRole);
           } else {
-            console.log('No profile found, using default role:', userRole);
           }
         } catch (profileErr) {
-          console.warn('Could not fetch user role from profiles table:', profileErr.message);
         }
     
     return res.status(200).json({ 
@@ -141,7 +131,6 @@ router.post("/login", async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Login error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -161,7 +150,6 @@ router.post("/refresh-token", async (req, res) => {
     }
     res.status(200).json({ accessToken: data.session?.access_token, refreshToken: data.session?.refresh_token });
   } catch (error) {
-    console.error("Token refresh error:", error);
     res.status(403).json({ message: "Invalid refresh token" });
   }
 });
@@ -181,7 +169,6 @@ router.get("/user-info", auth, async (req, res) => {
       lastLogin: req.user.lastLogin
     });
   } catch (error) {
-    console.error("Error fetching user info:", error);
     res.status(500).json({ message: "An error occurred while fetching user info." });
   }
 });
@@ -199,7 +186,6 @@ router.post("/forgot-password", async (req, res) => {
     }
     res.status(200).json({ message: "If that email exists, a password reset link has been sent." });
   } catch (err) {
-    console.error("Error in forgot password:", err);
     res.status(500).json({ message: "An error occurred while processing your request." });
   }
 });
@@ -247,7 +233,6 @@ router.post(
 
       return res.status(200).json({ message: "Password reset successful. You can now sign in." });
     } catch (error) {
-      console.error("Error confirming password reset:", error);
       res.status(500).json({ message: "Server error" });
     }
   }
@@ -313,7 +298,6 @@ router.post("/change-password", auth, [
     });
 
     if (sessionError || !sessionData.session) {
-      console.error("Error setting session:", sessionError);
       return res.status(401).json({ message: "Invalid session" });
     }
 
@@ -323,13 +307,11 @@ router.post("/change-password", auth, [
     });
 
     if (updateError) {
-      console.error("Error updating password:", updateError);
       return res.status(400).json({ message: updateError.message });
     }
     
     res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
-    console.error("Error changing password:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -356,7 +338,6 @@ router.put("/update-profile", auth, [
       const { data: existingUser, error: checkError } = await supabase.auth.admin.getUserByEmail(email);
       
       if (checkError && checkError.message !== "User not found") {
-        console.error("Error checking email:", checkError);
         return res.status(500).json({ message: "Server error while checking email" });
       }
       
@@ -388,7 +369,6 @@ router.put("/update-profile", auth, [
     });
 
     if (sessionError || !sessionData.session) {
-      console.error("Error setting session:", sessionError);
       return res.status(401).json({ message: "Invalid session" });
     }
 
@@ -404,7 +384,6 @@ router.put("/update-profile", auth, [
     const { data: updateResult, error: updateError } = await userSupabase.auth.updateUser(updateData);
 
     if (updateError) {
-      console.error("Error updating profile:", updateError);
       return res.status(400).json({ message: updateError.message });
     }
 
@@ -420,11 +399,9 @@ router.put("/update-profile", auth, [
         .eq('id', userId);
 
       if (profileError) {
-        console.warn("Could not update profile in profiles table:", profileError);
         // Don't fail the request since Supabase auth was updated successfully
       }
     } catch (profileErr) {
-      console.warn("Error updating profiles table:", profileErr);
     }
 
     res.status(200).json({ 
@@ -437,7 +414,6 @@ router.put("/update-profile", auth, [
       }
     });
   } catch (error) {
-    console.error("Error updating profile:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -451,7 +427,6 @@ router.post("/logout", auth, async (req, res) => {
     
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
-    console.error("Logout error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -462,7 +437,6 @@ router.post("/admin/logout", auth, requireAdmin, async (req, res) => {
     // Place to add server-side session invalidation if implemented later
     return res.status(200).json({ message: "Admin logged out successfully" });
   } catch (error) {
-    console.error("Admin logout error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -485,11 +459,8 @@ router.post("/validate-token", auth, (req, res) => {
 // Google OAuth via Supabase - start flow
 router.get('/oauth/google', async (req, res) => {
   try {
-    console.log('Google OAuth request received');
-    console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
     
     if (!process.env.FRONTEND_URL) {
-      console.error('FRONTEND_URL not set in environment variables');
       return res.status(500).json({ 
         message: 'Server configuration error: FRONTEND_URL not set',
         hint: 'Please set FRONTEND_URL in your .env file'
@@ -497,7 +468,6 @@ router.get('/oauth/google', async (req, res) => {
     }
     
     const redirectTo = `${process.env.FRONTEND_URL.replace(/\/$/, '')}/auth/callback`;
-    console.log('Redirect to:', redirectTo);
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -507,14 +477,11 @@ router.get('/oauth/google', async (req, res) => {
     });
     
     if (error) {
-      console.error('Supabase OAuth error:', error);
       return res.status(400).json({ message: error.message });
     }
     
-    console.log('OAuth URL:', data.url);
     return res.redirect(data.url);
   } catch (e) {
-    console.error('Google OAuth init error:', e);
     res.status(500).json({ message: 'Server error', error: e.message });
   }
 });

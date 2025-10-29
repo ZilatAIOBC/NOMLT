@@ -22,21 +22,15 @@ const { createDailySummariesForAllUsers } = require('../services/usageSummarySer
 function scheduleDailyUsageSummary() {
   // Run at midnight every day
   cron.schedule('0 0 * * *', async () => {
-    console.log('🕐 CRON: Starting daily usage summary creation...');
-    console.log(`🕐 Time: ${new Date().toISOString()}`);
 
     try {
       const result = await createDailySummariesForAllUsers();
       
-      console.log(`✅ CRON: Daily summaries created successfully`);
-      console.log(`📊 Created: ${result.created}, Errors: ${result.errors}`);
       
     } catch (error) {
-      console.error('❌ CRON: Failed to create daily summaries:', error);
     }
   });
 
-  console.log('✅ Daily usage summary cron job scheduled (runs at midnight)');
 }
 
 /**
@@ -44,14 +38,11 @@ function scheduleDailyUsageSummary() {
  * Call this to create summaries immediately without waiting for cron
  */
 async function runDailySummaryNow() {
-  console.log('🔧 Manual trigger: Creating daily summaries NOW...');
   
   try {
     const result = await createDailySummariesForAllUsers();
-    console.log(`✅ Manual run complete: Created ${result.created}, Errors: ${result.errors}`);
     return result;
   } catch (error) {
-    console.error('❌ Manual run failed:', error);
     throw error;
   }
 }

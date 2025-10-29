@@ -12,9 +12,7 @@ const AWS_REGION = process.env.AWS_REGION || "us-east-1";
 const AWS_S3_BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME;
 
 if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET_NAME) {
-  console.warn(
-    "Missing AWS S3 configuration. Please set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and AWS_S3_BUCKET_NAME in .env file."
-  );
+  // S3 operations will fail with clear error messages
 }
 
 // Initialize S3 Client

@@ -73,7 +73,7 @@ const Settings: React.FC = () => {
         setEmail(user.email || '');
       }
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      // Removed console for production
     }
   };
 
@@ -93,7 +93,7 @@ const Settings: React.FC = () => {
       setLifetimeSpent(creditsData.lifetime_spent);
       setSubscription(subscriptionData);
     } catch (err) {
-      console.error('Error fetching account data:', err);
+      // Removed console for production
       setError('Failed to load account information');
     } finally {
       setLoading(false);

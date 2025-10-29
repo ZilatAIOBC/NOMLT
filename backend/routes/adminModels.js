@@ -19,7 +19,6 @@ const { invalidateCreditCostsCache } = require('../config/creditPricing');
  */
 router.get('/category-pricing', auth, requireAdmin, async (req, res) => {
   try {
-    console.log('Backend Route: GET /api/admin/models/category-pricing - Fetching category pricing');
 
     const client = supabaseAdmin || supabase;
     
@@ -31,7 +30,6 @@ router.get('/category-pricing', auth, requireAdmin, async (req, res) => {
       .order('sort_order');
 
     if (error) {
-      console.error('Backend Route: Category pricing - Database error:', error);
       return res.status(500).json({
         success: false,
         error: 'Failed to fetch category pricing',
@@ -61,7 +59,6 @@ router.get('/category-pricing', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Backend Route: Category pricing - Unexpected error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -80,7 +77,6 @@ router.put('/category-pricing/:category', auth, requireAdmin, async (req, res) =
     const { category } = req.params;
     const { cost_per_generation } = req.body;
 
-    console.log(`Backend Route: PUT /api/admin/models/category-pricing/${category} - Updating category pricing`);
 
     // Validate category
     const validCategories = ['text_to_image', 'image_to_image', 'text_to_video', 'image_to_video'];
@@ -113,7 +109,6 @@ router.put('/category-pricing/:category', auth, requireAdmin, async (req, res) =
       .select();
 
     if (error) {
-      console.error(`Backend Route: Update category ${category} - Database error:`, error);
       return res.status(500).json({
         success: false,
         error: 'Failed to update category pricing',
@@ -124,7 +119,6 @@ router.put('/category-pricing/:category', auth, requireAdmin, async (req, res) =
     // Invalidate the pricing cache so new prices take effect immediately
     invalidateCreditCostsCache();
 
-    console.log(`Backend Route: Updated ${data?.length || 0} models in category ${category} to ${cost_per_generation} credits`);
     
     res.status(200).json({
       success: true,
@@ -138,7 +132,6 @@ router.put('/category-pricing/:category', auth, requireAdmin, async (req, res) =
     });
 
   } catch (error) {
-    console.error('Backend Route: Update category pricing - Unexpected error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -156,7 +149,6 @@ router.patch('/bulk-category-pricing', auth, requireAdmin, async (req, res) => {
     const { updates } = req.body; 
     // Expected format: { text_to_image: 30, text_to_video: 80, ... }
 
-    console.log('Backend Route: PATCH /api/admin/models/bulk-category-pricing - Bulk updating');
 
     if (!updates || typeof updates !== 'object') {
       return res.status(400).json({
@@ -205,7 +197,6 @@ router.patch('/bulk-category-pricing', auth, requireAdmin, async (req, res) => {
     // Invalidate cache
     invalidateCreditCostsCache();
 
-    console.log(`Backend Route: Bulk update - Updated ${results.length} categories, ${errors.length} errors`);
 
     res.status(200).json({
       success: errors.length === 0,
@@ -215,7 +206,6 @@ router.patch('/bulk-category-pricing', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Backend Route: Bulk category pricing - Unexpected error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -252,7 +242,6 @@ router.get('/', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Backend Route: Get all models - Error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -303,7 +292,6 @@ router.put('/:modelId', auth, requireAdmin, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Backend Route: Update model - Error:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',

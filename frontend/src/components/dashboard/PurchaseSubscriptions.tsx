@@ -48,7 +48,7 @@ const PurchaseSubscriptions: React.FC = () => {
         setPlans(plansData);
         setCurrentSubscription(subscription);
       } catch (err) {
-        console.error('Error fetching data:', err);
+        // Removed console for production
         setError('Failed to load subscription plans. Please try again later.');
       } finally {
         setLoading(false);
@@ -74,7 +74,7 @@ const PurchaseSubscriptions: React.FC = () => {
       try {
         userData = JSON.parse(authUser);
       } catch (parseError) {
-        console.error('Error parsing user data:', parseError);
+        // Removed console for production
         toast.error('Invalid user data. Please sign in again.');
         setProcessingPlanId(null);
         return;
@@ -171,7 +171,7 @@ const PurchaseSubscriptions: React.FC = () => {
       }
 
     } catch (err: any) {
-      console.error('Error processing plan action:', err);
+      // Removed console for production
       
       // Dismiss loading toasts
       toast.dismiss('checkout-prep');

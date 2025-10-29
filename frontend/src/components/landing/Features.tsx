@@ -146,7 +146,6 @@ const Features = (): JSX.Element => {
           <GenerationPreview
             thumbnailSrc={currentFeature.thumbnailSrc}
             prompt={currentFeature.prompt}
-            onGenerate={() => console.log(`Generating ${currentFeature.title}`)}
           />
         )}
         

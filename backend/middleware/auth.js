@@ -51,16 +51,12 @@ const auth = async (req, res, next) => {
               .eq('id', supabaseUser.id)
               .single();
 
-            console.log('Profile lookup result:', { profile, profileError });
             
             if (!profileError && profile) {
               userRole = profile.role || "user";
-              console.log('Found user role:', userRole);
             } else {
-              console.log('No profile found, using default role:', userRole);
             }
           } catch (profileErr) {
-            console.warn('Could not fetch user role from profiles table:', profileErr.message);
           }
 
       // Synthesize user object with role from database
@@ -95,7 +91,6 @@ const auth = async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.error("Auth middleware error:", error);
     return res.status(500).json({
       success: false,
       message: "Internal server error during authentication",
@@ -116,7 +111,6 @@ const requireVerifiedEmail = async (req, res, next) => {
     
     next();
   } catch (error) {
-    console.error("Error checking email verification:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -133,7 +127,6 @@ const requireAdmin = async (req, res, next) => {
     
     next();
   } catch (error) {
-    console.error("Error checking admin privileges:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

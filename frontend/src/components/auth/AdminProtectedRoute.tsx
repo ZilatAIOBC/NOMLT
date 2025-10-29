@@ -28,7 +28,7 @@ const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children
         const userData = JSON.parse(authUser);
         setUser(userData);
       } catch (error) {
-        console.error('Error checking auth:', error);
+        // Removed console for production
       } finally {
         setLoading(false);
       }

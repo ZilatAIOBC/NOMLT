@@ -53,7 +53,6 @@ router.get("/summary", auth, async (req, res) => {
     try {
       creditBalance = await getUserCredits(userId);
     } catch (credErr) {
-      console.warn('Could not fetch credit balance:', credErr);
     }
 
     // Get credit transactions (spent only) grouped by generation type
@@ -109,7 +108,6 @@ router.get("/summary", auth, async (req, res) => {
 
     const { data: generations, error: genError } = await genQuery;
 
-    console.log(`📊 Fetched ${generations?.length || 0} generations for stats`);
 
     const generationStats = {
       'text-to-image': { count: 0, credits: 0, successful: 0, failed: 0 },
@@ -132,7 +130,6 @@ router.get("/summary", auth, async (req, res) => {
       }
     }
 
-    console.log(`📊 Generation stats calculated:`, generationStats);
 
     return res.status(200).json({ 
       user_id: userId, 

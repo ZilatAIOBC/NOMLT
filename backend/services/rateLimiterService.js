@@ -55,14 +55,11 @@ const imageLimiter = new Bottleneck({
   // Events for monitoring
   events: {
     error: (error, info) => {
-      console.error(`[Image Limiter] Error:`, error.message);
     },
     dropped: (reason, payload) => {
-      console.warn(`[Image Limiter] Request dropped:`, reason);
     },
     done: (info) => {
       const counts = imageLimiter.counts();
-      console.log(`[Image Limiter] Done: ${counts.DONE}, Queue: ${counts.QUEUED}, Running: ${counts.RUNNING}`);
     }
   }
 });
@@ -91,14 +88,11 @@ const videoLimiter = new Bottleneck({
 
   events: {
     error: (error, info) => {
-      console.error(`[Video Limiter] Error:`, error.message);
     },
     dropped: (reason, payload) => {
-      console.warn(`[Video Limiter] Request dropped:`, reason);
     },
     done: (info) => {
       const counts = videoLimiter.counts();
-      console.log(`[Video Limiter] Done: ${counts.DONE}, Queue: ${counts.QUEUED}, Running: ${counts.RUNNING}`);
     }
   }
 });
@@ -125,10 +119,8 @@ const pollLimiter = new Bottleneck({
 
   events: {
     error: (error, info) => {
-      console.error(`[Poll Limiter] Error:`, error.message);
     },
     dropped: (reason, payload) => {
-      console.warn(`[Poll Limiter] Request dropped:`, reason);
     }
   }
 });
@@ -163,11 +155,9 @@ function withRateLimit(fn, type = 'image') {
       const duration = Date.now() - startTime;
       
       const counts = limiter.counts();
-      console.log(`[${type} Request] Completed in ${duration}ms | Done: ${counts.DONE}, Queue: ${counts.QUEUED}, Running: ${counts.RUNNING}`);
       
       return result;
     } catch (error) {
-      console.error(`[${type} Request] FAILED:`, error.message);
       throw error;
     }
   };
@@ -223,11 +213,6 @@ function getAllStats() {
  */
 function logStats() {
   const stats = getAllStats();
-  console.log('\n[Rate Limiter Stats]');
-  console.log(`Image: Done=${stats.image.done}, Queue=${stats.image.queued}, Running=${stats.image.running}`);
-  console.log(`Video: Done=${stats.video.done}, Queue=${stats.video.queued}, Running=${stats.video.running}`);
-  console.log(`Poll: Done=${stats.poll.done}, Queue=${stats.poll.queued}, Running=${stats.poll.running}`);
-  console.log('');
 }
 
 /**
@@ -238,11 +223,9 @@ function startPeriodicStatsLogging(intervalMs = 10000) {
   setInterval(() => {
     logStats();
   }, intervalMs);
-  console.log(`📊 [Rate Limiter] Started periodic stats logging every ${intervalMs}ms`);
 }
 
 // Log initial stats when module loads
-console.log('[Rate Limiter] Initialized | Image:450/min, Video:55/min, Poll:1000/min');
 
 // Optionally start periodic stats logging (uncomment to enable)
 // startPeriodicStatsLogging(10000); // Log stats every 10 seconds

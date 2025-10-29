@@ -30,7 +30,6 @@ router.get('/', async (req, res) => {
       data: models
     });
   } catch (error) {
-    console.error('Error fetching models:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch AI models',
@@ -65,7 +64,6 @@ router.get('/category/:category', async (req, res) => {
       category
     });
   } catch (error) {
-    console.error('Error fetching models by category:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch models',
@@ -100,7 +98,6 @@ router.get('/:modelName/cost', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching model cost:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch model cost',
@@ -145,7 +142,6 @@ router.put('/:modelName/cost', auth, requireAdmin, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error updating model cost:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to update model cost',

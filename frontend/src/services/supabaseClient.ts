@@ -6,7 +6,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 if (!supabaseUrl || !supabaseAnonKey) {
   // Fail fast in dev; in prod we still avoid crashing but log clearly
   // eslint-disable-next-line no-console
-  console.error('Missing Supabase env vars VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
+  // Removed console for production
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

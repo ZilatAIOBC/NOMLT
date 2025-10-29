@@ -55,7 +55,6 @@ router.get("/result", auth, async (req, res) => {
       return res.status(400).json({ error: "Missing url query parameter" });
     }
 
-    console.log(`Text-to-Image: User ${userId} checking result for URL: ${url}`);
 
     // Step 1: Get result from AI provider
     const decodedUrl = decodeURIComponent(url);
@@ -65,7 +64,6 @@ router.get("/result", auth, async (req, res) => {
       intervalMs ? Number(intervalMs) : undefined
     );
 
-    console.log(`Text-to-Image: Got result from AI provider`);
 
     // Check if generation is complete and has image URL
     const externalImageUrl = result.data.output || (result.data.outputs && result.data.outputs[0]);
@@ -76,7 +74,6 @@ router.get("/result", auth, async (req, res) => {
     }
 
     // Step 2: Generation is complete, save to S3
-    console.log(`Text-to-Image: Saving to S3 - External URL: ${externalImageUrl}`);
 
     const s3Result = await saveGenerationToS3(
       externalImageUrl,
@@ -84,7 +81,6 @@ router.get("/result", auth, async (req, res) => {
       "text-to-image"
     );
 
-    console.log(`Text-to-Image: Uploaded to S3 - Key: ${s3Result.s3Key}`);
 
     // Step 3: Save to database FIRST to get generation ID
     const generation = await createGeneration({
@@ -108,7 +104,6 @@ router.get("/result", auth, async (req, res) => {
       contentType: s3Result.contentType,
     });
 
-    console.log(`Text-to-Image: Saved to database - Generation ID: ${generation.id}`);
 
     // Step 4: Deduct credits with generation ID (enables idempotency)
     const creditCost = req.creditInfo?.cost || 30; // Default to 30 if not set
@@ -121,7 +116,6 @@ router.get("/result", auth, async (req, res) => {
         'text_to_image', 
         generation.id // Use generation ID for idempotency
       );
-      console.log(`Text-to-Image: Deducted ${creditCost} credits. New balance: ${creditResult.new_balance}`);
       
       // Update generation record with credits_used
       const client = supabaseAdmin || supabase;
@@ -140,10 +134,9 @@ router.get("/result", auth, async (req, res) => {
         creditsUsed: creditCost,
         status: 'completed',
         createdAt: generation.created_at
-      }).catch(err => console.error('Failed to update usage summary:', err));
+      }).catch(() => {});
         
     } catch (creditError) {
-      console.error(`Text-to-Image: Failed to deduct credits:`, creditError);
       // Mark generation as completed even if credit deduction fails
       try {
         const client = supabaseAdmin || supabase;
@@ -152,11 +145,9 @@ router.get("/result", auth, async (req, res) => {
           .update({ status: 'completed', completed_at: new Date().toISOString() })
           .eq('id', generation.id);
       } catch (statusError) {
-        console.error(`Text-to-Image: Failed to update status:`, statusError);
       }
     }
 
-    console.log(`Text-to-Image: Generation complete - ID: ${generation.id}, Credits used: ${creditCost}`);
 
     // Step 5: Return response with S3 URL, generation info, and credit balance
     res.status(200).json({
@@ -184,7 +175,6 @@ router.get("/result", auth, async (req, res) => {
     });
 
   } catch (e) {
-    console.error("Text-to-Image: Error in result endpoint:", e);
     
     // If we have a generation ID and credits were deducted, try to refund
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);

@@ -71,7 +71,7 @@ export const getUsers = async (params: GetUsersParams = {}): Promise<GetUsersRes
     const result = await fetchWithAuth(url, { method: 'GET' });
     return result.data;
   } catch (error: any) {
-    console.error('Error fetching users:', error);
+    // Removed console for production
     throw new Error(error.message || 'Failed to fetch users');
   }
 };
@@ -83,7 +83,7 @@ export const getUserStats = async (): Promise<UserStats> => {
     const result = await fetchWithAuth(url, { method: 'GET' });
     return result.data;
   } catch (error: any) {
-    console.error('Error fetching user stats:', error);
+    // Removed console for production
     throw new Error(error.message || 'Failed to fetch user statistics');
   }
 };
@@ -95,7 +95,7 @@ export const getUserDetails = async (userId: string): Promise<User> => {
     const result = await fetchWithAuth(url, { method: 'GET' });
     return result.data;
   } catch (error: any) {
-    console.error('Error fetching user details:', error);
+    // Removed console for production
     throw new Error(error.message || 'Failed to fetch user details');
   }
 };
@@ -113,7 +113,7 @@ export const updateUserStatus = async (
     });
     return result.data;
   } catch (error: any) {
-    console.error('Error updating user status:', error);
+    // Removed console for production
     throw new Error(error.message || 'Failed to update user status');
   }
 };
@@ -131,7 +131,7 @@ export const updateUserRole = async (
     });
     return result.data;
   } catch (error: any) {
-    console.error('Error updating user role:', error);
+    // Removed console for production
     throw new Error(error.message || 'Failed to update user role');
   }
 };
@@ -143,7 +143,7 @@ export const deleteUser = async (userId: string): Promise<{ id: string }> => {
     const result = await fetchWithAuth(url, { method: 'DELETE' });
     return result.data;
   } catch (error: any) {
-    console.error('Error deleting user:', error);
+    // Removed console for production
     throw new Error(error.message || 'Failed to delete user');
   }
 };
@@ -161,7 +161,7 @@ export const bulkUpdateUsers = async (
     });
     return result.data;
   } catch (error: any) {
-    console.error('Error bulk updating users:', error);
+    // Removed console for production
     throw new Error(error.message || 'Failed to bulk update users');
   }
 };
@@ -195,7 +195,7 @@ export const exportUsersToCSV = async (params: GetUsersParams = {}): Promise<Blo
     const csvString = csvRows.join('\n');
     return new Blob([csvString], { type: 'text/csv' });
   } catch (error: any) {
-    console.error('Error exporting users:', error);
+    // Removed console for production
     throw new Error('Failed to export users to CSV');
   }
 };

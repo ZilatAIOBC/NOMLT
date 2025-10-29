@@ -29,11 +29,6 @@ const Sidebar: React.FC = () => {
       const tablet = width >= 768 && width < 1024;
       const expanded = width >= 1024;
       
-      console.log('width', width);
-      console.log('Setting isMobile to:', mobile);
-      console.log('Setting isTablet to:', tablet);
-      console.log('Setting isExpanded to:', expanded);
-      
       setIsMobile(mobile);
       setIsTablet(tablet);
       setIsExpanded(expanded);

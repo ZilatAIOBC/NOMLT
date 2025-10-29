@@ -105,8 +105,6 @@ const ImageToImage: React.FC = () => {
         size: `${normalized.width}*${normalized.height}` // Enforce minimum total pixels and step size
       };
       
-      console.log('Image-to-Image Request Body:', JSON.stringify(requestBody, null, 2));
-      
       // Step 3: Create the image generation job
       const createResult = await callImageToImageAPI(requestBody);
       
@@ -123,17 +121,6 @@ const ImageToImage: React.FC = () => {
       
       // Step 5: Extract image URL
       if (result.data.outputs && result.data.outputs.length > 0) {
-        console.log('Final image URL:', result.data.outputs[0]);
-        console.log('Image-to-Image Full Response:', result);
-        
-        // Check if we got S3 generation info (optional logging)
-        const s3Info = (result as any).generation;
-        if (s3Info) {
-          console.log('S3 Generation Info:', s3Info);
-          console.log('S3 URL:', s3Info.s3Url);
-          console.log('Generation ID:', s3Info.id);
-        }
-        
         setGeneratedImage(result.data.outputs[0]);
         setStatus('completed');
         setGenerationProgress('');
@@ -141,23 +128,16 @@ const ImageToImage: React.FC = () => {
         // Refresh credit balance after successful generation
         setCreditRefreshTrigger(prev => prev + 1);
         
-        // Fetch and log enhanced usage summary
+        // Fetch usage summary
         try {
-          const summary = await fetchUsageSummary();
-          console.log('📊 Usage Summary (Image-to-Image):', summary);
-          console.log('💰 Credit Balance:', summary.credit_balance);
-          console.log('📈 Credits Spent by Type:', summary.credits_spent_by_type);
-          
-          
+          await fetchUsageSummary();
         } catch (e) {
-          console.warn('Failed to fetch usage summary:', e);
+          // Silently fail
         }
       } else {
         throw new Error('No image URL found in result outputs');
       }
     } catch (error: any) {
-      console.error('Generation failed:', error);
-      
       // Handle insufficient credits error (402)
       if (error.response?.status === 402 || error.message?.includes('Insufficient credits')) {
         const errorData = error.response?.data;

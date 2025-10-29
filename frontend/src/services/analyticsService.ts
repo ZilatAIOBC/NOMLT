@@ -107,7 +107,7 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
+    // Removed console for production
     throw error;
   }
 };
@@ -130,7 +130,7 @@ export const getFeatureUsageStats = async (): Promise<FeatureUsageResponse> => {
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching feature usage stats:', error);
+    // Removed console for production
     throw error;
   }
 };
@@ -153,7 +153,7 @@ export const getTopUsers = async (limit: number = 4, sortBy: string = 'credits')
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching top users:', error);
+    // Removed console for production
     throw error;
   }
 };
@@ -177,7 +177,7 @@ export const getCostPerFeature = async (): Promise<CostPerFeatureResponse> => {
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching cost per feature:', error);
+    // Removed console for production
     throw error;
   }
 };
@@ -201,7 +201,7 @@ export const getMonthlyTrends = async (): Promise<MonthlyTrends> => {
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching monthly trends:', error);
+    // Removed console for production
     throw error;
   }
 };
@@ -225,7 +225,7 @@ export const getDailyTrends = async (days: number = 30): Promise<DailyTrendsResp
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching daily trends:', error);
+    // Removed console for production
     throw error;
   }
 };

@@ -15,7 +15,6 @@ interface CreatePlanRequest {
   display_name: string;
   description?: string;
   price_monthly: number;
-  price_quarterly: number;
   price_yearly: number;
   credits_included: number;
   max_generations_per_month?: number;
@@ -37,7 +36,6 @@ interface UpdatePlanRequest {
   display_name?: string;
   description?: string;
   price_monthly?: number;
-  price_quarterly?: number;
   price_yearly?: number;
   credits_included?: number;
   max_generations_per_month?: number;
@@ -169,7 +167,6 @@ class AdminPlansService {
 
       return result.data;
     } catch (error) {
-      console.error('Error fetching all plans:', error);
       throw error;
     }
   }
@@ -196,7 +193,6 @@ class AdminPlansService {
 
       return result.data;
     } catch (error) {
-      console.error('Error creating plan:', error);
       throw error;
     }
   }
@@ -223,7 +219,6 @@ class AdminPlansService {
 
       return result.data;
     } catch (error) {
-      console.error('Error updating plan:', error);
       throw error;
     }
   }
@@ -249,7 +244,6 @@ class AdminPlansService {
 
       return result.data;
     } catch (error) {
-      console.error('Error deleting plan:', error);
       throw error;
     }
   }
@@ -268,10 +262,6 @@ class AdminPlansService {
       errors.push('Monthly price must be a positive number');
     }
 
-    if (planData.price_quarterly === undefined || planData.price_quarterly < 0) {
-      errors.push('Quarterly price must be a positive number');
-    }
-
     if (planData.price_yearly === undefined || planData.price_yearly < 0) {
       errors.push('Yearly price must be a positive number');
     }
@@ -281,14 +271,6 @@ class AdminPlansService {
     }
 
     // Validate pricing logic
-    if (planData.price_monthly && planData.price_quarterly) {
-      const expectedQuarterly = planData.price_monthly * 3 * 0.85; // 15% discount
-      const tolerance = planData.price_monthly * 0.1; // 10% tolerance
-      if (Math.abs(planData.price_quarterly - expectedQuarterly) > tolerance) {
-        errors.push('Quarterly price should be approximately 15% less than monthly price × 3');
-      }
-    }
-
     if (planData.price_monthly && planData.price_yearly) {
       const expectedYearly = planData.price_monthly * 12 * 0.7; // 30% discount
       const tolerance = planData.price_monthly * 2; // 20% tolerance
@@ -314,19 +296,13 @@ class AdminPlansService {
         currency: 'USD',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-      }).format(plan.price_monthly),
-      formattedQuarterlyPrice: new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }).format(plan.price_quarterly),
+      }).format(plan.price_monthly ?? 0),
       formattedYearlyPrice: new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
-      }).format(plan.price_yearly),
+      }).format(plan.price_yearly ?? 0),
     };
   }
 }

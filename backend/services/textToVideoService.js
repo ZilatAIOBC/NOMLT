@@ -10,10 +10,7 @@ const TEXT_TO_VIDEO_API_KEY = process.env.TEXT_TO_VIDEO_API_KEY;
 const TEXT_TO_VIDEO_API_URL = process.env.TEXT_TO_VIDEO_API_URL;
 
 if (!TEXT_TO_VIDEO_API_KEY || !TEXT_TO_VIDEO_API_URL) {
-  // Warn early so API routes can fail fast with clear message
-  console.warn(
-    "Missing TEXT_TO_VIDEO_API_KEY or TEXT_TO_VIDEO_API_URL environment variables."
-  );
+  // API routes will fail fast with clear message
 }
 
 /**
@@ -27,12 +24,9 @@ async function createTextToVideoJob(requestBody) {
   }
 
   try {
-    console.log('Backend: Creating text-to-video job with payload:', JSON.stringify(requestBody, null, 2));
     
     // Schedule request through rate limiter
-    console.log('🔄 [Video Limiter] Request scheduled through rate limiter');
     const response = await videoLimiter.schedule(async () => {
-      console.log('✅ [Video Limiter] Executing API request');
       return await axios.post(TEXT_TO_VIDEO_API_URL, requestBody, {
         headers: {
           "Content-Type": "application/json",
@@ -43,7 +37,6 @@ async function createTextToVideoJob(requestBody) {
     });
 
     const data = response.data;
-    console.log('Backend: Text-to-video create job response:', JSON.stringify(data, null, 2));
     
     if (!data || !data.data || !data.data.urls || !data.data.urls.get) {
       throw new Error("Invalid API response: missing result URL");
@@ -55,7 +48,6 @@ async function createTextToVideoJob(requestBody) {
         `${error.response.status} ${error.response.statusText} - ${JSON.stringify(
           error.response.data
         )}`) || error.message || "Unknown error";
-    console.error('Backend: Text-to-video create job failed:', message);
     throw new Error(`Text-to-video create job failed: ${message}`);
   }
 }
@@ -75,14 +67,12 @@ async function getTextToVideoResult(resultUrl, maxAttempts = 40, intervalMs = 60
     throw new Error("Result URL is required");
   }
 
-  console.log(`Backend: Starting text-to-video polling for URL: ${resultUrl}`);
   let attempts = 0;
 
   while (attempts < maxAttempts) {
     try {
       // Schedule poll request through rate limiter
       const response = await pollLimiter.schedule(async () => {
-        console.log(`🔄 [Poll Limiter] Poll attempt ${attempts + 1} executing`);
         return await axios.get(resultUrl, {
           headers: { Authorization: `Bearer ${TEXT_TO_VIDEO_API_KEY}` },
           timeout: 60_000,
@@ -92,27 +82,20 @@ async function getTextToVideoResult(resultUrl, maxAttempts = 40, intervalMs = 60
       const data = response.data;
       const status = data && data.data && data.data.status;
       
-      console.log(`Backend: Poll attempt ${attempts + 1}/${maxAttempts} - Status: ${status}`);
 
       if (status === "succeeded" || status === "completed") {
         const finalUrl = data && data.data && data.data.output;
-        console.log('Backend: Text-to-video generation completed successfully!');
-        console.log('Backend: Final video URL:', finalUrl);
-        console.log('Backend: Final result:', JSON.stringify(data, null, 2));
         return data;
       }
       if (status === "failed") {
         const err = (data && data.data && data.data.error) || "Unknown error";
-        console.error('Backend: Text-to-video generation failed:', err);
         throw new Error(`Text-to-video generation failed: ${err}`);
       }
 
-      console.log(`Backend: Text-to-video still ${status}, waiting ${intervalMs}ms before next check...`);
       await new Promise((resolve) => setTimeout(resolve, intervalMs));
       attempts++;
     } catch (error) {
       attempts++;
-      console.error(`Backend: Poll attempt ${attempts} failed:`, error.message);
       
       if (attempts >= maxAttempts) {
         const message =
@@ -120,7 +103,6 @@ async function getTextToVideoResult(resultUrl, maxAttempts = 40, intervalMs = 60
             `${error.response.status} ${error.response.statusText} - ${JSON.stringify(
               error.response.data
             )}`) || error.message || "Unknown error";
-        console.error('Backend: Text-to-video polling timed out:', message);
         throw new Error(`Polling failed: ${message}`);
       }
       await new Promise((resolve) => setTimeout(resolve, intervalMs));

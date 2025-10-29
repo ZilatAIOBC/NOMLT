@@ -130,15 +130,6 @@ async function reactivateSubscription(subscriptionId) {
     cancel_at_period_end: false
   });
   
-  // Log to debug
-  console.log('Reactivated subscription from Stripe:', {
-    id: subscription.id,
-    status: subscription.status,
-    cancel_at_period_end: subscription.cancel_at_period_end,
-    current_period_start: subscription.current_period_start,
-    current_period_end: subscription.current_period_end,
-  });
-  
   return subscription;
 }
 

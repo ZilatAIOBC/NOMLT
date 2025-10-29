@@ -80,7 +80,6 @@ export async function getCreditCosts(): Promise<{
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching credit costs:', error);
     throw error;
   }
 }
@@ -105,7 +104,6 @@ export async function getCreditCostByType(generationType: string): Promise<Credi
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching credit cost:', error);
     throw error;
   }
 }
@@ -127,7 +125,6 @@ export async function getCreditBalance(): Promise<CreditBalance> {
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching credit balance:', error);
     throw error;
   }
 }
@@ -167,7 +164,6 @@ export async function getCreditTransactions(
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching credit transactions:', error);
     throw error;
   }
 }
@@ -189,7 +185,6 @@ export async function getCreditSummary(): Promise<CreditSummary> {
     const result = await response.json();
     return result.data;
   } catch (error) {
-    console.error('Error fetching credit summary:', error);
     throw error;
   }
 }
