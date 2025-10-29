@@ -6,7 +6,7 @@ import AdminProtectedRoute from './components/auth/AdminProtectedRoute';
 import UserProtectedRoute from './components/auth/UserProtectedRoute';
 
 // Lazy load components for code splitting
-const Landing = lazy(() => import('./pages/Landingpage /Landing'));
+const Landing = lazy(() => import('./pages/Landingpage/Landing'));
 const SignUp = lazy(() => import('./pages/auth/SignUp'));
 const SignIn = lazy(() => import('./pages/auth/SignIn'));
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
