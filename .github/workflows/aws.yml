@@ -27,10 +27,10 @@
 name: Deploy to Amazon ECS
 
 on:
-  # push:
-  #   branches: [ "main" ]
+  push:
+    branches: [ "main" ]
  
-  workflow_dispatch:
+  # workflow_dispatch:     #for manual only
 
 
 env:
