@@ -306,8 +306,7 @@ const TermsAndConditions: React.FC = () => {
                   If you have any questions about these Terms & Conditions, please contact us at:
                 </p>
                 <div className="text-gray-300">
-                  <p>Email: legal@NOLMT.com</p>
-                  <p>Address: NOLMT.ai Legal Team</p>
+                  <p>Email: contact@nolmt.ai</p>
                 </div>
               </section>
             </div>

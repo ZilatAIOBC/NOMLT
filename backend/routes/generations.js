@@ -8,6 +8,8 @@ const {
   getGenerationById,
   deleteGeneration,
   getUserGenerationStats,
+  getUserGenerationKeys,
+  deleteAllGenerationsForUser,
 } = require("../models/Generation");
 const { getSignedS3Url, deleteFromS3 } = require("../services/s3Service");
 
@@ -136,6 +138,7 @@ router.get("/:id/signed-url", verifyToken, async (req, res) => {
     const userId = req.user._id || req.user.id || req.supabaseUser.id;
     const generationId = req.params.id;
     const expiresIn = parseInt(req.query.expiresIn) || 3600; // 1 hour default
+    const download = String(req.query.download || '').toLowerCase() === '1' || String(req.query.download || '').toLowerCase() === 'true';
 
     const generation = await getGenerationById(generationId);
 
@@ -147,7 +150,13 @@ router.get("/:id/signed-url", verifyToken, async (req, res) => {
       });
     }
 
-    const signedUrl = await getSignedS3Url(generation.s3_key, expiresIn);
+    let responseContentDisposition;
+    if (download) {
+      const filename = (generation.s3_key && generation.s3_key.split('/').pop()) || `generation-${generation.id}`;
+      responseContentDisposition = `attachment; filename="${filename}"`;
+    }
+
+    const signedUrl = await getSignedS3Url(generation.s3_key, expiresIn, responseContentDisposition);
 
     res.status(200).json({
       success: true,
@@ -205,6 +214,32 @@ router.delete("/:id", verifyToken, async (req, res) => {
       message: "Failed to delete generation",
       error: error.message,
     });
+  }
+});
+
+/**
+ * DELETE /api/generations
+ * Bulk delete all generations for the authenticated user
+ */
+router.delete("/", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user._id || req.user.id || req.supabaseUser.id;
+
+    // Fetch s3 keys first, then delete S3 objects in parallel (best-effort)
+    const keys = await getUserGenerationKeys(userId);
+    await Promise.all(
+      keys
+        .filter((k) => k.s3_key)
+        .map(async (k) => {
+          try { await deleteFromS3(k.s3_key); } catch (_) {}
+        })
+    );
+
+    const deletedCount = await deleteAllGenerationsForUser(userId);
+
+    res.status(200).json({ success: true, deleted: deletedCount });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to delete all generations", error: error.message });
   }
 });
 

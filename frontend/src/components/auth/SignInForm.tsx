@@ -118,7 +118,9 @@ const SignInForm: React.FC = () => {
               </>
             ) : (
               <>
-                <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+                <span className="bg-white rounded-full w-5 h-5 flex items-center justify-center">
+                  <img src="/google.svg" alt="Google" className="w-4 h-4" />
+                </span>
                 Continue with Google
               </>
             )}

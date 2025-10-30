@@ -108,7 +108,7 @@ const PrivacyPolicy: React.FC = () => {
                 and protect your information when you use our visual communication platform (the "Service"). 
                 Capitalized terms that are not defined in this Privacy Policy have the meaning given to them 
                 in our Terms of Use. If you do not agree with our policies and practices, do not use the Service. 
-                If you still have any questions or concerns, please contact us at privacy@NOLMT.ai. This Privacy 
+                If you still have any questions or concerns, please contact us at contact@nolmt.ai. This Privacy 
                 Policy applies to all users of the Service, including users of the Developer Portal.
               </p>
 
@@ -317,8 +317,7 @@ const PrivacyPolicy: React.FC = () => {
                   If you have any questions about this Privacy Policy, please contact us at:
                 </p>
                 <div className="text-gray-300">
-                  <p>Email: privacy@NOLMT.ai</p>
-                  <p>Address: NOLMT.ai Privacy Team</p>
+                  <p>Email: contact@nolmt.ai</p>
                 </div>
               </section>
             </div>

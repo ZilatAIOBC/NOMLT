@@ -146,6 +146,73 @@ async function deleteGeneration(generationId, userId) {
 }
 
 /**
+ * Fetch all generations for a user with ids and s3 keys
+ * @param {string} userId
+ * @returns {Promise<Array<{id:string, s3_key:string}>>}
+ */
+async function getUserGenerationKeys(userId) {
+  try {
+    const { data, error } = await supabase
+      .from("generations")
+      .select("id, s3_key")
+      .eq("user_id", userId);
+
+    if (error) {
+      throw new Error(`Failed to fetch generation keys: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Delete all generations for a user
+ * @param {string} userId
+ * @returns {Promise<number>} Number of deleted rows
+ */
+async function deleteAllGenerationsForUser(userId) {
+  try {
+    const { count, error } = await supabase
+      .from("generations")
+      .delete({ count: "exact" })
+      .eq("user_id", userId);
+
+    if (error) {
+      throw new Error(`Failed to delete all generations: ${error.message}`);
+    }
+
+    return count || 0;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
+ * Get generations older than given days
+ * @param {number} days
+ * @returns {Promise<Array<{id:string, user_id:string, s3_key:string}>>}
+ */
+async function getGenerationsOlderThan(days) {
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const { data, error } = await supabase
+      .from("generations")
+      .select("id, user_id, s3_key")
+      .lt("created_at", cutoff);
+
+    if (error) {
+      throw new Error(`Failed to fetch old generations: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
  * Get generation statistics for a user
  * @param {string} userId - User ID
  * @returns {Promise<object>} Statistics
@@ -184,5 +251,8 @@ module.exports = {
   getGenerationById,
   deleteGeneration,
   getUserGenerationStats,
+  getUserGenerationKeys,
+  deleteAllGenerationsForUser,
+  getGenerationsOlderThan,
 };
 

@@ -123,8 +123,10 @@ app.use("/api/rate-limiter", require("./routes/rateLimiter"));
 try {
   const { scheduleDailyUsageSummary } = require('./jobs/dailyUsageSummary');
   const { scheduleCreditExpirationJob } = require('./jobs/creditExpirationJob');
+  const { scheduleGenerationRetention } = require('./jobs/generationRetention');
   scheduleDailyUsageSummary && scheduleDailyUsageSummary();
   scheduleCreditExpirationJob && scheduleCreditExpirationJob();
+  scheduleGenerationRetention && scheduleGenerationRetention(7);
 } catch (e) {
   console.warn('Background jobs not scheduled:', e.message);
 }

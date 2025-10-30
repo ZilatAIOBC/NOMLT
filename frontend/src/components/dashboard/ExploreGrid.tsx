@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
-import { getUserGenerations, transformGeneration, deleteGeneration } from '../../services/generationsService';
+import { toast } from 'react-hot-toast';
+import { Trash2, Download } from 'lucide-react';
+import { getUserGenerations, transformGeneration, deleteGeneration, getGenerationSignedUrl, deleteAllGenerations } from '../../services/generationsService';
 import ConfirmationModal from '../common/ConfirmationModal';
+import DeleteAllModal from '../common/DeleteAllModal';
+import ImageLightbox from '../common/ImageLightbox';
 
 
 type Generation = {
@@ -30,8 +33,35 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [heights] = useState<Record<string, number>>(() => ({}));
+  const [page, setPage] = useState(1);
+  const pageSize = 50; // max 50 per page
+  const [totalCount, setTotalCount] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [lightboxAlt, setLightboxAlt] = useState<string>('');
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
-  // Fetch generations from database
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  const getPaginationPages = (currentPage: number, pagesCount: number): (number | string)[] => {
+    const pages: (number | string)[] = [];
+    const add = (v: number | string) => pages.push(v);
+    if (pagesCount <= 7) {
+      for (let i = 1; i <= pagesCount; i++) add(i);
+    } else {
+      add(1);
+      if (currentPage > 4) add('...');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(pagesCount - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) add(i);
+      if (currentPage < pagesCount - 3) add('...');
+      add(pagesCount);
+    }
+    return pages;
+  };
+
+  // Fetch generations from database with pagination
   useEffect(() => {
     const fetchGenerations = async () => {
       try {
@@ -39,10 +69,12 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
         setError(null);
         
         const type = activeTab === 'all' ? undefined : activeTab;
-        const response = await getUserGenerations(type, 100, 0);
+        const offset = (page - 1) * pageSize;
+        const response = await getUserGenerations(type, pageSize, offset);
         
         const transformedGenerations = response.generations.map(transformGeneration);
         setGenerations(transformedGenerations);
+        setTotalCount(response.count || 0);
         
         // Initialize heights for new generations only
         response.generations.forEach(gen => {
@@ -59,6 +91,11 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
     };
 
     fetchGenerations();
+  }, [activeTab, page]);
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setPage(1);
   }, [activeTab]);
 
   // No fallback data - only show real generations from database
@@ -110,6 +147,7 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
       setGenerations(transformedGenerations);
       setDeleteModalOpen(false);
       setDeletingId(null);
+      toast.success('Deleted successfully');
     } catch (error) {
       alert('Failed to delete generation. Please try again.');
     } finally {
@@ -120,6 +158,27 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
   const handleDeleteCancel = () => {
     setDeleteModalOpen(false);
     setDeletingId(null);
+  };
+
+  const handleDownload = async (generation: Generation, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const url = await getGenerationSignedUrl(generation.id, { download: true });
+      const filename = generation.s3Key ? generation.s3Key.split('/').pop() || `generation-${generation.id}` : `generation-${generation.id}`;
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(objectUrl);
+      toast.success('Download started');
+    } catch (err) {
+      toast.error('Failed to download. Please try again.');
+    }
   };
 
   // Show loading state
@@ -218,21 +277,30 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
                 <h2 className="text-2xl font-bold text-white mb-2">Your Generations</h2>
               )}
 
-          {/* Tabs */}
-          <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-4 sm:w-fit">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-3 rounded-3xl text-xs sm:text-sm font-medium transition-colors text-center ${
-                  activeTab === tab.id
-                    ? 'bg-gray-500 text-white font-semibold'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          {/* Tabs + Delete All */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-4 sm:w-fit">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-3 rounded-3xl text-xs sm:text-sm font-medium transition-colors text-center ${
+                    activeTab === tab.id
+                      ? 'bg-gray-500 text-white font-semibold'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setDeleteAllOpen(true)}
+              className="inline-flex items-center gap-2 self-start sm:self-auto px-4 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 text-white text-sm font-semibold transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete All
+            </button>
           </div>
         </div>
       )}
@@ -268,90 +336,163 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
           </div>
         </div>
       ) : (
-        <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-3 xl:columns-4 gap-4 space-y-4">
-          {filteredGenerations.map((generation) => (
-          <div
-            key={generation.id}
-            className="group relative break-inside-avoid rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-white/20 transition-colors cursor-pointer"
-            style={{
-              height: `${heights[generation.id] || 400}px`
-            }}
-          >
-            {generation.isVideo ? (
-              <div className="w-full h-full relative bg-black rounded-lg overflow-hidden">
-                {/* Custom Video Player for Grid */}
-                <video
+        <>
+          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+            {filteredGenerations.map((generation) => (
+            <div
+              key={generation.id}
+              className="group relative break-inside-avoid rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-white/20 transition-colors cursor-pointer"
+              style={{
+                height: `${heights[generation.id] || 400}px`
+              }}
+            >
+              {generation.isVideo ? (
+                <div className="w-full h-full relative bg-black rounded-lg overflow-hidden">
+                  {/* Custom Video Player for Grid */}
+                  <video
+                    src={generation.thumbnail}
+                    className="w-full h-full object-cover"
+                    preload="metadata"
+                    controls
+                    controlsList="nodownload noremoteplayback"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.parentElement!.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center bg-gray-800 text-white text-sm">
+                          Video not available
+                        </div>
+                      `;
+                    }}
+                  />
+                  {/* Hide volume control with CSS */}
+                  <style>
+                    {`
+                      video::-webkit-media-controls-volume-slider {
+                        display: none !important;
+                      }
+                      video::-webkit-media-controls-mute-button {
+                        display: none !important;
+                      }
+                      video::-webkit-media-controls-volume-control-container {
+                        display: none !important;
+                      }
+                    `}
+                  </style>
+                </div>
+              ) : (
+                <img
                   src={generation.thumbnail}
+                  alt={generation.prompt}
                   className="w-full h-full object-cover"
-                  preload="metadata"
-                  controls
-                  controlsList="nodownload noremoteplayback"
+                  onClick={() => {
+                    setLightboxSrc(generation.thumbnail);
+                    setLightboxAlt(generation.prompt || 'Preview');
+                    setLightboxOpen(true);
+                  }}
                   onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement!.innerHTML = `
-                      <div class="w-full h-full flex items-center justify-center bg-gray-800 text-white text-sm">
-                        Video not available
-                      </div>
-                    `;
+                    e.currentTarget.src = 'https://via.placeholder.com/400x600/1a1a1a/ffffff?text=Image+Not+Found';
                   }}
                 />
-                {/* Hide volume control with CSS */}
-                <style>
-                  {`
-                    video::-webkit-media-controls-volume-slider {
-                      display: none !important;
-                    }
-                    video::-webkit-media-controls-mute-button {
-                      display: none !important;
-                    }
-                    video::-webkit-media-controls-volume-control-container {
-                      display: none !important;
-                    }
-                  `}
-                </style>
+              )}
+              
+              {/* Hover overlay */}
+              <div className="absolute inset- bg-black/0 group-hover:bg-black/30 transition-colors flex items-end">
+                <div className="p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-white text-xs line-clamp-2">{generation.prompt}</p>
+                  {generation.createdAt && (
+                    <p className="text-gray-300 text-xs mt-1">
+                      {new Date(generation.createdAt).toLocaleDateString()}
+                    </p>
+                  )}
+                  {generation.fileSize && (
+                    <p className="text-gray-300 text-xs">
+                      {(generation.fileSize / 1024 / 1024).toFixed(1)} MB
+                    </p>
+                  )}
+                </div>
               </div>
-            ) : (
-              <img
-                src={generation.thumbnail}
-                alt={generation.prompt}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://via.placeholder.com/400x600/1a1a1a/ffffff?text=Image+Not+Found';
-                }}
-              />
-            )}
-            
-            {/* Hover overlay */}
-            <div className="absolute inset- bg-black/0 group-hover:bg-black/30 transition-colors flex items-end">
-              <div className="p-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <p className="text-white text-xs line-clamp-2">{generation.prompt}</p>
-                {generation.createdAt && (
-                  <p className="text-gray-300 text-xs mt-1">
-                    {new Date(generation.createdAt).toLocaleDateString()}
-                  </p>
-                )}
-                {generation.fileSize && (
-                  <p className="text-gray-300 text-xs">
-                    {(generation.fileSize / 1024 / 1024).toFixed(1)} MB
-                  </p>
-                )}
+              
+              {/* Action buttons on hover */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-2">
+                <button
+                  onClick={(e) => handleDownload(generation, e)}
+                  className="bg-white/90 hover:bg-white text-black p-2 rounded-full shadow-lg transition-colors"
+                  title="Download"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={(e) => handleDeleteClick(generation.id, e)}
+                  className="bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-colors"
+                  title="Delete generation"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
-            
-            {/* Delete button on hover */}
-            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          ))}
+          </div>
+
+          {/* Pagination */}
+          {totalCount > pageSize && (
+            <div className="mt-6 flex items-center justify-center gap-2">
               <button
-                onClick={(e) => handleDeleteClick(generation.id, e)}
-                className="bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-colors"
-                title="Delete generation"
+                className="px-3 py-2 rounded-md bg-white/10 text-white disabled:opacity-50"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
               >
-                <Trash2 className="w-4 h-4" />
+                Prev
+              </button>
+              {getPaginationPages(page, totalPages).map((p, idx) => (
+                typeof p === 'number' ? (
+                  <button
+                    key={`p-${p}-${idx}`}
+                    className={`px-3 py-2 rounded-md text-sm ${p === page ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                    onClick={() => setPage(p)}
+                  >
+                    {p}
+                  </button>
+                ) : (
+                  <span key={`e-${idx}`} className="px-2 text-white/60">{p}</span>
+                )
+              ))}
+              <button
+                className="px-3 py-2 rounded-md bg-white/10 text-white disabled:opacity-50"
+                onClick={() => setPage(p => (p < Math.ceil(totalCount / pageSize) ? p + 1 : p))}
+                disabled={page >= Math.ceil(totalCount / pageSize)}
+              >
+                Next
               </button>
             </div>
-          </div>
-        ))}
-        </div>
+          )}
+        </>
       )}
+
+      {/* Delete All confirmation */}
+      <DeleteAllModal
+        isOpen={deleteAllOpen}
+        onClose={() => { if (!isBulkDeleting) setDeleteAllOpen(false); }}
+        onConfirm={async () => {
+          try {
+            setIsBulkDeleting(true);
+            const removed = await deleteAllGenerations();
+            toast.success(`Deleted ${removed} generation${removed === 1 ? '' : 's'}`);
+            setPage(1);
+            setActiveTab('all');
+            const response = await getUserGenerations(undefined, pageSize, 0);
+            const transformed = response.generations.map(transformGeneration);
+            setGenerations(transformed);
+            setTotalCount(response.count || 0);
+          } catch (e) {
+            const err = e instanceof Error ? e.message : 'Failed to delete all';
+            toast.error(err);
+          } finally {
+            setIsBulkDeleting(false);
+            setDeleteAllOpen(false);
+          }
+        }}
+        isLoading={isBulkDeleting}
+      />
 
       {/* Confirmation Modal */}
       <ConfirmationModal
@@ -364,6 +505,14 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
         cancelText="Cancel"
         isLoading={isDeleting}
         type="danger"
+      />
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={lightboxOpen}
+        src={lightboxSrc}
+        alt={lightboxAlt}
+        onClose={() => setLightboxOpen(false)}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import VideoPlayer from '../../components/image-to-video/VideoPlayer';
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
@@ -9,6 +9,7 @@ import InsufficientCreditsModal from '../../components/dashboard/InsufficientCre
 import { callTextToVideoAPI, getTextToVideoResult, TextToVideoRequest } from '../../services/textToVideoService';
 import { fetchUsageSummary } from '../../services/usageService';
 import { useCreditCost } from '../../hooks/useCreditCost';
+import { getCreditBalance } from '../../services/creditsService';
 
 const TextToVideo: React.FC = () => {
   const [prompt, setPrompt] = useState('');
@@ -37,6 +38,21 @@ const TextToVideo: React.FC = () => {
 
   // Fetch dynamic credit cost from database
   const { cost: CREDIT_COST } = useCreditCost('text_to_video');
+
+  // Current credits and approx runs
+  const [currentCredits, setCurrentCredits] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const data = await getCreditBalance();
+        setCurrentCredits(data.balance);
+      } catch {
+        setCurrentCredits(0);
+      }
+    };
+    fetchBalance();
+  }, [creditRefreshTrigger]);
 
   const handleRun = async () => {
     if (!prompt) {
@@ -147,13 +163,13 @@ const TextToVideo: React.FC = () => {
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                maxLength={200}
-                className="w-full h-32 xl:h-56 px-3 py-2 bg-[#0D131F] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent resize-none"
+                maxLength={1000}
+                className="w-full h-32 xl:h-56 px-3 py-2 bg-[#0D131F] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent resize-none overflow-y-auto"
                 style={{ '--tw-ring-color': '#8A3FFC' } as React.CSSProperties}
                 placeholder="What do you want to create?"
               />
               <div className="flex justify-end mt-2">
-                <span className="text-xs text-gray-400">{prompt.length}/200</span>
+                <span className="text-xs text-gray-400">{prompt.length}/1000</span>
               </div>
             </div>
 
@@ -338,7 +354,7 @@ const TextToVideo: React.FC = () => {
               </div>
             )}
 
-            {/* Video Player */}+
+            {/* Video Player */}
             <div className="flex-1">
               <VideoPlayer
                 videoUrl={generatedVideo}
@@ -349,50 +365,20 @@ const TextToVideo: React.FC = () => {
 
             {/* Scrollable bottom section on mobile */}
             <div className="space-y-4 overflow-y-auto xl:overflow-visible">
-              {/* Cost Information */}
+              {/* Cost Information (credits-based) */}
               <div className="bg-[#0D131F] border border-gray-700 rounded-lg p-4">
                 <div className="text-sm text-white space-y-1">
-                  <p>Your request will cost <span className="font-semibold" style={{ color: '#8A3FFC' }}>$0.3</span> per run.</p>
-                  <p>For $10 you can run this model approximately <span className="font-semibold" style={{ color: '#8A3FFC' }}>33</span> times.</p>
+                  <p>Your request will cost <span className="font-semibold" style={{ color: '#8A3FFC' }}>{CREDIT_COST}</span> credits.</p>
+                  <p>
+                    With <span className="font-semibold" style={{ color: '#8A3FFC' }}>{currentCredits?.toLocaleString() ?? '--'}</span> credits you can run this model approximately{' '}
+                    <span className="font-semibold" style={{ color: '#8A3FFC' }}>
+                      {currentCredits != null && CREDIT_COST > 0 ? Math.floor(currentCredits / CREDIT_COST).toLocaleString() : '--'}
+                    </span>{' '}times.
+                  </p>
                 </div>
               </div>
 
-              {/* Separator Line */}
-              <div className="border-t border-gray-700"></div>
-
-              {/* One More Thing */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">One More Thing:</h3>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button 
-                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
-                    style={{ backgroundColor: '#8A3FFC' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7C3AED'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8A3FFC'}
-                  >
-                    <Mic className="w-4 h-4 text-white" />
-                    <span className="text-white text-sm">Add Sound</span>
-                  </button>
-                  <button 
-                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
-                    style={{ backgroundColor: '#8A3FFC' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7C3AED'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8A3FFC'}
-                  >
-                    <Video className="w-4 h-4 text-white" />
-                    <span className="text-white text-sm">Video Upscaler</span>
-                  </button>
-                  <button 
-                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
-                    style={{ backgroundColor: '#8A3FFC' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7C3AED'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8A3FFC'}
-                  >
-                    <Wand2 className="w-4 h-4 text-white" />
-                    <span className="text-white text-sm">Video Upscaler Pro</span>
-                  </button>
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>

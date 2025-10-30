@@ -67,8 +67,14 @@ export const getUserGenerations = async (
 };
 
 // Get fresh signed URL for a generation
-export const getGenerationSignedUrl = async (generationId: string): Promise<string> => {
-  const url = `${BACKEND_BASE_URL}/api/generations/${generationId}/signed-url`;
+export const getGenerationSignedUrl = async (
+  generationId: string,
+  options?: { download?: boolean; expiresInSeconds?: number }
+): Promise<string> => {
+  const params = new URLSearchParams();
+  if (options?.download) params.append('download', '1');
+  if (options?.expiresInSeconds) params.append('expiresIn', String(options.expiresInSeconds));
+  const url = `${BACKEND_BASE_URL}/api/generations/${generationId}/signed-url${params.toString() ? `?${params.toString()}` : ''}`;
 
   const response = await authHelper.authFetch(url, {
     method: 'GET',
@@ -98,6 +104,24 @@ export const deleteGeneration = async (generationId: string): Promise<void> => {
     const errorText = await response.text();
     throw new Error(`Failed to delete generation: ${response.status} ${response.statusText} - ${errorText}`);
   }
+};
+
+// Delete all generations for current user
+export const deleteAllGenerations = async (): Promise<number> => {
+  const url = `${BACKEND_BASE_URL}/api/generations`;
+
+  const response = await authHelper.authFetch(url, {
+    method: 'DELETE',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to delete all generations: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  const data = await response.json() as { success: boolean; deleted: number };
+  return data.deleted || 0;
 };
 
 // Transform database generation to frontend format
