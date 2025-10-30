@@ -19,6 +19,7 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [heights] = useState<Record<string, number>>(() => ({}));
 
   useEffect(() => {
     fetchRecentGenerations();
@@ -49,6 +50,13 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
           urlMap[id] = url;
         });
         setSignedUrls(urlMap);
+        
+        // Initialize heights for new generations only
+        response.generations.forEach(gen => {
+          if (!heights[gen.id]) {
+            heights[gen.id] = Math.floor(Math.random() * 200) + 300;
+          }
+        });
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load recent generations');
@@ -175,7 +183,7 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
                 key={generation.id}
                 className="group relative break-inside-avoid rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-white/20 transition-colors cursor-pointer"
                 style={{
-                  height: `${Math.floor(Math.random() * 200) + 300}px`
+                  height: `${heights[generation.id] || 400}px`
                 }}
               >
                 {isVideo ? (

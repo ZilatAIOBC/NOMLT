@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import emailjs from '@emailjs/browser';
+import { toast } from 'react-hot-toast';
 import Button from '../common/Button';
 
 const Contact: React.FC = () => {
@@ -9,6 +11,12 @@ const Contact: React.FC = () => {
     phone: '',
     message: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
+
+  // EmailJS configuration - will be set from environment variables
+  const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
+  const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+  const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -18,10 +26,67 @@ const Contact: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Removed console for production
-    setFormData({ firstName: '', lastName: '', email: '', phone: '', message: '' });
+    
+    // Validate EmailJS configuration
+    if (!EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID || !EMAILJS_PUBLIC_KEY) {
+      toast.error('Email service is not configured. Please contact support directly.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Prepare template parameters
+      const templateParams = {
+        from_name: `${formData.firstName} ${formData.lastName}`,
+        from_email: formData.email,
+        phone: formData.phone || 'Not provided',
+        message: formData.message,
+        to_name: 'NOMLT Support Team'
+      };
+
+      // Send email via EmailJS
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        templateParams,
+        EMAILJS_PUBLIC_KEY
+      );
+
+      // Success: show toast and reset form
+      toast.success('Message sent successfully! We\'ll get back to you soon.');
+      setFormData({ 
+        firstName: '', 
+        lastName: '', 
+        email: '', 
+        phone: '', 
+        message: '' 
+      });
+    } catch (error) {
+      // Error handling
+      console.error('EmailJS Error:', error);
+      
+      if (error instanceof Error) {
+        // Handle specific EmailJS errors
+        if (error.message.includes('Invalid template ID')) {
+          toast.error('Email template configuration error. Please contact support.');
+        } else if (error.message.includes('Invalid service ID')) {
+          toast.error('Email service configuration error. Please contact support.');
+        } else if (error.message.includes('Invalid public key')) {
+          toast.error('Email service authentication error. Please contact support.');
+        } else if (error.message.includes('Network')) {
+          toast.error('Network error. Please check your connection and try again.');
+        } else {
+          toast.error('Failed to send message. Please try again later.');
+        }
+      } else {
+        toast.error('An unexpected error occurred. Please try again later.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -108,9 +173,10 @@ const Contact: React.FC = () => {
                   type="submit"
                   variant="primary"
                   size="md"
-                  className="w-full h-[42px] rounded-[4px] bg-gradient-to-r from-[#763AF5] to-[#A604F2] hover:!from-[#763AF5] hover:!to-[#A604F2] transition-all duration-200 ease-out hover:brightness-110 hover:saturate-125 hover:shadow-[0_8px_24px_-8px_rgba(166,4,242,0.45)] active:scale-[0.99] shadow-none"
+                  disabled={isLoading}
+                  className="w-full h-[42px] rounded-[4px] bg-gradient-to-r from-[#763AF5] to-[#A604F2] hover:!from-[#763AF5] hover:!to-[#A604F2] transition-all duration-200 ease-out hover:brightness-110 hover:saturate-125 hover:shadow-[0_8px_24px_-8px_rgba(166,4,242,0.45)] active:scale-[0.99] shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100"
                 >
-                  Send Email
+                  {isLoading ? 'Sending...' : 'Send Email'}
                 </Button>
               </form>
             </div>

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { 
   LogOut,
-  Home,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -43,7 +42,7 @@ const Sidebar: React.FC = () => {
   const isCollapsible = isMobile || isTablet;
 
   const homeItem: SidebarItem = useMemo(
-    () => ({ name: 'Home', href: '/dashboard', icon: Home as IconComponent, color: 'text-green-400' }),
+    () => ({ name: 'Home', href: '/dashboard', icon: 'home', color: 'text-green-400' }),
     []
   );
 
@@ -102,9 +101,12 @@ const Sidebar: React.FC = () => {
   }, []);
 
   const renderHomeItem = useCallback(() => {
-    const Icon = homeItem.icon;
     const isCollapsed = isCollapsible && !isExpanded;
-    
+    const useLargeSize = (isCollapsed || isMobile);
+    const sizeClass = useLargeSize ? 'w-6 h-6' : 'w-5 h-5';
+
+    const isCustomIcon = typeof homeItem.icon === 'string';
+
     return (
       <NavLink
         key={homeItem.name}
@@ -123,14 +125,28 @@ const Sidebar: React.FC = () => {
         {({ isActive }) => (
           <>
             <span className={`inline-flex ${isCollapsed ? 'hover:opacity-80' : ''} transition-opacity`}>
-              <Icon className={`${isCollapsed || isMobile || isTablet ? 'w-6 h-6' : 'w-5 h-5'} ${isActive ? 'text-white' : homeItem.color}`} />
+              {isCustomIcon ? (
+                <img
+                  src={`/${homeItem.icon}.svg`}
+                  alt={homeItem.name}
+                  className={`${isActive ? 'brightness-0 invert' : ''} ${sizeClass}`}
+                />
+              ) : (
+                // Fallback if a component is ever passed
+                (() => {
+                  const IconComp = homeItem.icon as unknown as IconComponent;
+                  return (
+                    <IconComp className={`${sizeClass} ${isActive ? 'text-white' : homeItem.color}`} />
+                  );
+                })()
+              )}
             </span>
             {(!isCollapsible || isExpanded) && <span className="whitespace-nowrap hover:opacity-80 transition-opacity">{homeItem.name}</span>}
           </>
         )}
       </NavLink>
     );
-  }, [homeItem, isCollapsible, isExpanded, handleNavClick, isMobile, isTablet]);
+  }, [homeItem, isCollapsible, isExpanded, handleNavClick, isMobile]);
 
   const memoizedHomeItem = useMemo(() => renderHomeItem(), [renderHomeItem]);
 
@@ -148,7 +164,7 @@ const Sidebar: React.FC = () => {
       `}>
         {/* Logo */}
         <div className="p-6 border-b border-white/10">
-          <Link to="/dashboard" className={`flex items-center ${isCollapsible && !isExpanded ? 'justify-start' : 'justify-start'}`}>
+          <Link to={isCollapsible ? '/' : '/'} className={`flex items-center ${isCollapsible && !isExpanded ? 'justify-start' : 'justify-start'}`}>
             <img
               src={isCollapsible && !isExpanded ? '/videogenerations.svg' : '/logo.svg'}
               alt="NOLMT.AI"

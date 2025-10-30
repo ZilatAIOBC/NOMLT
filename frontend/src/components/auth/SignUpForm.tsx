@@ -258,7 +258,7 @@ const SignUpForm: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-white text-sm">
               By signing up you accept our{' '}
-              <Link to="/terms" className="hover:opacity-80" style={{ color: '#8A3FFC' }}>
+              <Link to="/terms-and-conditions" className="hover:opacity-80" style={{ color: '#8A3FFC' }}>
                 Terms and Conditions
               </Link>
             </p>
