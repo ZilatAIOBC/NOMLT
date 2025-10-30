@@ -29,6 +29,7 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [heights] = useState<Record<string, number>>(() => ({}));
 
   // Fetch generations from database
   useEffect(() => {
@@ -42,6 +43,13 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
         
         const transformedGenerations = response.generations.map(transformGeneration);
         setGenerations(transformedGenerations);
+        
+        // Initialize heights for new generations only
+        response.generations.forEach(gen => {
+          if (!heights[gen.id]) {
+            heights[gen.id] = Math.floor(Math.random() * 200) + 300;
+          }
+        });
         
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load generations');
@@ -266,7 +274,7 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
             key={generation.id}
             className="group relative break-inside-avoid rounded-lg overflow-hidden bg-white/5 border border-white/10 hover:border-white/20 transition-colors cursor-pointer"
             style={{
-              height: `${Math.floor(Math.random() * 200) + 300}px`
+              height: `${heights[generation.id] || 400}px`
             }}
           >
             {generation.isVideo ? (

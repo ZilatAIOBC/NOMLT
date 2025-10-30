@@ -67,7 +67,7 @@ const Navbar: React.FC = () => {
             <img
               src="/logo.svg"
               alt="NOLMT.AI"
-              className="h-6 w-auto"
+              className="h-8 w-auto"
             />
    
           </Link>

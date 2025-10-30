@@ -29,7 +29,7 @@ const Footer: React.FC = () => {
     { name: 'Pricing', href: '#pricing', id: 'pricing' },
     { name: 'Testimonials', href: '#testimonials', id: 'testimonials' },
     { name: 'FAQs', href: '#faqs', id: 'faqs' },
-    { name: 'Contact', href: '#contact', id: 'contact' },
+    { name: 'Contact Us', href: '#contact', id: 'contact' },
   ];
 
   return (
@@ -87,14 +87,6 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-white font-semibold text-[15px] mb-4">Contact Us</h3>
             <ul className="space-y-1 text-sm">
-              <li>
-                <button
-                  onClick={() => handleLinkClick('contact', location)}
-                  className="text-gray-400 hover:text-[#8A3FFC] font-medium gap-3 text-sm block transition-colors text-left w-full"
-                >
-                  Contact Form
-                </button>
-              </li>
               <li>
                 <a href="mailto:help@NOLMT.com" className="text-gray-400 hover:text-[#8A3FFC]  font-medium gap-3  text-sm block transition-colors">
                   help@NOLMT.com
