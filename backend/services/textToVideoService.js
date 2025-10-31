@@ -24,10 +24,23 @@ async function createTextToVideoJob(requestBody) {
   }
 
   try {
-    
+    // Transform request body to Wavespeed WAN 2.5 format
+    // Normalize size to Wavespeed's required format (e.g., 832*480)
+    const requestedSize = requestBody.size || requestBody.resolution || '832x480';
+    const normalizedSize = typeof requestedSize === 'string' ? requestedSize.replace('x', '*') : '832*480';
+
+    const wavespeedRequestBody = {
+      duration: requestBody.duration || 5,
+      enable_prompt_expansion: false,
+      prompt: requestBody.prompt,
+      seed: typeof requestBody.seed === 'number' ? requestBody.seed : -1,
+      size: normalizedSize,
+      audio: requestBody.audio // optional
+    };
+
     // Schedule request through rate limiter
     const response = await videoLimiter.schedule(async () => {
-      return await axios.post(TEXT_TO_VIDEO_API_URL, requestBody, {
+      return await axios.post(TEXT_TO_VIDEO_API_URL, wavespeedRequestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${TEXT_TO_VIDEO_API_KEY}`,
@@ -38,10 +51,30 @@ async function createTextToVideoJob(requestBody) {
 
     const data = response.data;
     
-    if (!data || !data.data || !data.data.urls || !data.data.urls.get) {
-      throw new Error("Invalid API response: missing result URL");
+    // For Wavespeed API, check for prediction id and construct result URL
+    if (!data || !data.data) {
+      throw new Error("Invalid API response: missing data");
     }
-    return data;
+
+    if (data.data.id) {
+      const urlParts = TEXT_TO_VIDEO_API_URL.split('/');
+      const baseUrl = `${urlParts[0]}//${urlParts[2]}/api/v3`;
+      const resultUrl = `${baseUrl}/predictions/${data.data.id}/result`;
+      return {
+        ...data,
+        data: {
+          ...data.data,
+          urls: { get: resultUrl }
+        }
+      };
+    }
+
+    // Fallback to old format if urls.get exists
+    if (data.data.urls && data.data.urls.get) {
+      return data;
+    }
+
+    throw new Error("Invalid API response: missing id or result URL");
   } catch (error) {
     const message =
       (error.response &&

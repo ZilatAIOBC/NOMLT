@@ -66,7 +66,6 @@ const Contact: React.FC = () => {
       });
     } catch (error) {
       // Error handling
-      console.error('EmailJS Error:', error);
       
       if (error instanceof Error) {
         // Handle specific EmailJS errors

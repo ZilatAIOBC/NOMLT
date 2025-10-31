@@ -22,11 +22,12 @@ function getSupabaseAccessToken(): string | undefined {
 }
 
 export interface TextToVideoRequest {
-  aspect_ratio: string;
-  camera_fixed: boolean;
-  duration: number;
+  duration: number; // fixed to 5 by UI
+  enable_prompt_expansion: boolean;
   prompt: string;
   seed?: number;
+  size: string; // e.g. "832x480" or "480x832"
+  audio?: string; // optional data URL
 }
 
 export interface TextToVideoCreateResponse {

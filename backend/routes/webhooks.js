@@ -115,23 +115,103 @@ async function handleCheckoutSessionCompleted(session) {
   const client = supabaseAdmin || supabase;
   
   try {
-    // Get subscription details from Stripe
-    const stripe = getStripeClient();
-    
-    // DEBUG: Log session data
+    // Branch: credit top-up payments (mode=payment)
+    if (session.mode === 'payment' && session.metadata?.purpose === 'credit_topup') {
+      console.log('[webhook] checkout.session.completed (credit_topup) received');
+      const userId = session.metadata?.user_id;
+      const credits = Number(session.metadata?.credits || '0');
+      const paymentIntentId = session.payment_intent;
+      console.log('[webhook] topup params:', { userId, credits, paymentIntentId });
+      const amountTotal = session.amount_total; // in smallest unit (e.g., cents)
+      const currency = session.currency; // e.g., 'usd'
 
+      if (!userId || !credits || !paymentIntentId) {
+        console.warn('[webhook] missing params for topup');
+        return;
+      }
+
+      // Idempotency: check by reference_id (if schema allows) OR description containing paymentIntentId
+      let alreadyRecorded = false;
+      try {
+        const { data: existingByRef } = await client
+          .from('credit_transactions')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('reference_id', paymentIntentId)
+          .eq('reference_type', 'credit_topup')
+          .maybeSingle();
+        if (existingByRef) alreadyRecorded = true;
+      } catch {}
+
+      if (!alreadyRecorded) {
+        try {
+          const { data: existingByDesc } = await client
+            .from('credit_transactions')
+            .select('id, description')
+            .eq('user_id', userId)
+            .eq('type', 'purchased')
+            .ilike('description', `%${paymentIntentId}%`)
+            .maybeSingle();
+          if (existingByDesc) alreadyRecorded = true;
+        } catch {}
+      }
+
+      if (alreadyRecorded) {
+        console.log('[webhook] topup already recorded, skipping');
+        return;
+      }
+
+      try {
+        const priceLabel = typeof amountTotal === 'number' && currency
+          ? `$${(amountTotal / 100).toFixed(2)} ${String(currency).toUpperCase()}`
+          : null;
+
+        const result = await addCredits(
+          userId,
+          credits,
+          'purchased',
+          priceLabel
+            ? `Credit top-up ${priceLabel} - ${credits.toLocaleString()} credits (payment_intent: ${paymentIntentId})`
+            : `Credit top-up purchase (payment_intent: ${paymentIntentId})`,
+          null,
+          'credit_topup'
+        );
+        console.log('[webhook] credits added for topup:', { userId, credits, result });
+
+        // Log the latest purchased transaction row for debugging/verification
+        try {
+          const { data: latestTx } = await client
+            .from('credit_transactions')
+            .select('id,user_id,type,amount,balance_after,description,reference_id,reference_type,metadata,created_at')
+            .eq('user_id', userId)
+            .eq('type', 'purchased')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (latestTx) {
+            console.log('[webhook] latest purchased transaction:', JSON.stringify([latestTx]));
+          } else {
+            console.warn('[webhook] no purchased transaction row found after credit add');
+          }
+        } catch (txErr) {
+          console.warn('[webhook] failed to read latest purchased transaction:', txErr?.message || txErr);
+        }
+      } catch (_) {
+        console.warn('[webhook] failed to add credits for topup');
+      }
+
+      return;
+    }
+
+    // Default branch: subscription checkout (mode=subscription)
+    const stripe = getStripeClient();
     const subscription = await stripe.subscriptions.retrieve(session.subscription);
     
-    // DEBUG: Log the FULL subscription object from Stripe
-    
-    // DEBUG: Log specific date fields
-
     // Extract user ID and plan ID from session metadata, fallback to subscription metadata
     const userId = session.metadata?.user_id || subscription.metadata?.user_id;
     const planId = session.metadata?.plan_id || subscription.metadata?.plan_id;
     const isUpgrade = session.metadata?.is_upgrade === 'true' || subscription.metadata?.is_upgrade === 'true';
     const oldSubscriptionId = session.metadata?.old_subscription_id || subscription.metadata?.old_subscription_id;
-    
     
     if (!userId || !planId) {
       return;

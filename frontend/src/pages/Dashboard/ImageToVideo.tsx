@@ -1,23 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ImageUpload from '../../components/image-to-video/ImageUpload';
+import AudioUpload from '../../components/image-to-video/AudioUpload';
 import VideoPlayer from '../../components/image-to-video/VideoPlayer';
 
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
 import RecentGenerations from '../../components/dashboard/RecentGenerations';
-import { RefreshCw, Sparkles, Mic, Video, Wand2, Info } from 'lucide-react';
+import { RefreshCw, Sparkles, Info } from 'lucide-react';
 import IdeaChips from '../../components/common/IdeaChips';
 import InsufficientCreditsModal from '../../components/dashboard/InsufficientCreditsModal';
 import { callImageToVideoAPI, getImageToVideoResult, uploadImageToUrl, ImageToVideoRequest } from '../../services/imageToVideoService';
 import { fetchUsageSummary } from '../../services/usageService';
 import { useCreditCost } from '../../hooks/useCreditCost';
+import { getCreditBalance } from '../../services/creditsService';
 
 const ImageToVideo: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [prefilledImageUrl, setPrefilledImageUrl] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [negativePrompt] = useState('');
   const [lastImage] = useState('');
-  const [duration, setDuration] = useState(5);
+  const [duration] = useState(10); // Fixed at 10 seconds as per requirements
   const [seed, setSeed] = useState(-1);
   const [status, setStatus] = useState<'idle' | 'generating' | 'completed'>('idle');
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
@@ -41,9 +47,37 @@ const ImageToVideo: React.FC = () => {
   // Fetch dynamic credit cost from database
   const { cost: CREDIT_COST } = useCreditCost('image_to_video');
 
+  // Current credits and approx runs
+  const [currentCredits, setCurrentCredits] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const data = await getCreditBalance();
+        setCurrentCredits(data.balance);
+      } catch {
+        setCurrentCredits(0);
+      }
+    };
+    fetchBalance();
+  }, [creditRefreshTrigger]);
+
+  // Load prefilled image URL if provided via navigation (from Text/Image to Image pages)
+  useEffect(() => {
+    const url = searchParams.get('imageUrl');
+    if (url) {
+      setPrefilledImageUrl(url);
+      const next = new URLSearchParams(searchParams);
+      next.delete('imageUrl');
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleRun = async () => {
-    if (!imageFile || !prompt) {
-      setError('Please upload an image and enter a prompt');
+
+    if ((!imageFile && !prefilledImageUrl) || !prompt) {
+      setError('Please provide an image and enter a prompt');
       return;
     }
 
@@ -52,22 +86,37 @@ const ImageToVideo: React.FC = () => {
     setGenerationProgress('Uploading image...');
 
     try {
-      // Step 1: Upload image and get URL
-      const imageUrl = await uploadImageToUrl(imageFile);
+      // Step 1: Use prefilled URL if available; otherwise upload file and get URL
+      const imageUrl = prefilledImageUrl || (imageFile ? await uploadImageToUrl(imageFile) : null);
+      if (!imageUrl) {
+        throw new Error('No image provided');
+      }
+      
+      // Step 1.5: Upload audio if provided
+      let audioUrl = null;
+      if (audioFile) {
+        setGenerationProgress('Uploading audio...');
+        audioUrl = await uploadImageToUrl(audioFile); // Reuse the same function for audio
+      }
+      
       setGenerationProgress('Image uploaded, creating video job...');
       
       // Step 2: Prepare request body with correct structure
       const requestBody: ImageToVideoRequest = {
         duration: duration,
         image: imageUrl,
+        audio: audioUrl || undefined,
         last_image: lastImage,
         negative_prompt: negativePrompt,
         prompt: prompt,
         seed: seed === -1 ? Math.floor(Math.random() * 1000000) : seed
       };
       
+      
       // Step 3: Create the video generation job
       const createResult = await callImageToVideoAPI(requestBody);
+      
+      
       
       // Check if we got the dynamic result URL
       if (!createResult.data.urls?.get) {
@@ -79,6 +128,8 @@ const ImageToVideo: React.FC = () => {
       // Step 4: Get the result using the dynamic URL from first API response
       // This will poll until the video is ready
       const result = await getImageToVideoResult(createResult.data.urls.get);
+      
+      
       
       // Step 5: Extract video URL
       if (result.data.outputs && result.data.outputs.length > 0) {
@@ -142,11 +193,27 @@ const ImageToVideo: React.FC = () => {
               {/* Image Input */}
               <div>
                 <label className="block text-sm font-medium text-white mb-3">Image *</label>
-                <ImageUpload
-                  file={imageFile}
-                  onFileChange={setImageFile}
-                  placeholder="https://d1q70pf5vjeyhc.cloudfront.net/media/fb8f67"
-                />
+                {prefilledImageUrl && !imageFile ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-700">
+                        <img src={prefilledImageUrl} alt="Prefilled" className="w-full h-full object-cover" />
+                      </div>
+                      <div className="text-sm text-gray-300">Using image from previous generation</div>
+                    </div>
+                    <div className="text-xs text-gray-400">Click below to replace with another image.</div>
+                  </div>
+                ) : null}
+                <div className="mt-2">
+                  <ImageUpload
+                    file={imageFile}
+                    onFileChange={(file) => {
+                      setImageFile(file);
+                      if (file) setPrefilledImageUrl(null);
+                    }}
+                    placeholder="https://d1q70pf5vjeyhc.cloudfront.net/media/fb8f67"
+                  />
+                </div>
               </div>
 
               {/* Prompt Input */}
@@ -155,13 +222,13 @@ const ImageToVideo: React.FC = () => {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  maxLength={200}
-                  className="w-full h-32 xl:h-56 px-3 py-2 bg-[#0D131F] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent resize-none"
+                  maxLength={2000}
+                  className="w-full h-32 xl:h-56 px-3 py-2 bg-[#0D131F] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent resize-none overflow-y-auto"
                   style={{ '--tw-ring-color': '#8A3FFC' } as React.CSSProperties}
                   placeholder="Describe the motion and scene for your video"
                 />
                 <div className="flex justify-end mt-2">
-                  <span className="text-xs text-gray-400">{prompt.length}/200</span>
+                  <span className="text-xs text-gray-400">{prompt.length}/2000 characters</span>
                 </div>
                 {/* Ideas */}
                 <div className="mt-3">
@@ -173,8 +240,20 @@ const ImageToVideo: React.FC = () => {
                 </div>
               </div>
 
-              {/* Duration */}
+              {/* Audio Input */}
               <div>
+                <label className="block text-sm font-medium text-white mb-3">Audio (Optional)</label>
+                <div className="mt-2">
+                  <AudioUpload
+                    file={audioFile}
+                    onFileChange={(file) => setAudioFile(file)}
+                    placeholder="https://example.com/audio.mp3"
+                  />
+                </div>
+              </div>
+
+              {/* Duration - Hidden as per requirements */}
+              {/* <div>
                 <label className="block text-sm font-medium text-white mb-3">Duration *</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -206,7 +285,7 @@ const ImageToVideo: React.FC = () => {
                     8s
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Seed */}
               <div>
@@ -249,18 +328,18 @@ const ImageToVideo: React.FC = () => {
               <div className="flex pt-2">
                 <button
                   onClick={handleRun}
-                  disabled={status === 'generating' || !imageFile || !prompt}
+                  disabled={status === 'generating' || (!imageFile && !prefilledImageUrl) || !prompt}
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 text-white font-semibold rounded-lg transition-colors disabled:cursor-not-allowed disabled:bg-gray-600"
                   style={{
-                    backgroundColor: status === 'generating' || !imageFile || !prompt ? '#6B7280' : '#8A3FFC'
+                    backgroundColor: status === 'generating' || (!imageFile && !prefilledImageUrl) || !prompt ? '#6B7280' : '#8A3FFC'
                   }}
                   onMouseEnter={(e) => {
-                    if (!(status === 'generating' || !imageFile || !prompt)) {
+                    if (!(status === 'generating' || (!imageFile && !prefilledImageUrl) || !prompt)) {
                       e.currentTarget.style.backgroundColor = '#7C3AED';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!(status === 'generating' || !imageFile || !prompt)) {
+                    if (!(status === 'generating' || (!imageFile && !prefilledImageUrl) || !prompt)) {
                       e.currentTarget.style.backgroundColor = '#8A3FFC';
                     }
                   }}
@@ -299,50 +378,20 @@ const ImageToVideo: React.FC = () => {
               />
             </div>
 
-            {/* Cost Information */}
+            {/* Cost Information (credits-based) */}
             <div className="bg-[#0D131F] border border-gray-700 rounded-lg p-4">
               <div className="text-sm text-white space-y-1">
-                <p>Your request will cost <span className="font-semibold" style={{ color: '#8A3FFC' }}>$0.15</span> per run.</p>
-                <p>For $10 you can run this model approximately <span className="font-semibold" style={{ color: '#8A3FFC' }}>66</span> times.</p>
+                <p>Your request will cost <span className="font-semibold" style={{ color: '#8A3FFC' }}>{CREDIT_COST}</span> credits.</p>
+                <p>
+                  With <span className="font-semibold" style={{ color: '#8A3FFC' }}>{currentCredits?.toLocaleString() ?? '--'}</span> credits you can run this model approximately{' '}
+                  <span className="font-semibold" style={{ color: '#8A3FFC' }}>
+                    {currentCredits != null && CREDIT_COST > 0 ? Math.floor(currentCredits / CREDIT_COST).toLocaleString() : '--'}
+                  </span>{' '}times.
+                </p>
               </div>
             </div>
 
-          {/* Separator Line */}
-          <div className="border-t border-gray-700"></div>
-
-          {/* One More Thing */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white">One More Thing:</h3>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button 
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
-                style={{ backgroundColor: '#8A3FFC' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7C3AED'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8A3FFC'}
-              >
-                <Mic className="w-4 h-4 text-white" />
-                <span className="text-white text-sm">Add Sound</span>
-              </button>
-              <button 
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
-                style={{ backgroundColor: '#8A3FFC' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7C3AED'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8A3FFC'}
-              >
-                <Video className="w-4 h-4 text-white" />
-                <span className="text-white text-sm">Video Upscaler</span>
-              </button>
-              <button 
-                className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors w-full sm:w-auto"
-                style={{ backgroundColor: '#8A3FFC' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#7C3AED'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#8A3FFC'}
-              >
-                <Wand2 className="w-4 h-4 text-white" />
-                <span className="text-white text-sm">Video Upscaler Pro</span>
-              </button>
-            </div>
-          </div>
+          
           </div>
         </div>
       </div>

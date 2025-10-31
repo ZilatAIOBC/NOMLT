@@ -124,7 +124,7 @@ async function uploadToS3(buffer, s3Key, contentType) {
  * @param {number} expiresIn - Expiration time in seconds (default: 1 hour)
  * @returns {Promise<string>} Signed URL
  */
-async function getSignedS3Url(s3Key, expiresIn = 3600) {
+async function getSignedS3Url(s3Key, expiresIn = 3600, responseContentDisposition) {
   if (!AWS_S3_BUCKET_NAME) {
     throw new Error("AWS S3 bucket is not configured");
   }
@@ -133,6 +133,7 @@ async function getSignedS3Url(s3Key, expiresIn = 3600) {
     const command = new GetObjectCommand({
       Bucket: AWS_S3_BUCKET_NAME,
       Key: s3Key,
+      ...(responseContentDisposition ? { ResponseContentDisposition: responseContentDisposition } : {}),
     });
 
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn });

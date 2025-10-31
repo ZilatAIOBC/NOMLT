@@ -1,6 +1,7 @@
 // services/stripeService.js
 const { getStripeClient } = require('../config/stripe');
 const { supabase, supabaseAdmin } = require('../utils/supabase');
+const { getCreditPack, CURRENCY } = require('../config/creditPacks');
 
 async function getOrCreateCustomerForUser(userId, email) {
   const client = supabaseAdmin || supabase;
@@ -102,6 +103,56 @@ async function retrieveCheckoutSession(sessionId) {
 }
 
 /**
+ * Create a one-time Checkout Session for credit top-up using inline price_data
+ * @param {Object} params
+ * @param {string} params.userId - Authenticated user ID
+ * @param {string} params.packId - Credit pack key from config
+ * @param {string} params.successUrl - Success redirect URL
+ * @param {string} params.cancelUrl - Cancel redirect URL
+ * @returns {Promise<object>} Stripe Checkout Session
+ */
+async function createTopupCheckoutSession({ userId, packId, successUrl, cancelUrl }) {
+  const pack = getCreditPack(packId);
+  if (!pack) {
+    throw new Error('Invalid credit pack');
+  }
+
+  const stripe = getStripeClient();
+
+  // Ensure Stripe customer exists
+  const customerId = await getOrCreateCustomerForUser(userId);
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    customer: customerId,
+    line_items: [
+      {
+        price_data: {
+          currency: CURRENCY,
+          unit_amount: pack.unitAmount,
+          product_data: {
+            name: pack.name,
+          },
+        },
+        quantity: 1,
+      },
+    ],
+    allow_promotion_codes: true,
+    billing_address_collection: 'auto',
+    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: cancelUrl,
+    metadata: {
+      purpose: 'credit_topup',
+      user_id: userId,
+      pack_id: packId,
+      credits: String(pack.credits),
+    },
+  });
+
+  return session;
+}
+
+/**
  * Cancel a subscription at the end of the current period
  * @param {string} subscriptionId - Stripe subscription ID
  * @returns {Promise<object>} Updated subscription object
@@ -179,6 +230,7 @@ module.exports = {
   getOrCreateCustomerForUser,
   createCheckoutSession,
   retrieveCheckoutSession,
+  createTopupCheckoutSession,
   cancelSubscription,
   reactivateSubscription,
   changeSubscriptionPlan,

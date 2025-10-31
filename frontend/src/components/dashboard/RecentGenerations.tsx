@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { Play, Image as ImageIcon, Trash2, Download } from 'lucide-react';
 import { getUserGenerations, getGenerationSignedUrl, deleteGeneration, GenerationFromDB } from '../../services/generationsService';
 import ConfirmationModal from '../common/ConfirmationModal';
+import ImageLightbox from '../common/ImageLightbox';
 
 interface RecentGenerationsProps {
   generationType: 'text-to-video' | 'text-to-image' | 'image-to-video' | 'image-to-image';
@@ -10,7 +12,7 @@ interface RecentGenerationsProps {
 
 const RecentGenerations: React.FC<RecentGenerationsProps> = ({ 
   generationType,
-  limit = 10
+  limit: _limit = 10
 }) => {
   const [generations, setGenerations] = useState<GenerationFromDB[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,9 +22,37 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [heights] = useState<Record<string, number>>(() => ({}));
+  const [page, setPage] = useState(1);
+  const pageSize = 50; // fixed page size for consistency
+  const [totalCount, setTotalCount] = useState(0);
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [lightboxAlt, setLightboxAlt] = useState<string>('');
+
+  const getPaginationPages = (currentPage: number, pagesCount: number): (number | string)[] => {
+    const pages: (number | string)[] = [];
+    const add = (v: number | string) => pages.push(v);
+    if (pagesCount <= 7) {
+      for (let i = 1; i <= pagesCount; i++) add(i);
+    } else {
+      add(1);
+      if (currentPage > 4) add('...');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(pagesCount - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) add(i);
+      if (currentPage < pagesCount - 3) add('...');
+      add(pagesCount);
+    }
+    return pages;
+  };
 
   useEffect(() => {
     fetchRecentGenerations();
+  }, [generationType, page]);
+
+  useEffect(() => {
+    setPage(1);
   }, [generationType]);
 
   const fetchRecentGenerations = async () => {
@@ -30,8 +60,10 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
     setError(null);
     
     try {
-      const response = await getUserGenerations(generationType, limit, 0);
+      const offset = (page - 1) * pageSize;
+      const response = await getUserGenerations(generationType, pageSize, offset);
       setGenerations(response.generations || []);
+      setTotalCount(response.count || 0);
       
       // Fetch fresh signed URLs for all generations
       if (response.generations && response.generations.length > 0) {
@@ -69,6 +101,27 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
     return type.includes('video');
   };
 
+  const handleDownload = async (generation: GenerationFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const url = await getGenerationSignedUrl(generation.id, { download: true });
+      const filename = generation.s3_key ? generation.s3_key.split('/').pop() || `generation-${generation.id}` : `generation-${generation.id}`;
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(objectUrl);
+      toast.success('Download started');
+    } catch (err) {
+      toast.error('Failed to download. Please try again.');
+    }
+  };
+
   const handleDeleteClick = (generationId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
     setDeletingId(generationId);
@@ -92,7 +145,7 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
       setDeleteModalOpen(false);
       setDeletingId(null);
     } catch (error) {
-      alert('Failed to delete generation. Please try again.');
+      toast.error('Failed to delete. Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -224,14 +277,26 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
                     src={url}
                     alt={generation.prompt || 'Generated image'}
                     className="w-full h-full object-cover"
+                    onClick={() => {
+                      setLightboxSrc(url);
+                      setLightboxAlt(generation.prompt || 'Preview');
+                      setLightboxOpen(true);
+                    }}
                     onError={(e) => {
                       e.currentTarget.src = 'https://via.placeholder.com/400x600/1a1a1a/ffffff?text=Image+Not+Found';
                     }}
                   />
                 )}
                 
-                {/* Delete button on hover */}
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                {/* Action buttons on hover */}
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                  <button
+                    onClick={(e) => handleDownload(generation, e)}
+                    className="bg-white/90 hover:bg-white text-black p-2 rounded-full shadow-lg transition-colors"
+                    title="Download"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={(e) => handleDeleteClick(generation.id, e)}
                     className="bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-colors"
@@ -244,6 +309,39 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
             );
           })}
         </div>
+
+        {/* Pagination */}
+        {totalCount > pageSize && (
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <button
+              className="px-3 py-2 rounded-md bg-white/10 text-white disabled:opacity-50"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Prev
+            </button>
+            {getPaginationPages(page, totalPages).map((p, idx) => (
+              typeof p === 'number' ? (
+                <button
+                  key={`p-${p}-${idx}`}
+                  className={`px-3 py-2 rounded-md text-sm ${p === page ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              ) : (
+                <span key={`e-${idx}`} className="px-2 text-white/60">{p}</span>
+              )
+            ))}
+            <button
+              className="px-3 py-2 rounded-md bg-white/10 text-white disabled:opacity-50"
+              onClick={() => setPage(p => (p < Math.ceil(totalCount / pageSize) ? p + 1 : p))}
+              disabled={page >= Math.ceil(totalCount / pageSize)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Confirmation Modal */}
@@ -257,6 +355,14 @@ const RecentGenerations: React.FC<RecentGenerationsProps> = ({
         cancelText="Cancel"
         isLoading={isDeleting}
         type="danger"
+      />
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        isOpen={lightboxOpen}
+        src={lightboxSrc}
+        alt={lightboxAlt}
+        onClose={() => setLightboxOpen(false)}
       />
     </div>
   );

@@ -88,18 +88,8 @@ const Footer: React.FC = () => {
             <h3 className="text-white font-semibold text-[15px] mb-4">Contact Us</h3>
             <ul className="space-y-1 text-sm">
               <li>
-                <a href="mailto:help@NOLMT.com" className="text-gray-400 hover:text-[#8A3FFC]  font-medium gap-3  text-sm block transition-colors">
-                  help@NOLMT.com
-                </a>
-              </li>
-              <li>
-                <a href="mailto:sales@NOLMT.com" className="text-gray-400 hover:text-[#8A3FFC]  font-medium gap-3  text-sm block transition-colors">
-                  sales@NOLMT.com
-                </a>
-              </li>
-              <li>
-                <a href="mailto:careers@NOLMT.com" className="text-gray-400 hover:text-[#8A3FFC]  font-medium gap-3  text-sm block transition-colors">
-                  careers@NOLMT.com
+                <a href="mailto:contact@nolmt.ai" className="text-gray-400 hover:text-[#8A3FFC]  font-medium gap-3  text-sm block transition-colors">
+                  contact@nolmt.ai
                 </a>
               </li>
             </ul>

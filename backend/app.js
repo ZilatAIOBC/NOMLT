@@ -10,6 +10,8 @@ dotenv.config();
 
 const app = express();
 
+console.log('[backend] Booting…');
+
 // IMPORTANT: Webhook endpoint needs raw body for Stripe signature verification
 // Add this BEFORE any body parsing middleware
 app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
@@ -68,9 +70,9 @@ app.use((req, res, next) => {
 });
 // Supabase (no persistent DB connection required). Validate envs.
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-  console.warn("Supabase configuration missing: SUPABASE_URL or SUPABASE_ANON_KEY");
+  console.warn('[backend][supabase] Missing SUPABASE_URL or SUPABASE_ANON_KEY');
 } else {
-  console.log("Supabase connected");
+  console.log('[backend][supabase] Environment variables present');
 }
 
 // Import Routes
@@ -123,16 +125,39 @@ app.use("/api/rate-limiter", require("./routes/rateLimiter"));
 try {
   const { scheduleDailyUsageSummary } = require('./jobs/dailyUsageSummary');
   const { scheduleCreditExpirationJob } = require('./jobs/creditExpirationJob');
+  const { scheduleGenerationRetention } = require('./jobs/generationRetention');
   scheduleDailyUsageSummary && scheduleDailyUsageSummary();
   scheduleCreditExpirationJob && scheduleCreditExpirationJob();
+  scheduleGenerationRetention && scheduleGenerationRetention(7);
 } catch (e) {
-  console.warn('Background jobs not scheduled:', e.message);
+  
 }
 
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server started on port: ${PORT}`);
+  console.log(`[backend] Listening on ${PORT} (${process.env.NODE_ENV || 'dev'})`);
+
+  // One-time Supabase connectivity check (non-blocking)
+  (async () => {
+    try {
+      if (!supabase) {
+        console.warn('[backend][supabase] Client not initialized');
+        return;
+      }
+      const client = supabaseAdmin || supabase;
+      const { error } = await client
+        .from('profiles')
+        .select('id', { count: 'exact', head: true });
+      if (error) {
+        console.warn('[backend][supabase] Connectivity check failed:', error.message);
+      } else {
+        console.log('[backend][supabase] Connected');
+      }
+    } catch (e) {
+      console.warn('[backend][supabase] Connectivity check error:', e.message);
+    }
+  })();
 });
 
 module.exports = app;

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createCheckoutSession, retrieveCheckoutSession } = require('../services/stripeService');
+const { createCheckoutSession, retrieveCheckoutSession, createTopupCheckoutSession } = require('../services/stripeService');
 
 // Helper: resolve frontend URL
 function getFrontendUrl() {
@@ -24,6 +24,30 @@ router.post('/create-checkout-session', async (req, res) => {
       cancelUrl,
       isUpgrade: isUpgrade || false
     });
+    return res.status(200).json({ url: session.url });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/payments/topup/session
+router.post('/topup/session', async (req, res) => {
+  try {
+    const { packId, userId } = req.body;
+    if (!packId || !userId) {
+      return res.status(400).json({ error: 'Missing packId or userId' });
+    }
+
+    const successUrl = `${getFrontendUrl()}/dashboard/credits`;
+    const cancelUrl = `${getFrontendUrl()}/dashboard/credits?canceled=true`;
+
+    const session = await createTopupCheckoutSession({
+      userId,
+      packId,
+      successUrl,
+      cancelUrl,
+    });
+
     return res.status(200).json({ url: session.url });
   } catch (e) {
     return res.status(500).json({ error: e.message });

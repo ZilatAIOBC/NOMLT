@@ -5,12 +5,14 @@ import CancelSubscriptionModal from '../../components/dashboard/CancelSubscripti
 import { CalendarDays, DollarSign, Star, CheckCircle, Loader2, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
 import { retrieveCheckoutSession } from '../../services/paymentService';
 import { getSubscriptionStatus, getTransactionHistory, SubscriptionData, TransactionData, cancelSubscription, reactivateSubscription } from '../../services/subscriptionService';
+import { getCreditTransactions, type CreditTransaction } from '../../services/creditsService';
 import { toast } from 'react-hot-toast';
 
 const Billing: React.FC = () => {
   const [verifyingSession, setVerifyingSession] = useState(false);
   const [billingData, setBillingData] = useState<SubscriptionData | null>(null);
   const [transactions, setTransactions] = useState<TransactionData[]>([]);
+  const [topups, setTopups] = useState<CreditTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canceling, setCanceling] = useState(false);
@@ -48,13 +50,63 @@ const Billing: React.FC = () => {
         }
 
         // Fetch subscription data and transactions
-        const [subscription, transactionHistory] = await Promise.all([
+        const [subscription, transactionHistory, creditTx] = await Promise.all([
           getSubscriptionStatus(),
-          getTransactionHistory()
+          getTransactionHistory(),
+          getCreditTransactions(50, 0, 'purchased').catch(() => ({ transactions: [], total: 0, limit: 0, offset: 0 }))
         ]);
         
         setBillingData(subscription);
-        setTransactions(transactionHistory);
+        // Normalize subscription transaction dates to include date + time (Month DD, YYYY, HH:MM AM/PM)
+        const mappedSubs: TransactionData[] = transactionHistory.map((t) => ({
+          ...t,
+          date: (() => {
+            const base = t.created_at || t.date;
+            try {
+              return new Date(base).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              });
+            } catch {
+              return t.date;
+            }
+          })(),
+        }));
+        // Map top-up credit transactions into the same table format and merge
+        let merged = mappedSubs;
+        if (Array.isArray((creditTx as any).transactions)) {
+          const onlyTopups: CreditTransaction[] = (creditTx as any).transactions.filter((t: CreditTransaction) => t.reference_type === 'credit_topup');
+          const mappedTopups: TransactionData[] = onlyTopups.map((t) => ({
+            id: t.id,
+            // For top-ups, show Month DD, YYYY (no time)
+            date: new Date(t.created_at).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            }),
+            // Simplified description to align with subscription rows
+            description: 'Credit top-up',
+            // Prefer currency label in description if present (e.g., "$5.00 USD - 7,000 credits" or "5.00 USD - 7,000 credits")
+            amount: (() => {
+              const desc = t.description || '';
+              // Match "$5.00 USD" OR "5.00" (with or without currency code)
+              const currencyMatch = desc.match(/(?:\$\s*)?(\d[\d,]*(?:\.\d{2})?)(?:\s*[A-Za-z]{3})?/);
+              if (currencyMatch && currencyMatch[1]) {
+                const num = currencyMatch[1].replace(/\s+/g, '');
+                return `$${num}`;
+              }
+              return `+${t.amount.toLocaleString()} credits`;
+            })(),
+            status: 'paid',
+            subscription_id: '',
+            created_at: t.created_at,
+          }));
+          merged = [...transactionHistory, ...mappedTopups].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+        }
+        setTransactions(merged);
         
       } catch (err: any) {
         // Removed console for production
@@ -385,6 +437,8 @@ const Billing: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Top-ups are merged into the Transaction History table above */}
         </div>
       </div>
     </div>
