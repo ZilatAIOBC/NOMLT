@@ -198,7 +198,7 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-3 rounded-3xl text-xs sm:text-sm font-medium transition-colors text-center ${
                     activeTab === tab.id
-                      ? 'bg-gray-500 text-white font-semibold'
+                      ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white font-semibold'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                   }`}
                 >
@@ -236,7 +236,7 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-3 rounded-3xl text-xs sm:text-sm font-medium transition-colors text-center ${
                     activeTab === tab.id
-                      ? 'bg-gray-500 text-white font-semibold'
+                      ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white font-semibold'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                   }`}
                 >
@@ -286,7 +286,7 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
                   onClick={() => setActiveTab(tab.id)}
                   className={`w-full sm:w-auto px-3 sm:px-5 py-2 sm:py-3 rounded-3xl text-xs sm:text-sm font-medium transition-colors text-center ${
                     activeTab === tab.id
-                      ? 'bg-gray-500 text-white font-semibold'
+                      ? 'bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] text-white font-semibold'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                   }`}
                 >

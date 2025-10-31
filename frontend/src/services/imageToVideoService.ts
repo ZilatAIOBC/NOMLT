@@ -23,6 +23,7 @@ function getSupabaseAccessToken(): string | undefined {
 export interface ImageToVideoRequest {
   duration: number;
   image: string;
+  audio?: string; // Optional audio URL or data URL
   last_image: string;
   negative_prompt: string;
   prompt: string;
@@ -74,14 +75,12 @@ export const createImageToVideoJob = async (
 ): Promise<ImageToVideoCreateResponse> => {
   const url = `${BACKEND_BASE_URL}/api/image-to-video`;
   
-  // Removed console for production
-  // Removed console for production
-  // Removed console for production
+  
 
   const token = getSupabaseAccessToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-  // Removed console for production
+  
 
   const response = await fetch(url, {
     method: 'POST',
@@ -90,23 +89,23 @@ export const createImageToVideoJob = async (
     credentials: 'include',
   });
 
-  // Removed console for production
+  
 
   if (!response.ok) {
     const errorText = await response.text();
-    // Removed console for production
+    
     throw new Error(`Backend request failed: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
   const data = (await response.json()) as ImageToVideoCreateResponse;
-  // Removed console for production
+  
   
   if (!data?.data?.urls?.get) {
-    // Removed console for production
+    
     throw new Error('Invalid backend response: missing result URL');
   }
   
-  // Removed console for production
+  
   return data;
 };
 
@@ -116,17 +115,14 @@ export const getImageToVideoResult = async (
   maxAttempts: number = 40,
   intervalMs: number = 6000
 ): Promise<ImageToVideoResultResponse> => {
-  // Removed console for production
-  // Removed console for production
-  // Removed console for production
+  
   
   let attempts = 0;
 
   while (attempts < maxAttempts) {
     const url = `${BACKEND_BASE_URL}/api/image-to-video/result?url=${encodeURIComponent(resultUrl)}`;
     
-    // Removed console for production
-    // Removed console for production
+    
 
     const token = getSupabaseAccessToken();
     const headers: Record<string, string> = {};
@@ -134,26 +130,25 @@ export const getImageToVideoResult = async (
 
     const response = await fetch(url, { method: 'GET', headers, credentials: 'include' });
 
-    // Removed console for production
+    
 
     if (!response.ok) {
       const errorText = await response.text();
-      // Removed console for production
+      
       throw new Error(`Backend result failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = (await response.json()) as any;
     const status = data?.data?.status;
     
-    // Removed console for production
-    // Removed console for production
+    
 
     if (status === 'succeeded' || status === 'completed') {
-      // Removed console for production
+      
       
       // Check if this is our new S3 response format with generation info
       if (data.success && data.generation) {
-        // Removed console for production
+        
         // Transform our S3 response to match expected format
         return {
           code: data.code || 200,
@@ -166,22 +161,22 @@ export const getImageToVideoResult = async (
         } as ImageToVideoResultResponse;
       }
       
-      // Removed console for production
+      
       // Original AI provider response format
       return data as ImageToVideoResultResponse;
     }
     if (status === 'failed') {
       const err = data?.data?.error || 'Unknown error';
-      // Removed console for production
+      
       throw new Error(`Image-to-video generation failed: ${err}`);
     }
 
-    // Removed console for production
+    
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
     attempts++;
   }
 
-  // Removed console for production
+  
   throw new Error('Image-to-video generation timed out - maximum attempts reached');
 };
 

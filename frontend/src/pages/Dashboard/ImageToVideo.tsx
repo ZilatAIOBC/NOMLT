@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ImageUpload from '../../components/image-to-video/ImageUpload';
+import AudioUpload from '../../components/image-to-video/AudioUpload';
 import VideoPlayer from '../../components/image-to-video/VideoPlayer';
 
 import TopHeader from '../../components/dashboard/TopHeader';
@@ -17,11 +18,12 @@ import { getCreditBalance } from '../../services/creditsService';
 const ImageToVideo: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [prefilledImageUrl, setPrefilledImageUrl] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [negativePrompt] = useState('');
   const [lastImage] = useState('');
-  const [duration, setDuration] = useState(5);
+  const [duration] = useState(10); // Fixed at 10 seconds as per requirements
   const [seed, setSeed] = useState(-1);
   const [status, setStatus] = useState<'idle' | 'generating' | 'completed'>('idle');
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
@@ -73,6 +75,7 @@ const ImageToVideo: React.FC = () => {
   }, []);
 
   const handleRun = async () => {
+
     if ((!imageFile && !prefilledImageUrl) || !prompt) {
       setError('Please provide an image and enter a prompt');
       return;
@@ -88,20 +91,32 @@ const ImageToVideo: React.FC = () => {
       if (!imageUrl) {
         throw new Error('No image provided');
       }
+      
+      // Step 1.5: Upload audio if provided
+      let audioUrl = null;
+      if (audioFile) {
+        setGenerationProgress('Uploading audio...');
+        audioUrl = await uploadImageToUrl(audioFile); // Reuse the same function for audio
+      }
+      
       setGenerationProgress('Image uploaded, creating video job...');
       
       // Step 2: Prepare request body with correct structure
       const requestBody: ImageToVideoRequest = {
         duration: duration,
         image: imageUrl,
+        audio: audioUrl || undefined,
         last_image: lastImage,
         negative_prompt: negativePrompt,
         prompt: prompt,
         seed: seed === -1 ? Math.floor(Math.random() * 1000000) : seed
       };
       
+      
       // Step 3: Create the video generation job
       const createResult = await callImageToVideoAPI(requestBody);
+      
+      
       
       // Check if we got the dynamic result URL
       if (!createResult.data.urls?.get) {
@@ -113,6 +128,8 @@ const ImageToVideo: React.FC = () => {
       // Step 4: Get the result using the dynamic URL from first API response
       // This will poll until the video is ready
       const result = await getImageToVideoResult(createResult.data.urls.get);
+      
+      
       
       // Step 5: Extract video URL
       if (result.data.outputs && result.data.outputs.length > 0) {
@@ -223,8 +240,20 @@ const ImageToVideo: React.FC = () => {
                 </div>
               </div>
 
-              {/* Duration */}
+              {/* Audio Input */}
               <div>
+                <label className="block text-sm font-medium text-white mb-3">Audio (Optional)</label>
+                <div className="mt-2">
+                  <AudioUpload
+                    file={audioFile}
+                    onFileChange={(file) => setAudioFile(file)}
+                    placeholder="https://example.com/audio.mp3"
+                  />
+                </div>
+              </div>
+
+              {/* Duration - Hidden as per requirements */}
+              {/* <div>
                 <label className="block text-sm font-medium text-white mb-3">Duration *</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -256,7 +285,7 @@ const ImageToVideo: React.FC = () => {
                     8s
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Seed */}
               <div>

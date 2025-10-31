@@ -68,9 +68,9 @@ app.use((req, res, next) => {
 });
 // Supabase (no persistent DB connection required). Validate envs.
 if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-  console.warn("Supabase configuration missing: SUPABASE_URL or SUPABASE_ANON_KEY");
+  
 } else {
-  console.log("Supabase connected");
+  
 }
 
 // Import Routes
@@ -128,13 +128,13 @@ try {
   scheduleCreditExpirationJob && scheduleCreditExpirationJob();
   scheduleGenerationRetention && scheduleGenerationRetention(7);
 } catch (e) {
-  console.warn('Background jobs not scheduled:', e.message);
+  
 }
 
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server started on port: ${PORT}`);
+  
 });
 
 module.exports = app;

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import VideoPlayer from '../../components/image-to-video/VideoPlayer';
+import AudioUpload from '../../components/image-to-video/AudioUpload';
 import TopHeader from '../../components/dashboard/TopHeader';
 import HeaderBar from '../../components/dashboard/HeaderBar';
 import RecentGenerations from '../../components/dashboard/RecentGenerations';
-import { Sparkles, RefreshCw, Info, Mic, Video, Wand2 } from 'lucide-react';
+import { Sparkles, RefreshCw, Info } from 'lucide-react';
 import IdeaChips from '../../components/common/IdeaChips';
 import InsufficientCreditsModal from '../../components/dashboard/InsufficientCreditsModal';
 import { callTextToVideoAPI, getTextToVideoResult, TextToVideoRequest } from '../../services/textToVideoService';
@@ -13,9 +14,9 @@ import { getCreditBalance } from '../../services/creditsService';
 
 const TextToVideo: React.FC = () => {
   const [prompt, setPrompt] = useState('');
-  const [aspectRatio, setAspectRatio] = useState('1:1');
-  const [duration, setDuration] = useState(5);
-  const [cameraFixed, setCameraFixed] = useState(false);
+  const [resolution, setResolution] = useState<'832x480' | '480x832'>('832x480');
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const duration = 5;
   const [seed, setSeed] = useState(-1);
   const [status, setStatus] = useState<'idle' | 'generating' | 'completed'>('idle');
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);
@@ -66,12 +67,21 @@ const TextToVideo: React.FC = () => {
 
     try {
       // Step 1: Prepare request body with correct structure
+      // Optional audio upload
+      let audioUrl: string | undefined = undefined;
+      if (audioFile) {
+        setGenerationProgress('Uploading audio...');
+        const { uploadImageToUrl } = await import('../../services/imageToVideoService');
+        audioUrl = await uploadImageToUrl(audioFile);
+      }
+
       const requestBody: TextToVideoRequest = {
-        aspect_ratio: aspectRatio,
-        camera_fixed: cameraFixed,
-        duration: duration,
+        duration: 5,
+        enable_prompt_expansion: false,
         prompt: prompt,
-        seed: seed === -1 ? undefined : seed
+        seed: seed === -1 ? undefined : seed,
+        size: resolution,
+        audio: audioUrl
       };
       
       // Step 2: Create the text-to-video generation job
@@ -131,14 +141,9 @@ const TextToVideo: React.FC = () => {
     setSeed(Math.floor(Math.random() * 1000000));
   };
 
-  const aspectRatioOptions = [
-    { label: '1:1', value: '1:1' },
-    { label: '16:9', value: '16:9' },
-    { label: '4:3', value: '4:3' },
-    { label: '3:4', value: '3:4' },
-    { label: '9:16', value: '9:16' },
-    { label: '21:9', value: '21:9' },
-    { label: '9:21', value: '9:21' },
+  const resolutionOptions = [
+    { label: '832 x 480', value: '832x480' },
+    { label: '480 x 832', value: '480x832' },
   ];
 
   return (
@@ -181,35 +186,40 @@ const TextToVideo: React.FC = () => {
                 onSelect={setPrompt}
               />
             </div>
-            {/* Aspect Ratio */}
+            {/* Audio (Optional) */}
+            <div>
+              <label className="block text-sm font-medium text-white mb-3">Audio (Optional)</label>
+              <div className="mt-2">
+                <AudioUpload
+                  file={audioFile}
+                  onFileChange={(file) => setAudioFile(file)}
+                  placeholder="https://example.com/audio.mp3"
+                />
+              </div>
+            </div>
+
+            {/* Resolution (WAN 2.5) */}
             <div>
               <label className="block text-sm font-medium text-white mb-3">
-                Aspect Ratio
+                Resolution
               </label>
-              <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                {aspectRatioOptions.map((option) => {
-                  const [width, height] = option.value.split(':').map(Number);
-                  const isSelected = aspectRatio === option.value;
-                  
+              <div className="grid grid-cols-2 gap-2">
+                {resolutionOptions.map((option) => {
+                  const isSelected = resolution === (option.value as '832x480' | '480x832');
                   return (
                     <button
                       key={option.value}
-                      onClick={() => setAspectRatio(option.value)}
-                      className={`px-3 py-3 text-sm rounded-lg border transition-colors flex flex-col items-center justify-center gap-2 ${
+                      onClick={() => setResolution(option.value as '832x480' | '480x832')}
+                      className={`px-3 py-3 text-sm rounded-lg border transition-colors flex items-center justify-center ${
                         isSelected
-                          ? 'border-pink-500 bg-pink-500 text-white'
+                          ? 'text-white'
                           : 'border-gray-600 bg-[#0D131F] text-gray-300 hover:border-gray-500 hover:text-white'
                       }`}
+                      style={{
+                        backgroundColor: isSelected ? '#8A3FFC' : 'transparent',
+                        borderColor: isSelected ? '#8A3FFC' : undefined
+                      }}
                     >
-                      <div 
-                        className={`rounded-sm ${
-                          isSelected ? 'bg-white' : 'bg-gray-400'
-                        }`}
-                        style={{
-                          width: `${Math.min(width * 3, 20)}px`,
-                          height: `${Math.min(height * 3, 20)}px`
-                        }}
-                      ></div>
                       <span className="text-xs">{option.label}</span>
                     </button>
                   );
@@ -217,65 +227,10 @@ const TextToVideo: React.FC = () => {
               </div>
             </div>
 
-            {/* Duration */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-3">
-                Duration *
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setDuration(5)}
-                  className={`px-4 py-3 text-sm rounded-lg border transition-colors ${
-                    duration === 5
-                      ? 'text-white'
-                      : 'border-gray-600 bg-[#0D131F] text-gray-300 hover:border-gray-500 hover:text-white'
-                  }`}
-                  style={{
-                    backgroundColor: duration === 5 ? '#8A3FFC' : 'transparent',
-                    borderColor: duration === 5 ? '#8A3FFC' : undefined
-                  }}
-                >
-                  5s
-                </button>
-                <button
-                  onClick={() => setDuration(10)}
-                  className={`px-4 py-3 text-sm rounded-lg border transition-colors ${
-                    duration === 10
-                      ? 'text-white'
-                      : 'border-gray-600 text-gray-300 hover:border-gray-500 hover:text-white'
-                  }`}
-                  style={{
-                    backgroundColor: duration === 10 ? '#8A3FFC' : 'transparent',
-                    borderColor: duration === 10 ? '#8A3FFC' : undefined
-                  }}
-                >
-                  10s
-                </button>
-              </div>
-            </div>
+            {/* Duration fixed to 5 seconds (hidden control) */}
+            <input type="hidden" value={duration} readOnly />
 
-            {/* Camera Fixed */}
-            <div>
-              <label className="block text-sm font-medium text-white mb-3">
-                Camera_fixed
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="cameraFixed"
-                  checked={cameraFixed}
-                  onChange={(e) => setCameraFixed(e.target.checked)}
-                  className="w-4 h-4 bg-gray-800 border-gray-600 rounded focus:ring-2"
-                  style={{ 
-                    color: '#8A3FFC',
-                    '--tw-ring-color': '#8A3FFC'
-                  } as React.CSSProperties}
-                />
-                <label htmlFor="cameraFixed" className="text-sm text-gray-300">
-                  Whether to fix the camera position.
-                </label>
-              </div>
-            </div>
+            {/* Camera_fixed not supported/needed for WAN 2.5 */}
 
             {/* Seed */}
             <div>

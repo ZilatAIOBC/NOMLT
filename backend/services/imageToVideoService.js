@@ -24,10 +24,22 @@ async function createImageToVideoJob(requestBody) {
   }
 
   try {
+    // Transform request body to Wavespeed WAN 2.5 format
+    const wavespeedRequestBody = {
+      duration: requestBody.duration || 10,
+      enable_prompt_expansion: false, // Default to false as per requirements
+      image: requestBody.image,
+      audio: requestBody.audio, // Optional audio field
+      prompt: requestBody.prompt,
+      resolution: "480p", // Default to 480p as per requirements
+      seed: requestBody.seed || -1
+    };
+    
+    
     
     // Schedule request through rate limiter
     const response = await videoLimiter.schedule(async () => {
-      return await axios.post(IMAGE_TO_VIDEO_API_URL, requestBody, {
+      return await axios.post(IMAGE_TO_VIDEO_API_URL, wavespeedRequestBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${IMAGE_TO_VIDEO_API_KEY}`,
@@ -38,10 +50,36 @@ async function createImageToVideoJob(requestBody) {
 
     const data = response.data;
     
-    if (!data || !data.data || !data.data.urls || !data.data.urls.get) {
-      throw new Error("Invalid API response: missing result URL");
+    // For Wavespeed API, check for prediction_id to construct result URL
+    if (!data || !data.data) {
+      throw new Error("Invalid API response: missing data");
     }
-    return data;
+    
+    // Construct the result URL from id/prediction_id
+    // Wavespeed returns an id field that we use to construct the result URL
+    if (data.data.id) {
+      // Extract the base API URL (https://api.wavespeed.ai/api/v3) and construct the result URL
+      // URL format: https://api.wavespeed.ai/api/v3/predictions/{id}/result
+      const urlParts = IMAGE_TO_VIDEO_API_URL.split('/');
+      const baseUrl = `${urlParts[0]}//${urlParts[2]}/api/v3`;
+      const resultUrl = `${baseUrl}/predictions/${data.data.id}/result`;
+      return {
+        ...data,
+        data: {
+          ...data.data,
+          urls: {
+            get: resultUrl
+          }
+        }
+      };
+    }
+    
+    // Fallback to old format if urls.get exists
+    if (data.data.urls && data.data.urls.get) {
+      return data;
+    }
+    
+    throw new Error("Invalid API response: missing id or result URL");
   } catch (error) {
     const message =
       (error.response &&
