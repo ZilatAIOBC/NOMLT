@@ -2,11 +2,18 @@ import React, { useEffect, useState } from 'react';
 import HeaderBar from '../../components/dashboard/HeaderBar';
 import TopHeader from '../../components/dashboard/TopHeader';
 import { getCreditSummary, formatCredits, type CreditSummary, type CreditTransaction } from '../../services/creditsService';
+import BuyCreditsModal from '../../components/dashboard/BuyCreditsModal';
 
 const Credits: React.FC = () => {
   const [creditData, setCreditData] = useState<CreditSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showBuyModal, setShowBuyModal] = useState(false);
+
+  // Ensure page starts at the top whenever Credits mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     fetchCreditData();
@@ -17,9 +24,11 @@ const Credits: React.FC = () => {
       setLoading(true);
       setError(null);
       const data = await getCreditSummary();
+      console.log('[frontend][credits] summary loaded', data);
       setCreditData(data);
     } catch (err) {
       // Removed console for production
+      console.warn('[frontend][credits] failed to load summary', err);
       setError('Failed to load credit information');
     } finally {
       setLoading(false);
@@ -46,10 +55,15 @@ const Credits: React.FC = () => {
     return labels[type] || type;
   };
 
-  const cleanDescription = (description: string, type: string) => {
-    if (!description) return getTransactionTypeLabel(type);
-    // Just remove IDs in parentheses
-    return description.replace(/\([^)]+\)/g, '').trim() || getTransactionTypeLabel(type);
+  const cleanDescription = (t: CreditTransaction) => {
+    // Normalize top-ups to a clean label
+    if (t.type === 'purchased' && t.reference_type === 'credit_topup') {
+      return 'Credit top-up purchase';
+    }
+    const description = t.description || '';
+    if (!description) return getTransactionTypeLabel(t.type);
+    // Remove IDs in parentheses (Stripe IDs, etc.)
+    return description.replace(/\([^)]+\)/g, '').trim() || getTransactionTypeLabel(t.type);
   };
 
   return (
@@ -154,14 +168,22 @@ const Credits: React.FC = () => {
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-[#5B3BEA] via-[#7A3AEA] to-[#2C60EB] p-5 sm:p-6 flex items-center">
                   <div className="flex-1">
                     <div className="text-white font-semibold text-lg">Need more credits?</div>
-                    <div className="text-white/80 text-sm mt-1">Subscribe to a plan to get more credits.</div>
+                    <div className="text-white/80 text-sm mt-1">Top up instantly or view plans.</div>
                   </div>
-                  <button 
-                    onClick={() => window.location.href = '/dashboard/billing'}
-                    className="mt-4 lg:mt-0 whitespace-nowrap inline-flex items-center justify-center rounded-lg bg-white text-[#0F0F0F] font-medium px-4 py-2 text-sm hover:bg-white/90 transition-colors"
-                  >
-                    View Plans
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setShowBuyModal(true)}
+                      className="mt-4 lg:mt-0 whitespace-nowrap inline-flex items-center justify-center rounded-lg bg-white text-[#0F0F0F] font-medium px-4 py-2 text-sm hover:bg-white/90 transition-colors"
+                    >
+                      Buy Credits
+                    </button>
+                    <button 
+                      onClick={() => window.location.href = '/dashboard/billing'}
+                      className="mt-4 lg:mt-0 whitespace-nowrap inline-flex items-center justify-center rounded-lg border border-white/20 text-white font-medium px-4 py-2 text-sm hover:bg-white/10 transition-colors"
+                    >
+                      View Plans
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -202,7 +224,7 @@ const Credits: React.FC = () => {
                             </td>
                             <td className="px-4 py-4">
                               <div className="text-sm text-white/90 font-medium">
-                                {cleanDescription(transaction.description, transaction.type)}
+                                {cleanDescription(transaction)}
                               </div>
                               <div className="text-xs text-white/40 mt-0.5 capitalize">
                                 {transaction.type.replace('_', ' ')}
@@ -230,6 +252,7 @@ const Credits: React.FC = () => {
           )}
         </div>
       </div>
+      <BuyCreditsModal open={showBuyModal} onClose={() => setShowBuyModal(false)} />
     </div>
   );
 };

@@ -168,13 +168,13 @@ const TextToVideo: React.FC = () => {
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                maxLength={1000}
+                maxLength={2000}
                 className="w-full h-32 xl:h-56 px-3 py-2 bg-[#0D131F] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent resize-none overflow-y-auto"
                 style={{ '--tw-ring-color': '#8A3FFC' } as React.CSSProperties}
                 placeholder="What do you want to create?"
               />
               <div className="flex justify-end mt-2">
-                <span className="text-xs text-gray-400">{prompt.length}/1000</span>
+              <span className="text-xs text-gray-400">{prompt.length}/2000 characters</span>
               </div>
             </div>
 
