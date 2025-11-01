@@ -108,7 +108,7 @@ const FAQ: React.FC = () => {
   };
 
   return (
-    <section id="faq" className="py-24 bg-black">
+    <section id="faqs" className="py-24 bg-black">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header Section - Centered on mobile/tablet */}
         <div className="text-center lg:hidden mb-12">
