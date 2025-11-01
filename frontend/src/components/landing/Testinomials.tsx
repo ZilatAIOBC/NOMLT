@@ -128,7 +128,7 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }
 
 const TestimonialsSection: React.FC = () => {
   return (
-    <section className="py-16 px-6 bg-black">
+    <section id="testimonials" className="py-16 px-6 bg-black">
       <div className="max-w-7xl mx-auto">
         {/* Header - Matching Figma exactly */}
         <div className="text-center mb-8">

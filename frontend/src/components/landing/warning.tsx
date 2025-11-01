@@ -29,7 +29,7 @@ export const WarningSection = (): JSX.Element => {
             </Button>
           </Link>
 
-          <Link to="/signin">
+          <Link to="/signup">
             <Button className="h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 lg:px-4 md:px-3 sm:px-2 bg-[#8a3ffc] rounded-lg shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/90">
               <span className="[font-family:'Inter',Helvetica] font-normal text-[#f0f0f0] text-sm lg:text-sm md:text-xs sm:text-xs tracking-[0] leading-6 whitespace-nowrap">
                 Start Generating
@@ -201,7 +201,7 @@ export const WarningSection = (): JSX.Element => {
                 </button>
               </Link>
 
-              <Link to="/signin">
+              <Link to="/signup">
                 <Button className="flex-1 h-auto inline-flex items-center gap-2 pt-[5.5px] pb-[6.5px] px-4 bg-[#8a3ffc] rounded-lg shadow-[0px_1px_0px_#0000000d] hover:bg-[#8a3ffc]/90">
                   <span className="[font-family:'Inter',Helvetica] font-normal text-[#f0f0f0] text-sm tracking-[0] leading-6 whitespace-nowrap">
                     Start Generating
