@@ -47,7 +47,7 @@ const Hero: React.FC = () => {
           </div>
           
           {/* Main Title */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold text-white leading-widest mt-4 tracking-widest">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-6xl xl:text-8xl 2xl:text-8xl font-bold text-white leading-tight sm:leading-snug md:leading-normal mt-4 tracking-wider md:tracking-widest">
               MEET NOLMT.ai
             </h1>
           

@@ -51,7 +51,7 @@ const SidebarSectionList: React.FC<Props> = ({
   return (
     <>
       {sections.map((section) => (
-        <div key={section.title} className="space-y-2">
+        <div key={section.title} className="space-y-2 lg:space-y-1 xl:space-y-2">
           {(!isCollapsible || isExpanded) && (
             <div className="px-3 text-gray-400/80 text-xs font-semibold tracking-wide">
               {section.title}
