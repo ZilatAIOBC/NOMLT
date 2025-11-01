@@ -26,7 +26,7 @@ async function createImageToVideoJob(requestBody) {
   try {
     // Transform request body to Wavespeed WAN 2.5 format
     const wavespeedRequestBody = {
-      duration: requestBody.duration || 10,
+      duration: requestBody.duration || 8,
       enable_prompt_expansion: false, // Default to false as per requirements
       image: requestBody.image,
       audio: requestBody.audio, // Optional audio field

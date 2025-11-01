@@ -23,7 +23,7 @@ const ImageToVideo: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [negativePrompt] = useState('');
   const [lastImage] = useState('');
-  const [duration] = useState(10); // Fixed at 10 seconds as per requirements
+  const [duration] = useState(8); // Fixed at 8 seconds as per requirements
   const [seed, setSeed] = useState(-1);
   const [status, setStatus] = useState<'idle' | 'generating' | 'completed'>('idle');
   const [generatedVideo, setGeneratedVideo] = useState<string | null>(null);

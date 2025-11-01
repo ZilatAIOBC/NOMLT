@@ -175,7 +175,7 @@ const Sidebar: React.FC = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 md:px-4 py-6 space-y-4 overflow-y-auto">
+        <nav className="flex-1 px-2 md:px-4 py-6 space-y-4 lg:space-y-1 xl:space-y-4 overflow-y-auto">
           {/* Home */}
           {memoizedHomeItem}
 
