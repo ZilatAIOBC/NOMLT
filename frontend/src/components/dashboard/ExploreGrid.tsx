@@ -295,8 +295,16 @@ const ExploreGrid: React.FC<ExploreGridProps> = ({ showHeader = true, showTitle 
               ))}
             </div>
             <button
-              onClick={() => setDeleteAllOpen(true)}
-              className="inline-flex items-center gap-2 self-start sm:self-auto px-4 py-2 rounded-lg bg-red-600/80 hover:bg-red-600 text-white text-sm font-semibold transition-colors"
+              onClick={() => {
+                if (generations.length === 0 || loading || isBulkDeleting) return;
+                setDeleteAllOpen(true);
+              }}
+              disabled={generations.length === 0 || loading || isBulkDeleting}
+              className={`inline-flex items-center gap-2 self-start sm:self-auto px-4 py-2 rounded-lg text-white text-sm font-semibold transition-colors ${
+                generations.length === 0 || loading || isBulkDeleting
+                  ? 'bg-red-600/50 cursor-not-allowed opacity-60'
+                  : 'bg-red-600/80 hover:bg-red-600'
+              }`}
             >
               <Trash2 className="w-4 h-4" />
               Delete All
