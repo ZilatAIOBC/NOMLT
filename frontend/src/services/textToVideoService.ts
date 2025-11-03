@@ -106,14 +106,13 @@ export const getTextToVideoResult = async (
   maxAttempts = 40,
   intervalMs = 6000
 ): Promise<TextToVideoResultResponse> => {
-  // Removed console for production
-  // Removed console for production
-  // Removed console for production
+  // Sanitize potential stray quotes/whitespace to avoid malformed URLs
+  const sanitizedResultUrl = (resultUrl || "").trim().replace(/^['"]|['"]$/g, "");
   let attempts = 0;
 
   while (attempts < maxAttempts) {
     const url = `${BACKEND_BASE_URL}/api/text-to-video/result?url=${encodeURIComponent(
-      resultUrl
+      sanitizedResultUrl
     )}`;
 
     const token = getSupabaseAccessToken();

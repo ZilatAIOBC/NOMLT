@@ -111,9 +111,8 @@ export const getTextToImageResult = async (
   maxAttempts: number = 40,
   intervalMs: number = 6000
 ): Promise<TextToImageResultResponse> => {
-  // Removed console for production
-  // Removed console for production
-  // Removed console for production
+  // Sanitize potential stray quotes/whitespace to avoid malformed URLs
+  const sanitizedResultUrl = (resultUrl || "").trim().replace(/^['"]|['"]$/g, "");
   let attempts = 0;
 
   // Attach Supabase session token for authentication
@@ -122,7 +121,7 @@ export const getTextToImageResult = async (
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   while (attempts < maxAttempts) {
-    const url = `${BACKEND_BASE_URL}/api/text-to-image/result?url=${encodeURIComponent(resultUrl)}`;
+    const url = `${BACKEND_BASE_URL}/api/text-to-image/result?url=${encodeURIComponent(sanitizedResultUrl)}`;
     // Removed console for production
     // Removed console for production
 
