@@ -75,6 +75,31 @@ if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
   console.log('[backend][supabase] Environment variables present');
 }
 
+// Ensure CORS headers and handle OPTIONS preflight at Node level (safety net)
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOriginsSet = new Set([
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://localhost:5000',
+    'http://localhost:8080',
+    'https://nolmt.ai',
+    'https://www.nolmt.ai',
+    'https://api.nolmt.ai',
+  ]);
+
+  if (origin && allowedOriginsSet.has(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  }
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 // Import Routes
 
 app.get('/health', (req, res) => {

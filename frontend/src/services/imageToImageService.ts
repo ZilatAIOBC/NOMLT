@@ -114,14 +114,13 @@ export const getImageToImageResult = async (
   maxAttempts: number = 40,
   intervalMs: number = 6000
 ): Promise<ImageToImageResultResponse> => {
-  // Removed console for production
-  // Removed console for production
-  // Removed console for production
+  // Sanitize potential stray quotes/whitespace to avoid malformed URLs
+  const sanitizedResultUrl = (resultUrl || "").trim().replace(/^['"]|['"]$/g, "");
   
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    const url = `${BACKEND_BASE_URL}/api/image-to-image/result?url=${encodeURIComponent(resultUrl)}`;
+    const url = `${BACKEND_BASE_URL}/api/image-to-image/result?url=${encodeURIComponent(sanitizedResultUrl)}`;
     
     // Removed console for production
     // Removed console for production

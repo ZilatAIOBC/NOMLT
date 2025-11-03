@@ -115,12 +115,12 @@ export const getImageToVideoResult = async (
   maxAttempts: number = 40,
   intervalMs: number = 6000
 ): Promise<ImageToVideoResultResponse> => {
-  
-  
+  // Sanitize potential stray quotes/whitespace to avoid malformed URLs
+  const sanitizedResultUrl = (resultUrl || "").trim().replace(/^['"]|['"]$/g, "");
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    const url = `${BACKEND_BASE_URL}/api/image-to-video/result?url=${encodeURIComponent(resultUrl)}`;
+    const url = `${BACKEND_BASE_URL}/api/image-to-video/result?url=${encodeURIComponent(sanitizedResultUrl)}`;
     
     
 
