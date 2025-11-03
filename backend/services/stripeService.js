@@ -5,6 +5,8 @@ const { getCreditPack, CURRENCY } = require('../config/creditPacks');
 
 async function getOrCreateCustomerForUser(userId, email) {
   const client = supabaseAdmin || supabase;
+  const stripe = getStripeClient();
+  
   const { data: userProfile, error: fetchError } = await client
     .from('profiles')
     .select('id, stripe_customer_id, email')
@@ -14,16 +16,25 @@ async function getOrCreateCustomerForUser(userId, email) {
     throw new Error(`Failed to fetch user profile: ${fetchError.message}`);
   }
 
+  // If we have a stored customer ID, validate it exists in Stripe
   if (userProfile && userProfile.stripe_customer_id) {
-    return userProfile.stripe_customer_id;
+    try {
+      // Try to retrieve the customer from Stripe to verify it exists
+      await stripe.customers.retrieve(userProfile.stripe_customer_id);
+      return userProfile.stripe_customer_id;
+    } catch (stripeError) {
+      // If customer doesn't exist or is invalid, create a new one
+      console.warn(`Stripe customer ${userProfile.stripe_customer_id} not found or invalid, creating new customer for user ${userId}`);
+    }
   }
 
-  const stripe = getStripeClient();
+  // Create a new Stripe customer
   const customer = await stripe.customers.create({
     email: email || userProfile?.email,
     metadata: { user_id: userId }
   });
 
+  // Update the database with the new customer ID
   const { error: updateError } = await client
     .from('profiles')
     .update({ stripe_customer_id: customer.id })
