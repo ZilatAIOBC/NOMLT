@@ -221,34 +221,6 @@ export const exportUsersToCSV = async (
   }
 };
 
-// Add User Credits manually
-export const manuallyAdjustUserCredits = async (
-  userId: string,
-  amount: number, // amount to ADD (delta)
-  type: "earned" | "purchased" | "bonus" | "refund" = "bonus",
-  description?: string
-): Promise<{
-  amount_added: number;
-  new_balance: number;
-  lifetime_earned: number;
-}> => {
-  try {
-    const url = `${API_BASE_URL}/api/admin/credits/manual-adjust`;
-    const result = await fetchWithAuth(url, {
-      method: "POST",
-      body: JSON.stringify({
-        userId,
-        amount, // positive delta
-        type, // defaults to 'bonus'
-        description: description ?? "Manual adjustment by admin",
-      }),
-    });
-    return result.data;
-  } catch (error: any) {
-    throw new Error(error.message || "Failed to manually adjust credits");
-  }
-};
-
 export default {
   getUsers,
   getUserStats,
@@ -258,5 +230,4 @@ export default {
   deleteUser,
   bulkUpdateUsers,
   exportUsersToCSV,
-  manuallyAdjustUserCredits,
 };

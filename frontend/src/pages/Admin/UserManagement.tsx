@@ -5,10 +5,12 @@ import {
   getUsers,
   updateUserRole,
   updateUserStatus,
-  manuallyAdjustUserCredits,
 } from "../../services/adminUsersService";
+import { manuallyAdjustUserCredits } from "../../services/adminCreditsService";
 import toast from "react-hot-toast";
 import ChangeCreditsModal from "../../components/admin/modals/ChangeCreditsModal";
+import ChangePlanModal from "../../components/admin/modals/ChangePlanModal";
+import { adminChangePlan } from "../../services/adminBillingService";
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -27,6 +29,13 @@ export default function UserManagement() {
   const [creditsUser, setCreditsUser] = useState<Pick<
     User,
     "id" | "name" | "email" | "credits"
+  > | null>(null);
+
+  //  state for change-plan modal
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [planUser, setPlanUser] = useState<Pick<
+    User,
+    "id" | "name" | "email" | "plan"
   > | null>(null);
 
   // Fetch users from API
@@ -118,6 +127,18 @@ export default function UserManagement() {
     setActionMenuOpen(null);
   };
 
+  // open change-plan modal
+  const openChangePlan = (u: User) => {
+    setPlanUser({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      plan: u.plan,
+    });
+    setPlanModalOpen(true);
+    setActionMenuOpen(null);
+  };
+
   // submit credits change
   const handleChangeCreditsSubmit = async (
     userId: string,
@@ -136,6 +157,22 @@ export default function UserManagement() {
       await fetchUsers();
     } catch (error: any) {
       toast.error(error?.message || "Failed to add credits");
+      throw error;
+    }
+  };
+
+  // Change Plan submit handler
+  const handleChangePlanSubmit = async (
+    userId: string,
+    newPlanId: string,
+    interval: "monthly" | "yearly"
+  ) => {
+    try {
+      const res = await adminChangePlan({ userId, newPlanId, interval });
+      toast.success(res?.message || "Plan changed successfully");
+      await fetchUsers();
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to change plan");
       throw error;
     }
   };
@@ -396,6 +433,18 @@ export default function UserManagement() {
                                 </button>
                               </>
                             )}
+
+                            {user.plan.toLowerCase() !== "free" && (
+                              <>
+                                <div className="my-1 border-t border-white/10" />
+                                <button
+                                  onClick={() => openChangePlan(user)}
+                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
+                                >
+                                  Change Plan
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       )}
@@ -473,6 +522,14 @@ export default function UserManagement() {
         user={creditsUser}
         onClose={() => setCreditsModalOpen(false)}
         onSubmit={handleChangeCreditsSubmit}
+      />
+
+      {/*  Change Plan Modal*/}
+      <ChangePlanModal
+        open={planModalOpen}
+        user={planUser}
+        onClose={() => setPlanModalOpen(false)}
+        onSubmit={handleChangePlanSubmit}
       />
     </div>
   );
