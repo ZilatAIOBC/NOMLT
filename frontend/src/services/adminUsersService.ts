@@ -221,23 +221,6 @@ export const exportUsersToCSV = async (
   }
 };
 
-// Add User Credits manually
-export const updateUserCredits = async (
-  userId: string,
-  creditsDelta: number
-): Promise<{ id: string; credits: number }> => {
-  try {
-    const url = `${API_BASE_URL}/api/admin/users/${userId}/credits`;
-    const result = await fetchWithAuth(url, {
-      method: "POST",
-      body: JSON.stringify({ delta: creditsDelta }),
-    });
-    return result.data;
-  } catch (error: any) {
-    throw new Error(error.message || "Failed to add user credits");
-  }
-};
-
 export default {
   getUsers,
   getUserStats,

@@ -31,9 +31,9 @@ async function getUserId(req) {
 router.get('/subscription', async (req, res) => {
   try {
     const userId = await getUserId(req);
-    
+
     const client = supabaseAdmin || supabase;
-    
+
     // Get user's active subscription with plan details
     // Order by updated_at to get the most recently modified subscription
     const { data: subscription, error } = await client
@@ -132,24 +132,24 @@ router.get('/data', async (req, res) => {
 
     // Get payment transactions - Generate mock data from subscription
     let transactions = [];
-    
+
     // If user has a subscription, create mock transaction data
     if (subscription && subscription.id) {
       const periodStart = new Date(subscription.current_period_start);
       const periodEnd = new Date(subscription.current_period_end);
       const periodLength = periodEnd - periodStart;
       const isYearly = periodLength > 365 * 24 * 60 * 60 * 1000;
-      
+
       // Get plan details to show price
       const { data: plan } = await client
         .from('plans')
         .select('display_name, price_monthly, price_yearly')
         .eq('id', subscription.plan_id)
         .single();
-      
+
       const price = isYearly ? (plan?.price_yearly || 0) : (plan?.price_monthly || 0);
       const planName = plan?.display_name || 'Subscription';
-      
+
       // Create mock transaction for current period
       transactions = [
         {
@@ -194,15 +194,15 @@ router.post('/subscription/cancel', async (req, res) => {
       .single();
 
     if (fetchError || !subscription) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'No active subscription found',
-        details: fetchError?.message 
+        details: fetchError?.message
       });
     }
 
     if (!subscription.stripe_subscription_id) {
-      return res.status(400).json({ 
-        error: 'Subscription missing Stripe ID' 
+      return res.status(400).json({
+        error: 'Subscription missing Stripe ID'
       });
     }
 
@@ -215,11 +215,11 @@ router.post('/subscription/cancel', async (req, res) => {
       .update({
         cancel_at_period_end: true,
         canceled_at: new Date().toISOString(),
-        current_period_start: canceledSubscription.current_period_start 
-          ? new Date(canceledSubscription.current_period_start * 1000).toISOString() 
+        current_period_start: canceledSubscription.current_period_start
+          ? new Date(canceledSubscription.current_period_start * 1000).toISOString()
           : null,
-        current_period_end: canceledSubscription.current_period_end 
-          ? new Date(canceledSubscription.current_period_end * 1000).toISOString() 
+        current_period_end: canceledSubscription.current_period_end
+          ? new Date(canceledSubscription.current_period_end * 1000).toISOString()
           : null,
         status: canceledSubscription.status,
         updated_at: new Date().toISOString(),
@@ -236,15 +236,15 @@ router.post('/subscription/cancel', async (req, res) => {
       subscription: {
         id: subscription.id,
         cancel_at_period_end: true,
-        current_period_end: canceledSubscription.current_period_end 
-          ? new Date(canceledSubscription.current_period_end * 1000).toISOString() 
+        current_period_end: canceledSubscription.current_period_end
+          ? new Date(canceledSubscription.current_period_end * 1000).toISOString()
           : null
       }
     });
 
   } catch (error) {
-    res.status(500).json({ 
-      error: error.message || 'Failed to cancel subscription' 
+    res.status(500).json({
+      error: error.message || 'Failed to cancel subscription'
     });
   }
 });
@@ -267,15 +267,15 @@ router.post('/subscription/reactivate', async (req, res) => {
       .single();
 
     if (fetchError || !subscription) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'No canceled subscription found to reactivate',
-        details: fetchError?.message 
+        details: fetchError?.message
       });
     }
 
     if (!subscription.stripe_subscription_id) {
-      return res.status(400).json({ 
-        error: 'Subscription missing Stripe ID' 
+      return res.status(400).json({
+        error: 'Subscription missing Stripe ID'
       });
     }
 
@@ -317,7 +317,7 @@ router.post('/subscription/reactivate', async (req, res) => {
       .select('current_period_start, current_period_end, cancel_at_period_end')
       .eq('id', subscription.id)
       .single();
-    
+
 
     res.json({
       success: true,
@@ -325,15 +325,15 @@ router.post('/subscription/reactivate', async (req, res) => {
       subscription: {
         id: subscription.id,
         cancel_at_period_end: false,
-        current_period_end: reactivatedStripeSubscription.current_period_end 
-          ? new Date(reactivatedStripeSubscription.current_period_end * 1000).toISOString() 
+        current_period_end: reactivatedStripeSubscription.current_period_end
+          ? new Date(reactivatedStripeSubscription.current_period_end * 1000).toISOString()
           : null
       }
     });
 
   } catch (error) {
-    res.status(500).json({ 
-      error: error.message || 'Failed to reactivate subscription' 
+    res.status(500).json({
+      error: error.message || 'Failed to reactivate subscription'
     });
   }
 });
@@ -365,15 +365,15 @@ router.post('/subscription/change-plan', async (req, res) => {
       .single();
 
     if (fetchError || !currentSubscription) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'No active subscription found',
-        details: fetchError?.message 
+        details: fetchError?.message
       });
     }
 
     if (currentSubscription.plan_id === newPlanId) {
-      return res.status(400).json({ 
-        error: 'You are already subscribed to this plan' 
+      return res.status(400).json({
+        error: 'You are already subscribed to this plan'
       });
     }
 
@@ -386,20 +386,20 @@ router.post('/subscription/change-plan', async (req, res) => {
       .single();
 
     if (planError || !newPlan) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         error: 'New plan not found or inactive',
-        details: planError?.message 
+        details: planError?.message
       });
     }
 
     // Get the new Stripe price ID based on interval
-    const newPriceId = interval === 'yearly' 
-      ? newPlan.stripe_price_id_yearly 
+    const newPriceId = interval === 'yearly'
+      ? newPlan.stripe_price_id_yearly
       : newPlan.stripe_price_id_monthly;
 
     if (!newPriceId) {
-      return res.status(400).json({ 
-        error: `Plan ${newPlan.display_name} is not configured for ${interval} billing` 
+      return res.status(400).json({
+        error: `Plan ${newPlan.display_name} is not configured for ${interval} billing`
       });
     }
 
@@ -439,7 +439,7 @@ router.post('/subscription/change-plan', async (req, res) => {
     } else {
       // Immediate change (upgrade path typically). Proceed to Stripe now
       const updatedStripeSubscription = await changeSubscriptionPlan(
-        currentSubscription.stripe_subscription_id, 
+        currentSubscription.stripe_subscription_id,
         newPriceId
       );
 
@@ -447,11 +447,11 @@ router.post('/subscription/change-plan', async (req, res) => {
         .from('subscriptions')
         .update({
           plan_id: newPlanId,
-          current_period_start: updatedStripeSubscription.current_period_start 
-            ? new Date(updatedStripeSubscription.current_period_start * 1000).toISOString() 
+          current_period_start: updatedStripeSubscription.current_period_start
+            ? new Date(updatedStripeSubscription.current_period_start * 1000).toISOString()
             : null,
-          current_period_end: updatedStripeSubscription.current_period_end 
-            ? new Date(updatedStripeSubscription.current_period_end * 1000).toISOString() 
+          current_period_end: updatedStripeSubscription.current_period_end
+            ? new Date(updatedStripeSubscription.current_period_end * 1000).toISOString()
             : null,
           status: updatedStripeSubscription.status,
           cancel_at_period_end: updatedStripeSubscription.cancel_at_period_end || false,
@@ -469,16 +469,16 @@ router.post('/subscription/change-plan', async (req, res) => {
           id: currentSubscription.id,
           plan_id: newPlanId,
           plan_name: newPlan.display_name,
-          current_period_end: updatedStripeSubscription.current_period_end 
-            ? new Date(updatedStripeSubscription.current_period_end * 1000).toISOString() 
+          current_period_end: updatedStripeSubscription.current_period_end
+            ? new Date(updatedStripeSubscription.current_period_end * 1000).toISOString()
             : null
         }
       });
     }
 
   } catch (error) {
-    res.status(500).json({ 
-      error: error.message || 'Failed to change subscription plan' 
+    res.status(500).json({
+      error: error.message || 'Failed to change subscription plan'
     });
   }
 });
