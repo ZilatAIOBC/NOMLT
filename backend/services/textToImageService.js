@@ -24,7 +24,7 @@ async function createTextToImageJob(requestBody) {
   }
 
   try {
-    
+
     // Schedule request through rate limiter
     const response = await imageLimiter.schedule(async () => {
       return await axios.post(TEXT_TO_IMAGE_API_URL, requestBody, {
@@ -37,7 +37,7 @@ async function createTextToImageJob(requestBody) {
     });
 
     const data = response.data;
-    
+
     if (!data || !data.data || !data.data.urls || !data.data.urls.get) {
       throw new Error("Invalid API response: missing result URL");
     }
@@ -81,7 +81,7 @@ async function getTextToImageResult(resultUrl, maxAttempts = 40, intervalMs = 60
 
       const data = response.data;
       const status = data && data.data && data.data.status;
-      
+
 
       if (status === "succeeded" || status === "completed") {
         const finalUrl = data && data.data && data.data.output;
@@ -96,7 +96,7 @@ async function getTextToImageResult(resultUrl, maxAttempts = 40, intervalMs = 60
       attempts++;
     } catch (error) {
       attempts++;
-      
+
       if (attempts >= maxAttempts) {
         const message =
           (error.response &&

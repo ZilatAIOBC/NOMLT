@@ -6,7 +6,7 @@ const { getCreditPack, CURRENCY } = require('../config/creditPacks');
 async function getOrCreateCustomerForUser(userId, email) {
   const client = supabaseAdmin || supabase;
   const stripe = getStripeClient();
-  
+
   const { data: userProfile, error: fetchError } = await client
     .from('profiles')
     .select('id, stripe_customer_id, email')
@@ -170,12 +170,12 @@ async function createTopupCheckoutSession({ userId, packId, successUrl, cancelUr
  */
 async function cancelSubscription(subscriptionId) {
   const stripe = getStripeClient();
-  
+
   // Cancel at period end to allow user to keep using until paid period expires
   const subscription = await stripe.subscriptions.update(subscriptionId, {
     cancel_at_period_end: true
   });
-  
+
   return subscription;
 }
 
@@ -186,12 +186,12 @@ async function cancelSubscription(subscriptionId) {
  */
 async function reactivateSubscription(subscriptionId) {
   const stripe = getStripeClient();
-  
+
   // Remove the cancel_at_period_end flag
   const subscription = await stripe.subscriptions.update(subscriptionId, {
     cancel_at_period_end: false
   });
-  
+
   return subscription;
 }
 
@@ -204,17 +204,17 @@ async function reactivateSubscription(subscriptionId) {
  */
 async function changeSubscriptionPlan(subscriptionId, newPriceId, prorationBehavior = 'always_invoice') {
   const stripe = getStripeClient();
-  
+
   // First, retrieve the subscription to get the current subscription item
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  
+
   if (!subscription || !subscription.items || !subscription.items.data || subscription.items.data.length === 0) {
     throw new Error('Subscription or subscription items not found');
   }
-  
+
   // Get the subscription item ID (usually there's only one)
   const subscriptionItemId = subscription.items.data[0].id;
-  
+
   // Update the subscription with the new price
   const updatedSubscription = await stripe.subscriptions.update(subscriptionId, {
     items: [{
@@ -223,7 +223,7 @@ async function changeSubscriptionPlan(subscriptionId, newPriceId, prorationBehav
     }],
     proration_behavior: prorationBehavior,
   });
-  
+
   return updatedSubscription;
 }
 

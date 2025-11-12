@@ -2,13 +2,16 @@
  * =====================================================
  * CREDITS SERVICE
  * =====================================================
- * 
+ *
  * Frontend service for interacting with credit-related APIs
  */
 
-import { authHelper } from '../utils/authHelper';
+import { authHelper } from "../utils/authHelper";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL|| import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_BACKEND_URL ||
+  "http://localhost:5000";
 
 // Types
 export interface CreditCosts {
@@ -34,7 +37,7 @@ export interface CreditBalance {
 export interface CreditTransaction {
   id: string;
   user_id: string;
-  type: 'earned' | 'spent' | 'purchased' | 'bonus' | 'refund';
+  type: "earned" | "spent" | "purchased" | "bonus" | "refund";
   amount: number;
   balance_after: number;
   description: string;
@@ -56,7 +59,6 @@ export interface CreditSummary {
   };
 }
 
-
 /**
  * Get credit costs for all generation types
  * No authentication required
@@ -67,9 +69,9 @@ export async function getCreditCosts(): Promise<{
 }> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/credits/costs`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
@@ -88,14 +90,19 @@ export async function getCreditCosts(): Promise<{
  * Get credit cost for a specific generation type
  * No authentication required
  */
-export async function getCreditCostByType(generationType: string): Promise<CreditCostDetail> {
+export async function getCreditCostByType(
+  generationType: string
+): Promise<CreditCostDetail> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/credits/costs/${generationType}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/api/credits/costs/${generationType}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to fetch credit cost: ${response.statusText}`);
@@ -114,9 +121,12 @@ export async function getCreditCostByType(generationType: string): Promise<Credi
  */
 export async function getCreditBalance(): Promise<CreditBalance> {
   try {
-    const response = await authHelper.authFetch(`${API_BASE_URL}/api/credits/balance`, {
-      method: 'GET',
-    });
+    const response = await authHelper.authFetch(
+      `${API_BASE_URL}/api/credits/balance`,
+      {
+        method: "GET",
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to fetch credit balance: ${response.statusText}`);
@@ -150,15 +160,20 @@ export async function getCreditTransactions(
     });
 
     if (type) {
-      params.append('type', type);
+      params.append("type", type);
     }
 
-    const response = await authHelper.authFetch(`${API_BASE_URL}/api/credits/transactions?${params}`, {
-      method: 'GET',
-    });
+    const response = await authHelper.authFetch(
+      `${API_BASE_URL}/api/credits/transactions?${params}`,
+      {
+        method: "GET",
+      }
+    );
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch credit transactions: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch credit transactions: ${response.statusText}`
+      );
     }
 
     const result = await response.json();
@@ -174,9 +189,12 @@ export async function getCreditTransactions(
  */
 export async function getCreditSummary(): Promise<CreditSummary> {
   try {
-    const response = await authHelper.authFetch(`${API_BASE_URL}/api/credits/summary`, {
-      method: 'GET',
-    });
+    const response = await authHelper.authFetch(
+      `${API_BASE_URL}/api/credits/summary`,
+      {
+        method: "GET",
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Failed to fetch credit summary: ${response.statusText}`);
@@ -201,10 +219,10 @@ export function formatCredits(amount: number): string {
  */
 export function getGenerationTypeName(type: string): string {
   const names: { [key: string]: string } = {
-    text_to_image: 'Text to Image',
-    image_to_image: 'Image to Image',
-    text_to_video: 'Text to Video',
-    image_to_video: 'Image to Video',
+    text_to_image: "Text to Image",
+    image_to_image: "Image to Image",
+    text_to_video: "Text to Video",
+    image_to_video: "Image to Video",
   };
   return names[type] || type;
 }
@@ -223,4 +241,3 @@ export function calculateAffordableGenerations(
     image_to_video: Math.floor(balance / costs.image_to_video),
   };
 }
-

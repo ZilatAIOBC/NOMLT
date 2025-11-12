@@ -14,9 +14,9 @@ function getSupabaseAccessToken(): string | undefined {
       }
     }
     // Fallbacks if above not found
-    const sbSimple = localStorage.getItem('sb-access-token');
+    const sbSimple = localStorage.getItem("sb-access-token");
     if (sbSimple) return sbSimple;
-    const custom = localStorage.getItem('accessToken');
+    const custom = localStorage.getItem("accessToken");
     if (custom) return custom;
   } catch (_) {}
   return undefined;
@@ -80,27 +80,31 @@ export const createTextToImageJob = async (
   // Attach Supabase session token if available
   const token = getSupabaseAccessToken();
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   // Removed console for production
   // Removed console for production
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify(requestBody),
-    credentials: 'include',
+    credentials: "include",
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Backend request failed: ${response.status} ${response.statusText} - ${errorText}`);
+    throw new Error(
+      `Backend request failed: ${response.status} ${response.statusText} - ${errorText}`
+    );
   }
 
   const data = (await response.json()) as TextToImageCreateResponse;
   if (!data?.data?.urls?.get) {
-    throw new Error('Invalid backend response: missing result URL');
+    throw new Error("Invalid backend response: missing result URL");
   }
   return data;
 };
@@ -112,30 +116,38 @@ export const getTextToImageResult = async (
   intervalMs: number = 6000
 ): Promise<TextToImageResultResponse> => {
   // Sanitize potential stray quotes/whitespace to avoid malformed URLs
-  const sanitizedResultUrl = (resultUrl || "").trim().replace(/^['"]|['"]$/g, "");
+  const sanitizedResultUrl = (resultUrl || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
   let attempts = 0;
 
   // Attach Supabase session token for authentication
   const token = getSupabaseAccessToken();
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   while (attempts < maxAttempts) {
-    const url = `${BACKEND_BASE_URL}/api/text-to-image/result?url=${encodeURIComponent(sanitizedResultUrl)}`;
+    const url = `${BACKEND_BASE_URL}/api/text-to-image/result?url=${encodeURIComponent(
+      sanitizedResultUrl
+    )}`;
     // Removed console for production
     // Removed console for production
 
-    const response = await fetch(url, { 
-      method: 'GET', 
+    const response = await fetch(url, {
+      method: "GET",
       headers,
-      credentials: 'include' 
+      credentials: "include",
     });
     // Removed console for production
 
     if (!response.ok) {
       const errorText = await response.text();
       // Removed console for production
-      throw new Error(`Backend result failed: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(
+        `Backend result failed: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
     const data = (await response.json()) as any;
@@ -143,27 +155,27 @@ export const getTextToImageResult = async (
     // Removed console for production
     // Removed console for production
 
-    if (status === 'succeeded' || status === 'completed') {
+    if (status === "succeeded" || status === "completed") {
       // Check if this is our new S3 response format with generation info
       if (data.success && data.generation) {
         // Removed console for production
         // Transform our S3 response to match expected format
         return {
           code: data.code || 200,
-          message: data.message || 'Success',
+          message: data.message || "Success",
           data: {
             ...data.data,
             // Convert single output to outputs array for compatibility
-            outputs: data.data.output ? [data.data.output] : []
-          }
+            outputs: data.data.output ? [data.data.output] : [],
+          },
         } as TextToImageResultResponse;
       }
-      
+
       // Original AI provider response format
       return data as TextToImageResultResponse;
     }
-    if (status === 'failed') {
-      const err = data?.data?.error || 'Unknown error';
+    if (status === "failed") {
+      const err = data?.data?.error || "Unknown error";
       // Removed console for production
       throw new Error(`Text-to-image generation failed: ${err}`);
     }
@@ -174,7 +186,9 @@ export const getTextToImageResult = async (
   }
 
   // Removed console for production
-  throw new Error('Text-to-image generation timed out - maximum attempts reached');
+  throw new Error(
+    "Text-to-image generation timed out - maximum attempts reached"
+  );
 };
 
 // Backward-compatible alias for existing call sites

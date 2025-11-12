@@ -31,10 +31,10 @@ const allowedOrigins = [
   'http://localhost:8080',
   'https://nolmt.ai',
   'https://www.nolmt.ai',
- 
- 
+
+
   'https://api.nolmt.ai',
-  
+
 ];
 
 const corsOptions = {
@@ -43,7 +43,7 @@ const corsOptions = {
     if (!origin) {
       return callback(null, true);
     }
-    
+
     // Check if the origin is in the allowed list
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -155,7 +155,7 @@ try {
   scheduleCreditExpirationJob && scheduleCreditExpirationJob();
   scheduleGenerationRetention && scheduleGenerationRetention(7);
 } catch (e) {
-  
+
 }
 
 

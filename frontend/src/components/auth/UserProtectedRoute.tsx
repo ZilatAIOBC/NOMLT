@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
-import { authHelper } from '../../utils/authHelper';
+import React, { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { authHelper } from "../../utils/authHelper";
 
 interface User {
   id: string;
@@ -16,7 +16,7 @@ interface UserProtectedRouteProps {
 
 /**
  * UserProtectedRoute - Protects user dashboard routes
- * 
+ *
  * Features:
  * - Checks if user is authenticated
  * - Validates user role (non-admin users only)
@@ -24,7 +24,9 @@ interface UserProtectedRouteProps {
  * - Redirects admin users to admin dashboard
  * - Shows loading state during authentication check
  */
-const UserProtectedRoute: React.FC<UserProtectedRouteProps> = ({ children }) => {
+const UserProtectedRoute: React.FC<UserProtectedRouteProps> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
@@ -63,12 +65,12 @@ const UserProtectedRoute: React.FC<UserProtectedRouteProps> = ({ children }) => 
 
   // Redirect to signin if not authenticated
   if (!user) {
-    toast.error('Please sign in to access this page');
+    toast.error("Please sign in to access this page");
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
   // Redirect admin users to admin dashboard
-  if (user.role === 'admin') {
+  if (user.role === "admin") {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
@@ -76,4 +78,3 @@ const UserProtectedRoute: React.FC<UserProtectedRouteProps> = ({ children }) => 
 };
 
 export default UserProtectedRoute;
-

@@ -18,7 +18,7 @@ const { getCreditCost } = require('../config/creditPricing');
 async function getUserCredits(userId) {
   try {
     const client = supabaseAdmin || supabase;
-    
+
     const { data, error } = await client
       .from('user_credits')
       .select('balance, lifetime_earned, lifetime_spent, updated_at')
@@ -28,7 +28,7 @@ async function getUserCredits(userId) {
     if (error) {
       // If user has no credit record, create one with 0 balance
       if (error.code === 'PGRST116') {
-        
+
         const { data: newCredit, error: createError } = await client
           .from('user_credits')
           .insert({
@@ -51,7 +51,7 @@ async function getUserCredits(userId) {
           updated_at: newCredit.updated_at
         };
       }
-      
+
       throw new Error(`Failed to fetch credits: ${error.message}`);
     }
 
@@ -88,9 +88,9 @@ async function hasEnoughCredits(userId, amount) {
  */
 async function deductCredits(userId, amount, generationType, generationId) {
   try {
-    
+
     const client = supabaseAdmin || supabase;
-    
+
     // IDEMPOTENCY CHECK: If generationId provided, check if already deducted
     if (generationId) {
       const { data: existingTransaction, error: checkError } = await client
@@ -110,7 +110,7 @@ async function deductCredits(userId, amount, generationType, generationId) {
         };
       }
     }
-    
+
     // Call PostgreSQL function to update credits
     const { data, error } = await client.rpc('update_user_credits', {
       p_user_id: userId,
@@ -131,8 +131,8 @@ async function deductCredits(userId, amount, generationType, generationId) {
 
     // Get updated balance
     const updatedCredits = await getUserCredits(userId);
-    
-    
+
+
     return {
       amount_deducted: amount,
       new_balance: updatedCredits.balance,
@@ -157,9 +157,9 @@ async function deductCredits(userId, amount, generationType, generationId) {
  */
 async function addCredits(userId, amount, type = 'earned', description = 'Credits added', referenceId = null, referenceType = null) {
   try {
-    
+
     const client = supabaseAdmin || supabase;
-    
+
     // Call PostgreSQL function to update credits
     const { data, error } = await client.rpc('update_user_credits', {
       p_user_id: userId,
@@ -176,8 +176,8 @@ async function addCredits(userId, amount, type = 'earned', description = 'Credit
 
     // Get updated balance
     const updatedCredits = await getUserCredits(userId);
-    
-    
+
+
     return {
       amount_added: amount,
       new_balance: updatedCredits.balance,
@@ -240,9 +240,9 @@ async function spendCredits(userId, amount, description = 'Credits spent', refer
  */
 async function refundCredits(userId, amount, generationType, generationId, reason = 'Generation failed') {
   try {
-    
+
     const client = supabaseAdmin || supabase;
-    
+
     // IDEMPOTENCY CHECK: Prevent double refunds for same generation
     if (generationId) {
       const { data: existingRefund, error: checkError } = await client
@@ -262,7 +262,7 @@ async function refundCredits(userId, amount, generationType, generationId, reaso
         };
       }
     }
-    
+
     // Call PostgreSQL function to update credits
     const { data, error } = await client.rpc('update_user_credits', {
       p_user_id: userId,
@@ -279,8 +279,8 @@ async function refundCredits(userId, amount, generationType, generationId, reaso
 
     // Get updated balance
     const updatedCredits = await getUserCredits(userId);
-    
-    
+
+
     return {
       amount_refunded: amount,
       new_balance: updatedCredits.balance,
@@ -302,10 +302,10 @@ async function checkCreditsForGeneration(userId, generationType) {
   try {
     const cost = await getCreditCost(generationType);
     const credits = await getUserCredits(userId);
-    
+
     const hasEnough = credits.balance >= cost;
     const shortfall = hasEnough ? 0 : cost - credits.balance;
-    
+
     return {
       hasEnough,
       currentBalance: credits.balance,
@@ -328,16 +328,16 @@ async function checkCreditsForGeneration(userId, generationType) {
  */
 async function resetCredits(userId, amount, description = 'Credits reset') {
   try {
-    
+
     const client = supabaseAdmin || supabase;
-    
+
     // Get current balance
     const currentCredits = await getUserCredits(userId);
-    
+
     // Update balance directly
     const { error } = await client
       .from('user_credits')
-      .update({ 
+      .update({
         balance: amount,
         updated_at: new Date().toISOString()
       })
@@ -359,7 +359,7 @@ async function resetCredits(userId, amount, description = 'Credits reset') {
         reference_type: 'subscription'
       });
 
-    
+
     return {
       old_balance: currentCredits.balance,
       new_balance: amount,
