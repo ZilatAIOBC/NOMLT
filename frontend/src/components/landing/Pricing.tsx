@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
-import { plansService, PlanWithPricing, BillingCycle } from '../../services/plansService';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Check } from "lucide-react";
+import {
+  plansService,
+  PlanWithPricing,
+  BillingCycle,
+} from "../../services/plansService";
 
-const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode; badgeText?: string }> = ({ active, onClick, children, badgeText }) => (
+const TabButton: React.FC<{
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+  badgeText?: string;
+}> = ({ active, onClick, children, badgeText }) => (
   <button
     onClick={onClick}
     className={`relative px-6 py-2 rounded-full text-sm transition-colors ${
       active
-        ? 'text-white bg-[#763EEA] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]'
-        : 'text-white/90 hover:bg-white/5'
+        ? "text-white bg-[#763EEA] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+        : "text-white/90 hover:bg-white/5"
     }`}
   >
     {badgeText && (
@@ -23,7 +32,7 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; children: Reac
 
 const Pricing: React.FC = () => {
   const navigate = useNavigate();
-  const [cycle, setCycle] = useState<BillingCycle>('monthly');
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [plans, setPlans] = useState<PlanWithPricing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,13 +42,13 @@ const Pricing: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Fetch only plans data
         const plansData = await plansService.getPlansWithPricing();
         setPlans(plansData);
       } catch (err) {
         // Removed console for production
-        setError('Failed to load subscription plans. Please try again later.');
+        setError("Failed to load subscription plans. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -50,7 +59,7 @@ const Pricing: React.FC = () => {
 
   const handleGetStarted = () => {
     // Simply redirect to signup page
-    navigate('/signin');
+    navigate("/signin");
   };
 
   // Loading state with skeleton cards
@@ -67,7 +76,7 @@ const Pricing: React.FC = () => {
               </h3>
               <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
             </div>
-            
+
             <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
               Purchase a Subscription
             </h1>
@@ -88,13 +97,16 @@ const Pricing: React.FC = () => {
           <div className="flex justify-center">
             <div className="grid gap-7 md:gap-10 xl:gap-16 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 justify-items-center">
               {[1, 2, 3].map((index) => (
-                <div key={index} className="relative rounded-2xl border border-white/10 bg-[#121212] p-5 md:p-6 xl:p-6 pt-6 md:pt-7 xl:pt-8 flex flex-col w-full max-w-[320px] md:max-w-[340px] xl:w-[350px] min-h-[560px] md:min-h-[640px] xl:h-[750px] overflow-hidden animate-pulse">
+                <div
+                  key={index}
+                  className="relative rounded-2xl border border-white/10 bg-[#121212] p-5 md:p-6 xl:p-6 pt-6 md:pt-7 xl:pt-8 flex flex-col w-full max-w-[320px] md:max-w-[340px] xl:w-[350px] min-h-[560px] md:min-h-[640px] xl:h-[750px] overflow-hidden animate-pulse"
+                >
                   {/* Badge skeleton */}
                   <div className="absolute top-3 right-4 w-16 h-5 bg-white/10 rounded-full"></div>
-                  
+
                   {/* Title skeleton */}
                   <div className="w-20 h-6 bg-white/10 rounded mb-3"></div>
-                  
+
                   {/* Price skeleton */}
                   <div className="mb-4">
                     <div className="flex items-baseline gap-2 mb-1">
@@ -111,7 +123,10 @@ const Pricing: React.FC = () => {
                   {/* Features skeleton */}
                   <div className="space-y-3.5">
                     {[1, 2, 3, 4, 5, 6, 7].map((featureIndex) => (
-                      <div key={featureIndex} className="flex items-start gap-2">
+                      <div
+                        key={featureIndex}
+                        className="flex items-start gap-2"
+                      >
                         <div className="w-4 h-4 bg-white/10 rounded-full mt-0.5"></div>
                         <div className="w-32 h-4 bg-white/10 rounded"></div>
                       </div>
@@ -140,7 +155,7 @@ const Pricing: React.FC = () => {
               </h3>
               <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
             </div>
-            
+
             <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
               Purchase a Subscription
             </h1>
@@ -170,7 +185,7 @@ const Pricing: React.FC = () => {
             </h3>
             <div className="w-8 sm:w-12 md:w-16 h-px bg-gradient-to-l from-[#0F0F0F] to-[#9333EA]"></div>
           </div>
-          
+
           <h1 className="text-2xl md:text-3xl font-bold text-white text-center mb-2">
             Purchase a Subscription
           </h1>
@@ -181,39 +196,64 @@ const Pricing: React.FC = () => {
 
         <div className="flex items-center justify-center mb-12">
           <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-[#0C111C]/80 p-1 shadow-sm">
-            <TabButton active={cycle === 'monthly'} onClick={() => setCycle('monthly')}>Monthly</TabButton>
-            <TabButton active={cycle === 'yearly'} onClick={() => setCycle('yearly')} badgeText="SAVE 30%">Yearly</TabButton>
+            <TabButton
+              active={cycle === "monthly"}
+              onClick={() => setCycle("monthly")}
+            >
+              Monthly
+            </TabButton>
+            <TabButton
+              active={cycle === "yearly"}
+              onClick={() => setCycle("yearly")}
+              badgeText="SAVE 30%"
+            >
+              Yearly
+            </TabButton>
           </div>
         </div>
 
         <div className="flex justify-center">
           <div className="grid gap-7 md:gap-10 xl:gap-16 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 justify-items-center">
             {plans.map((plan) => (
-              <div 
-                key={plan.id} 
+              <div
+                key={plan.id}
                 className="relative rounded-2xl border border-white/10  hover:border-white/20 hover:shadow-[0_8px_25px_rgba(118,62,234,0.3)] p-5 md:p-6 xl:p-6 pt-6 md:pt-7 xl:pt-8 flex flex-col transition-all duration-300 w-full max-w-[320px] md:max-w-[340px] xl:w-[350px] min-h-[560px] md:min-h-[640px] xl:h-[750px] overflow-hidden"
               >
                 {plan.badge && (
-                  <div className={`absolute top-3 right-4 px-3 py-1 text-xs rounded-full ${
-                    plan.badge === 'Most Popular' 
-                      ? 'bg-[#FED3A7] text-[#C06101]' 
-                      : plan.badge === 'Special Offer'
-                      ? 'bg-[#FF78AE] text-white'
-                      : 'bg-gray-600 text-white border border-white/10'
-                  }`}>{plan.badge}</div>
+                  <div
+                    className={`absolute top-3 right-4 px-3 py-1 text-xs rounded-full ${
+                      plan.badge === "Most Popular"
+                        ? "bg-[#FED3A7] text-[#C06101]"
+                        : plan.badge === "Special Offer"
+                        ? "bg-[#FF78AE] text-white"
+                        : "bg-gray-600 text-white border border-white/10"
+                    }`}
+                  >
+                    {plan.badge}
+                  </div>
                 )}
 
-                <div className="text-white font-bold text-base md:text-lg xl:text-xl mb-3">{plan.display_name}</div>
+                <div className="text-white font-bold text-base md:text-lg xl:text-xl mb-3">
+                  {plan.display_name}
+                </div>
                 <div className="mb-4">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-white text-sm md:text-base leading-none">{plan.priceByCycle[cycle].currency}</span>
-                    <span className="text-white text-xl md:text-2xl font-semibold leading-none">{plan.priceByCycle[cycle].amount}</span>
-                    <span className="text-white/70 text-xs leading-none">{plan.priceByCycle[cycle].cadenceLabel}</span>
+                    <span className="text-white text-sm md:text-base leading-none">
+                      {plan.priceByCycle[cycle].currency}
+                    </span>
+                    <span className="text-white text-xl md:text-2xl font-semibold leading-none">
+                      {plan.priceByCycle[cycle].amount}
+                    </span>
+                    <span className="text-white/70 text-xs leading-none">
+                      {plan.priceByCycle[cycle].cadenceLabel}
+                    </span>
                   </div>
-                  <div className="text-[11px] text-white/70 mt-1">{plan.priceByCycle[cycle].billedLabel}</div>
+                  <div className="text-[11px] text-white/70 mt-1">
+                    {plan.priceByCycle[cycle].billedLabel}
+                  </div>
                 </div>
 
-                <button 
+                <button
                   onClick={handleGetStarted}
                   className="mb-5 w-full justify-center px-4 md:px-5 py-2.5 md:py-3 rounded-lg text-white text-sm md:text-[15px] font-medium bg-gradient-to-r from-[#4057EB] via-[#823AEA] to-[#2C60EB] hover:opacity-95 transition-opacity flex items-center gap-2"
                 >
@@ -222,14 +262,18 @@ const Pricing: React.FC = () => {
 
                 <ul className="space-y-3 md:space-y-3.5 text-sm md:text-[15px] text-white/90">
                   {plan.features.map((feature, i) => {
-                    const isUnlimitedSeedream = plan.seedream_unlimited && feature.toLowerCase().includes('seedream');
+                    const isUnlimitedSeedream =
+                      plan.seedream_unlimited &&
+                      feature.toLowerCase().includes("seedream");
                     if (isUnlimitedSeedream) {
                       return (
                         <li key={i} className="flex items-start gap-2">
                           <Check className="mt-0.5 h-4 w-4 text-gray-400 shrink-0" />
                           <div className="flex items-center gap-10">
                             <span className="text-white/90">Seedream V4</span>
-                            <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-300 text-black">Unlimited</span>
+                            <span className="px-2 py-0.5 rounded-full text-xs bg-yellow-300 text-black">
+                              Unlimited
+                            </span>
                           </div>
                         </li>
                       );

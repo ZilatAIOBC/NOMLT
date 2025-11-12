@@ -1,12 +1,31 @@
-import React, { useEffect, useState, useRef } from 'react';
-import HeaderBar from '../../components/dashboard/HeaderBar';
-import TopHeader from '../../components/dashboard/TopHeader';
-import CancelSubscriptionModal from '../../components/dashboard/CancelSubscriptionModal';
-import { CalendarDays, DollarSign, Star, CheckCircle, Loader2, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
-import { retrieveCheckoutSession } from '../../services/paymentService';
-import { getSubscriptionStatus, getTransactionHistory, SubscriptionData, TransactionData, cancelSubscription, reactivateSubscription } from '../../services/subscriptionService';
-import { getCreditTransactions, type CreditTransaction } from '../../services/creditsService';
-import { toast } from 'react-hot-toast';
+import React, { useEffect, useState, useRef } from "react";
+import HeaderBar from "../../components/dashboard/HeaderBar";
+import TopHeader from "../../components/dashboard/TopHeader";
+import CancelSubscriptionModal from "../../components/dashboard/CancelSubscriptionModal";
+import {
+  CalendarDays,
+  DollarSign,
+  Star,
+  CheckCircle,
+  Loader2,
+  AlertTriangle,
+  XCircle,
+  RefreshCw,
+} from "lucide-react";
+import { retrieveCheckoutSession } from "../../services/paymentService";
+import {
+  getSubscriptionStatus,
+  getTransactionHistory,
+  SubscriptionData,
+  TransactionData,
+  cancelSubscription,
+  reactivateSubscription,
+} from "../../services/subscriptionService";
+import {
+  getCreditTransactions,
+  type CreditTransaction,
+} from "../../services/creditsService";
+import { toast } from "react-hot-toast";
 
 const Billing: React.FC = () => {
   const [verifyingSession, setVerifyingSession] = useState(false);
@@ -31,20 +50,20 @@ const Billing: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // Get user ID from localStorage
-        const authUser = localStorage.getItem('authUser');
+        const authUser = localStorage.getItem("authUser");
         if (!authUser) {
-          setError('Please sign in to view billing information');
+          setError("Please sign in to view billing information");
           setLoading(false);
           return;
         }
-        
+
         const userData = JSON.parse(authUser);
         const userId = userData.id;
-        
+
         if (!userId) {
-          setError('User ID not found. Please sign in again.');
+          setError("User ID not found. Please sign in again.");
           setLoading(false);
           return;
         }
@@ -53,9 +72,14 @@ const Billing: React.FC = () => {
         const [subscription, transactionHistory, creditTx] = await Promise.all([
           getSubscriptionStatus(),
           getTransactionHistory(),
-          getCreditTransactions(50, 0, 'purchased').catch(() => ({ transactions: [], total: 0, limit: 0, offset: 0 }))
+          getCreditTransactions(50, 0, "purchased").catch(() => ({
+            transactions: [],
+            total: 0,
+            limit: 0,
+            offset: 0,
+          })),
         ]);
-        
+
         setBillingData(subscription);
         // Normalize subscription transaction dates to include date + time (Month DD, YYYY, HH:MM AM/PM)
         const mappedSubs: TransactionData[] = transactionHistory.map((t) => ({
@@ -63,12 +87,12 @@ const Billing: React.FC = () => {
           date: (() => {
             const base = t.created_at || t.date;
             try {
-              return new Date(base).toLocaleString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
+              return new Date(base).toLocaleString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
               });
             } catch {
               return t.date;
@@ -78,39 +102,46 @@ const Billing: React.FC = () => {
         // Map top-up credit transactions into the same table format and merge
         let merged = mappedSubs;
         if (Array.isArray((creditTx as any).transactions)) {
-          const onlyTopups: CreditTransaction[] = (creditTx as any).transactions.filter((t: CreditTransaction) => t.reference_type === 'credit_topup');
+          const onlyTopups: CreditTransaction[] = (
+            creditTx as any
+          ).transactions.filter(
+            (t: CreditTransaction) => t.reference_type === "credit_topup"
+          );
           const mappedTopups: TransactionData[] = onlyTopups.map((t) => ({
             id: t.id,
             // For top-ups, show Month DD, YYYY (no time)
-            date: new Date(t.created_at).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
+            date: new Date(t.created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
             }),
             // Simplified description to align with subscription rows
-            description: 'Credit top-up',
+            description: "Credit top-up",
             // Prefer currency label in description if present (e.g., "$5.00 USD - 7,000 credits" or "5.00 USD - 7,000 credits")
             amount: (() => {
-              const desc = t.description || '';
+              const desc = t.description || "";
               // Match "$5.00 USD" OR "5.00" (with or without currency code)
-              const currencyMatch = desc.match(/(?:\$\s*)?(\d[\d,]*(?:\.\d{2})?)(?:\s*[A-Za-z]{3})?/);
+              const currencyMatch = desc.match(
+                /(?:\$\s*)?(\d[\d,]*(?:\.\d{2})?)(?:\s*[A-Za-z]{3})?/
+              );
               if (currencyMatch && currencyMatch[1]) {
-                const num = currencyMatch[1].replace(/\s+/g, '');
+                const num = currencyMatch[1].replace(/\s+/g, "");
                 return `$${num}`;
               }
               return `+${t.amount.toLocaleString()} credits`;
             })(),
-            status: 'paid',
-            subscription_id: '',
+            status: "paid",
+            subscription_id: "",
             created_at: t.created_at,
           }));
-          merged = [...transactionHistory, ...mappedTopups].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+          merged = [...transactionHistory, ...mappedTopups].sort((a, b) =>
+            a.created_at < b.created_at ? 1 : -1
+          );
         }
         setTransactions(merged);
-        
       } catch (err: any) {
         // Removed console for production
-        setError(err.message || 'Failed to load billing information');
+        setError(err.message || "Failed to load billing information");
       } finally {
         setLoading(false);
       }
@@ -118,13 +149,13 @@ const Billing: React.FC = () => {
 
     const verifyCheckoutSession = async () => {
       const params = new URLSearchParams(window.location.search);
-      const sessionId = params.get('session_id');
-      const canceled = params.get('canceled');
+      const sessionId = params.get("session_id");
+      const canceled = params.get("canceled");
 
-      if (canceled === 'true') {
-        toast.error('Checkout was canceled');
+      if (canceled === "true") {
+        toast.error("Checkout was canceled");
         // Clean up URL immediately
-        window.history.replaceState({}, '', window.location.pathname);
+        window.history.replaceState({}, "", window.location.pathname);
         return;
       }
 
@@ -132,9 +163,9 @@ const Billing: React.FC = () => {
         try {
           setVerifyingSession(true);
           const { session } = await retrieveCheckoutSession(sessionId);
-          
-          if (session.payment_status === 'paid') {
-            toast.success('Subscription activated successfully! 🎉');
+
+          if (session.payment_status === "paid") {
+            toast.success("Subscription activated successfully! 🎉");
             // Give the webhook a moment to persist subscription, then refetch
             await new Promise((r) => setTimeout(r, 1200));
             try {
@@ -151,15 +182,15 @@ const Billing: React.FC = () => {
               // Non-fatal; user can refresh manually
               // Removed console for production
             }
-          } else if (session.payment_status === 'unpaid') {
-            toast.error('Payment was not completed');
+          } else if (session.payment_status === "unpaid") {
+            toast.error("Payment was not completed");
           }
-          
+
           // Clean up URL immediately
-          window.history.replaceState({}, '', window.location.pathname);
+          window.history.replaceState({}, "", window.location.pathname);
         } catch (error: any) {
           // Removed console for production
-          toast.error('Failed to verify payment status');
+          toast.error("Failed to verify payment status");
         } finally {
           setVerifyingSession(false);
         }
@@ -168,10 +199,10 @@ const Billing: React.FC = () => {
 
     // Load billing data
     loadBillingData();
-    
+
     // Check for checkout session verification only if URL has session_id
     const params = new URLSearchParams(window.location.search);
-    if (params.get('session_id') || params.get('canceled')) {
+    if (params.get("session_id") || params.get("canceled")) {
       verifyCheckoutSession();
     }
   }, []); // Empty dependency array - run only once on mount
@@ -180,19 +211,19 @@ const Billing: React.FC = () => {
     try {
       setCanceling(true);
       setShowCancelModal(false);
-      
+
       const result = await cancelSubscription();
-      
+
       if (result.success) {
-        toast.success(result.message || 'Subscription canceled successfully');
-        
+        toast.success(result.message || "Subscription canceled successfully");
+
         // Refresh billing data
         const updatedSubscription = await getSubscriptionStatus();
         setBillingData(updatedSubscription);
       }
     } catch (err: any) {
       // Removed console for production
-      toast.error(err.message || 'Failed to cancel subscription');
+      toast.error(err.message || "Failed to cancel subscription");
     } finally {
       setCanceling(false);
     }
@@ -202,17 +233,19 @@ const Billing: React.FC = () => {
     try {
       setReactivating(true);
       const result = await reactivateSubscription();
-      
+
       if (result.success) {
-        toast.success(result.message || 'Subscription reactivated successfully');
-        
+        toast.success(
+          result.message || "Subscription reactivated successfully"
+        );
+
         // Refresh billing data
         const updatedSubscription = await getSubscriptionStatus();
         setBillingData(updatedSubscription);
       }
     } catch (err: any) {
       // Removed console for production
-      toast.error(err.message || 'Failed to reactivate subscription');
+      toast.error(err.message || "Failed to reactivate subscription");
     } finally {
       setReactivating(false);
     }
@@ -226,8 +259,12 @@ const Billing: React.FC = () => {
 
       <div className="p-4 sm:p-6 lg:p-8 pt-28 md:pt-32 xl:pt-36">
         <div className="w-full max-w-7xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">Billing Information</h1>
-          <p className="text-white/70 mb-6 sm:mb-10">Manage your subscription and payment details.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8">
+            Billing Information
+          </h1>
+          <p className="text-white/70 mb-6 sm:mb-10">
+            Manage your subscription and payment details.
+          </p>
 
           {/* Cancel Confirmation Modal */}
           <CancelSubscriptionModal
@@ -248,12 +285,15 @@ const Billing: React.FC = () => {
 
           {/* Active Subscription */}
           <div className="rounded-2xl border border-white/10 bg-[#0D131F] p-5 sm:p-6 max-w-2xl">
-            <div className="text-lg font-semibold mb-4">Active Subscription</div>
+            <div className="text-lg font-semibold mb-4">
+              Active Subscription
+            </div>
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mb-4"></div>
-                <div className="text-sm text-white/80">Loading billing information...</div>
-              
+                <div className="text-sm text-white/80">
+                  Loading billing information...
+                </div>
               </div>
             ) : error ? (
               <div className="text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">
@@ -273,16 +313,17 @@ const Billing: React.FC = () => {
                           Subscription Ending Soon
                         </div>
                         <div className="text-blue-200/80 text-sm mb-4 leading-relaxed">
-                          Your subscription will end on{' '}
+                          Your subscription will end on{" "}
                           <span className="font-semibold text-white">
-                            {billingData.current_period_end 
-                              ? new Date(billingData.current_period_end).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
+                            {billingData.current_period_end
+                              ? new Date(
+                                  billingData.current_period_end
+                                ).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
                                 })
-                              : 'the end of your billing period'
-                            }
+                              : "the end of your billing period"}
                           </span>
                           . You'll keep full access until then.
                         </div>
@@ -315,7 +356,9 @@ const Billing: React.FC = () => {
                     </div>
                     <div>
                       <div className="text-sm text-white/80">Current Plan</div>
-                      <div className="text-white/90">{billingData.display_name}</div>
+                      <div className="text-white/90">
+                        {billingData.display_name}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -323,16 +366,19 @@ const Billing: React.FC = () => {
                       <CalendarDays className="w-5 h-5 text-blue-300" />
                     </div>
                     <div>
-                      <div className="text-sm text-white/80">Next Billing Date</div>
+                      <div className="text-sm text-white/80">
+                        Next Billing Date
+                      </div>
                       <div className="text-white/90">
-                        {billingData.current_period_end 
-                          ? new Date(billingData.current_period_end).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric'
+                        {billingData.current_period_end
+                          ? new Date(
+                              billingData.current_period_end
+                            ).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
                             })
-                          : 'N/A'
-                        }
+                          : "N/A"}
                       </div>
                     </div>
                   </div>
@@ -341,8 +387,12 @@ const Billing: React.FC = () => {
                       <DollarSign className="w-5 h-5 text-emerald-300" />
                     </div>
                     <div>
-                      <div className="text-sm text-white/80">Subscription Status</div>
-                      <div className="text-white/90 capitalize">{billingData.status}</div>
+                      <div className="text-sm text-white/80">
+                        Subscription Status
+                      </div>
+                      <div className="text-white/90 capitalize">
+                        {billingData.status}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -355,7 +405,7 @@ const Billing: React.FC = () => {
                   >
                     Change Plan
                   </a>
-                  
+
                   {!billingData.cancel_at_period_end && (
                     <button
                       onClick={() => setShowCancelModal(true)}
@@ -370,8 +420,8 @@ const Billing: React.FC = () => {
             ) : (
               <div className="text-center py-8">
                 <div className="text-white/70 mb-4">No active subscription</div>
-                <a 
-                  href="/dashboard/subscription" 
+                <a
+                  href="/dashboard/subscription"
                   className="inline-flex items-center justify-center rounded-lg bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-medium px-4 py-2 text-sm transition-colors"
                 >
                   Choose a Plan
@@ -382,7 +432,9 @@ const Billing: React.FC = () => {
 
           {/* Past Transactions */}
           <div className="mt-8 sm:mt-10">
-            <div className="text-lg font-semibold mb-4">Transaction History</div>
+            <div className="text-lg font-semibold mb-4">
+              Transaction History
+            </div>
             {loading ? (
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0D131F] p-8">
                 <div className="flex flex-col items-center justify-center py-12">
@@ -404,18 +456,28 @@ const Billing: React.FC = () => {
                     key={transaction.id}
                     className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-3 px-5 py-4 border-t border-white/5"
                   >
-                    <div className="md:col-span-3 text-white/90">{transaction.date}</div>
-                    <div className="md:col-span-4 text-white/90">{transaction.description}</div>
-                    <div className="md:col-span-2 text-white/90 font-medium">{transaction.amount}</div>
+                    <div className="md:col-span-3 text-white/90">
+                      {transaction.date}
+                    </div>
+                    <div className="md:col-span-4 text-white/90">
+                      {transaction.description}
+                    </div>
+                    <div className="md:col-span-2 text-white/90 font-medium">
+                      {transaction.amount}
+                    </div>
                     <div className="md:col-span-3">
-                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                        transaction.status === 'paid' || transaction.status === 'active'
-                          ? 'bg-emerald-600/15 text-emerald-300'
-                          : transaction.status === 'canceled'
-                          ? 'bg-red-600/15 text-red-300'
-                          : 'bg-yellow-600/15 text-yellow-300'
-                      }`}>
-                        {transaction.status === 'paid' || transaction.status === 'active' ? (
+                      <span
+                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                          transaction.status === "paid" ||
+                          transaction.status === "active"
+                            ? "bg-emerald-600/15 text-emerald-300"
+                            : transaction.status === "canceled"
+                            ? "bg-red-600/15 text-red-300"
+                            : "bg-yellow-600/15 text-yellow-300"
+                        }`}
+                      >
+                        {transaction.status === "paid" ||
+                        transaction.status === "active" ? (
                           <>
                             <CheckCircle className="w-3.5 h-3.5" />
                             Paid
@@ -431,8 +493,12 @@ const Billing: React.FC = () => {
             ) : (
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0D131F] p-8">
                 <div className="text-center">
-                  <div className="text-white/70 mb-2">No transactions found</div>
-                  <div className="text-sm text-white/50">Your transaction history will appear here</div>
+                  <div className="text-white/70 mb-2">
+                    No transactions found
+                  </div>
+                  <div className="text-sm text-white/50">
+                    Your transaction history will appear here
+                  </div>
                 </div>
               </div>
             )}
@@ -446,6 +512,3 @@ const Billing: React.FC = () => {
 };
 
 export default Billing;
-
-
-

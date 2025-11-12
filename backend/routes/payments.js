@@ -16,11 +16,11 @@ router.post('/create-checkout-session', async (req, res) => {
     }
     const successUrl = `${getFrontendUrl()}/dashboard/billing`;
     const cancelUrl = `${getFrontendUrl()}/dashboard/billing?canceled=true`;
-    const session = await createCheckoutSession({ 
-      userId, 
-      planId, 
-      interval, 
-      successUrl, 
+    const session = await createCheckoutSession({
+      userId,
+      planId,
+      interval,
+      successUrl,
       cancelUrl,
       isUpgrade: isUpgrade || false
     });

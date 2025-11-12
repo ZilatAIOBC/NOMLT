@@ -59,7 +59,7 @@ function checkCredits(generationType) {
 
       // 4. If insufficient credits, return 402 Payment Required
       if (!creditCheck.hasEnough) {
-        
+
         return res.status(402).json({
           success: false,
           error: 'Insufficient credits',
@@ -75,7 +75,7 @@ function checkCredits(generationType) {
       }
 
       // 5. User has enough credits - attach info to request and continue
-      
+
       // Attach credit information to request for use in route handler
       req.creditInfo = {
         generationType,
@@ -122,7 +122,7 @@ function checkCreditsWithCustomCost(customCost) {
 
       // Check if user has enough
       if (credits.balance < customCost) {
-        
+
         return res.status(402).json({
           success: false,
           error: 'Insufficient credits',

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Crown, ChevronDown, Menu, X } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import CreditDisplay from './CreditDisplay';
-import { authService } from '../../services/authService';
+import React, { useState, useEffect, useRef } from "react";
+import { Crown, ChevronDown, Menu, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import CreditDisplay from "./CreditDisplay";
+import { authService } from "../../services/authService";
 
 interface TopHeaderProps {
   creditRefreshTrigger?: number;
@@ -12,18 +12,18 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [userName, setUserName] = useState('User');
-  const [userInitial, setUserInitial] = useState('U');
+  const [userName, setUserName] = useState("User");
+  const [userInitial, setUserInitial] = useState("U");
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const mobileProfileDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Load user data from localStorage
     try {
-      const storedUser = localStorage.getItem('authUser');
+      const storedUser = localStorage.getItem("authUser");
       if (storedUser) {
         const user = JSON.parse(storedUser);
-        const name = user.name || 'User';
+        const name = user.name || "User";
         setUserName(name);
         setUserInitial(name.charAt(0).toUpperCase());
       }
@@ -58,7 +58,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsProfileOpen(false);
       }
     };
@@ -69,34 +69,39 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
     };
 
     if (isProfileOpen) {
-      document.addEventListener('pointerdown', handlePointerDown, { passive: true });
-      document.addEventListener('keydown', handleKeyDown);
-      window.addEventListener('scroll', handleScroll, { passive: true });
+      document.addEventListener("pointerdown", handlePointerDown, {
+        passive: true,
+      });
+      document.addEventListener("keydown", handleKeyDown);
+      window.addEventListener("scroll", handleScroll, { passive: true });
     }
 
     return () => {
-      document.removeEventListener('pointerdown', handlePointerDown as EventListener);
-      document.removeEventListener('keydown', handleKeyDown as EventListener);
-      window.removeEventListener('scroll', handleScroll as EventListener);
+      document.removeEventListener(
+        "pointerdown",
+        handlePointerDown as EventListener
+      );
+      document.removeEventListener("keydown", handleKeyDown as EventListener);
+      window.removeEventListener("scroll", handleScroll as EventListener);
     };
   }, [isProfileOpen]);
 
   const handleSignOut = async () => {
     try {
       await authService.logout();
-      navigate('/signin');
+      navigate("/signin");
     } catch (error) {
       // Force logout even if there's an error
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('authUser');
-      navigate('/signin');
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("authUser");
+      navigate("/signin");
     }
   };
 
   const handleNavigateToSettings = () => {
     setIsProfileOpen(false);
     setIsMobileMenuOpen(false);
-    navigate('/dashboard/settings');
+    navigate("/dashboard/settings");
   };
 
   return (
@@ -104,18 +109,14 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
       <div className="flex items-center w-full justify-between lg:justify-start">
         {/* Mobile & Tablet: logo left */}
         <Link to="/" className="lg:hidden flex items-center">
-          <img 
-            src="/logo.svg" 
-            alt="NOLMT.AI" 
-            className="h-7"
-          />
+          <img src="/logo.svg" alt="NOLMT.AI" className="h-7" />
         </Link>
 
         {/* Desktop: actions visible and aligned left */}
         <div className="hidden lg:flex items-center gap-3 lg:-translate-x-2">
           <CreditDisplay variant="full" refreshTrigger={creditRefreshTrigger} />
-          <button 
-            onClick={() => navigate('/dashboard/subscription')}
+          <button
+            onClick={() => navigate("/dashboard/subscription")}
             className="px-3 py-1.5 rounded-full bg-purple-900/60 text-white border border-white/10 flex items-center gap-2 text-sm hover:bg-purple-800/60 transition-colors"
           >
             <Crown className="w-4 h-4" />
@@ -129,19 +130,27 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
               aria-expanded={isProfileOpen}
               data-profile-toggle="true"
             >
-              <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">{userInitial}</div>
-              <span className="hidden sm:inline text-sm text-white/90">{userName}</span>
-              <ChevronDown className={`w-4 h-4 text-white/80 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+              <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">
+                {userInitial}
+              </div>
+              <span className="hidden sm:inline text-sm text-white/90">
+                {userName}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-white/80 transition-transform ${
+                  isProfileOpen ? "rotate-180" : ""
+                }`}
+              />
             </button>
             {isProfileOpen && (
               <div className="absolute left-0 mt-2 w-40 rounded-lg bg-[#121212] border border-white/10 shadow-xl overflow-hidden z-10">
-                <button 
+                <button
                   onClick={handleNavigateToSettings}
                   className="w-full text-left block px-4 py-2 text-sm text-white/90 hover:bg-white/5 transition-colors"
                 >
                   Account Settings
                 </button>
-                <button 
+                <button
                   onClick={handleSignOut}
                   className="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                 >
@@ -158,7 +167,11 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
           onClick={() => setIsMobileMenuOpen((v) => !v)}
           aria-label="Toggle header menu"
         >
-          {isMobileMenuOpen ? <X className="w-5 h-5 text-white/90" /> : <Menu className="w-5 h-5 text-white/90" />}
+          {isMobileMenuOpen ? (
+            <X className="w-5 h-5 text-white/90" />
+          ) : (
+            <Menu className="w-5 h-5 text-white/90" />
+          )}
         </button>
       </div>
 
@@ -178,7 +191,9 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
               // Ignore clicks on the toggle button
               if (
                 target instanceof Element &&
-                (target.closest('[data-profile-toggle="true"]') as Element | null)
+                (target.closest(
+                  '[data-profile-toggle="true"]'
+                ) as Element | null)
               ) {
                 return;
               }
@@ -191,12 +206,15 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
             }}
           >
             <div className="w-full flex justify-center">
-              <CreditDisplay variant="full" refreshTrigger={creditRefreshTrigger} />
+              <CreditDisplay
+                variant="full"
+                refreshTrigger={creditRefreshTrigger}
+              />
             </div>
-            <button 
+            <button
               onClick={() => {
                 setIsMobileMenuOpen(false);
-                navigate('/dashboard/subscription');
+                navigate("/dashboard/subscription");
               }}
               className="w-full justify-center px-3 py-2 rounded-md bg-purple-900/60 text-white border border-white/10 flex items-center gap-2 text-sm hover:bg-purple-800/60 transition-colors"
             >
@@ -212,20 +230,26 @@ const TopHeader: React.FC<TopHeaderProps> = ({ creditRefreshTrigger = 0 }) => {
                 data-profile-toggle="true"
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">{userInitial}</div>
+                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-sm font-semibold">
+                    {userInitial}
+                  </div>
                   <span className="text-sm text-white/90">{userName}</span>
                 </div>
-                <ChevronDown className={`w-4 h-4 text-white/80 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-4 h-4 text-white/80 transition-transform ${
+                    isProfileOpen ? "rotate-180" : ""
+                  }`}
+                />
               </button>
               {isProfileOpen && (
                 <div className="mt-2 w-full rounded-lg bg-[#121212] border border-white/10 shadow-xl overflow-hidden">
-                  <button 
+                  <button
                     onClick={handleNavigateToSettings}
                     className="w-full text-left block px-4 py-2 text-sm text-white/90 hover:bg-white/5 transition-colors"
                   >
                     Account Settings
                   </button>
-                  <button 
+                  <button
                     onClick={handleSignOut}
                     className="w-full text-left block px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                   >

@@ -1,9 +1,9 @@
-import React from 'react';
-import TopHeader from '../../components/dashboard/TopHeader';
-import HeaderBar from '../../components/dashboard/HeaderBar';
-import PurchaseSubscriptions from '../../components/dashboard/PurchaseSubscriptions';
-import ComparePlans from '../../components/dashboard/ComparePlans';
-import FAQAccordion from '../../components/dashboard/FAQAccordion';
+import React from "react";
+import TopHeader from "../../components/dashboard/TopHeader";
+import HeaderBar from "../../components/dashboard/HeaderBar";
+import PurchaseSubscriptions from "../../components/dashboard/PurchaseSubscriptions";
+import ComparePlans from "../../components/dashboard/ComparePlans";
+import FAQAccordion from "../../components/dashboard/FAQAccordion";
 
 const ManageSubscription: React.FC = () => {
   return (
@@ -24,5 +24,3 @@ const ManageSubscription: React.FC = () => {
 };
 
 export default ManageSubscription;
-
-

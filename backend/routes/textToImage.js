@@ -19,9 +19,9 @@ router.post("/", auth, checkCredits('text_to_image'), async (req, res) => {
     const startedAt = Date.now();
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
     const requestSizeBytes = Buffer.byteLength(JSON.stringify(req.body || {}), "utf8");
-    
+
     const data = await createTextToImageJob(req.body || {});
-    
+
     const processingTimeMs = Date.now() - startedAt;
     // Fire-and-forget insert into api_usage; do not block response
     const client = supabaseAdmin || supabase;
@@ -35,10 +35,10 @@ router.post("/", auth, checkCredits('text_to_image'), async (req, res) => {
           request_size_bytes: requestSizeBytes,
           processing_time_ms: processingTimeMs
         })
-        .then(() => {})
-        .catch(() => {});
+        .then(() => { })
+        .catch(() => { });
     }
-    
+
     res.status(200).json(data);
   } catch (e) {
     res.status(500).json({ error: e.message || "Failed to create job" });
@@ -50,7 +50,7 @@ router.get("/result", auth, async (req, res) => {
   try {
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
     const { url, maxAttempts, intervalMs } = req.query;
-    
+
     if (!url) {
       return res.status(400).json({ error: "Missing url query parameter" });
     }
@@ -67,7 +67,7 @@ router.get("/result", auth, async (req, res) => {
 
     // Check if generation is complete and has image URL
     const externalImageUrl = result.data.output || (result.data.outputs && result.data.outputs[0]);
-    
+
     if (!externalImageUrl) {
       // Still processing or no output yet, return the original response
       return res.status(200).json(result);
@@ -108,20 +108,20 @@ router.get("/result", auth, async (req, res) => {
     // Step 4: Deduct credits with generation ID (enables idempotency)
     const creditCost = req.creditInfo?.cost || 30; // Default to 30 if not set
     let creditResult = null;
-    
+
     try {
       creditResult = await deductCredits(
-        userId, 
-        creditCost, 
-        'text_to_image', 
+        userId,
+        creditCost,
+        'text_to_image',
         generation.id // Use generation ID for idempotency
       );
-      
+
       // Update generation record with credits_used
       const client = supabaseAdmin || supabase;
       await client
         .from('generations')
-        .update({ 
+        .update({
           credits_used: creditCost,
           status: 'completed',
           completed_at: new Date().toISOString()
@@ -134,8 +134,8 @@ router.get("/result", auth, async (req, res) => {
         creditsUsed: creditCost,
         status: 'completed',
         createdAt: generation.created_at
-      }).catch(() => {});
-        
+      }).catch(() => { });
+
     } catch (creditError) {
       // Mark generation as completed even if credit deduction fails
       try {
@@ -175,16 +175,16 @@ router.get("/result", auth, async (req, res) => {
     });
 
   } catch (e) {
-    
+
     // If we have a generation ID and credits were deducted, try to refund
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
     const creditCost = req.creditInfo?.cost || 30;
-    
+
     // Check if generation was created (would need to be tracked in scope)
     // For now, we'll log the error and let manual admin intervention handle refunds if needed
     // In a production system, you might want to track generation IDs more carefully
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: e.message || "Failed to get result",
       message: "Generation failed. If credits were deducted, they will be automatically refunded."
     });

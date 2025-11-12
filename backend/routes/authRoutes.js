@@ -21,7 +21,7 @@ router.post(
   ],
   async (req, res) => {
     try {
-      
+
       // Validate input
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -50,7 +50,7 @@ router.post(
         message: "Registration successful. Please check your email to verify your account.",
         userId: data.user?.id
       });
-  } catch (err) {
+    } catch (err) {
       if (err?.name === 'ValidationError' && err?.errors) {
         const errors = Object.keys(err.errors).map((key) => ({
           msg: err.errors[key]?.message || 'Invalid value',
@@ -97,30 +97,30 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: error.message });
     }
     const session = data.session;
-    
-        // Fetch user role from profiles table using service role to bypass RLS
-        let userRole = "user"; // default role
-        try {
-          
-          // Use service role to bypass RLS policies
-          const { supabaseAdmin } = require("../utils/supabase");
-          const serviceSupabase = supabaseAdmin || supabase;
-          
-          const { data: profile, error: profileError } = await serviceSupabase
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user?.id)
-            .single();
 
-          
-          if (!profileError && profile) {
-            userRole = profile.role || "user";
-          } else {
-          }
-        } catch (profileErr) {
-        }
-    
-    return res.status(200).json({ 
+    // Fetch user role from profiles table using service role to bypass RLS
+    let userRole = "user"; // default role
+    try {
+
+      // Use service role to bypass RLS policies
+      const { supabaseAdmin } = require("../utils/supabase");
+      const serviceSupabase = supabaseAdmin || supabase;
+
+      const { data: profile, error: profileError } = await serviceSupabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user?.id)
+        .single();
+
+
+      if (!profileError && profile) {
+        userRole = profile.role || "user";
+      } else {
+      }
+    } catch (profileErr) {
+    }
+
+    return res.status(200).json({
       accessToken: session?.access_token,
       refreshToken: session?.refresh_token,
       user: {
@@ -138,11 +138,11 @@ router.post("/login", async (req, res) => {
 // Refresh token route using Supabase
 router.post("/refresh-token", async (req, res) => {
   const { refreshToken } = req.body;
-  
+
   if (!refreshToken) {
     return res.status(401).json({ message: "Refresh token required" });
   }
-  
+
   try {
     const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
     if (error) {
@@ -242,7 +242,7 @@ router.post(
 router.post("/change-password", auth, [
   check("currentPassword", "Current password is required").not().isEmpty(),
   check(
-    "newPassword", 
+    "newPassword",
     "New password must be at least 8 characters with uppercase, lowercase, and number"
   )
     .isLength({ min: 8 })
@@ -254,10 +254,10 @@ router.post("/change-password", auth, [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
+
     const { currentPassword, newPassword, refreshToken } = req.body;
     const userEmail = req.user.email;
-    
+
     if (!userEmail) {
       return res.status(400).json({ message: "User email not found" });
     }
@@ -309,7 +309,7 @@ router.post("/change-password", auth, [
     if (updateError) {
       return res.status(400).json({ message: updateError.message });
     }
-    
+
     res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -327,20 +327,20 @@ router.put("/update-profile", auth, [
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    
+
     const { name, email } = req.body;
     const userId = req.user._id;
     const currentEmail = req.user.email;
-    
+
     // Check if email is being changed
     if (email !== currentEmail) {
       // Check if new email already exists in Supabase
       const { data: existingUser, error: checkError } = await supabase.auth.admin.getUserByEmail(email);
-      
+
       if (checkError && checkError.message !== "User not found") {
         return res.status(500).json({ message: "Server error while checking email" });
       }
-      
+
       if (existingUser && existingUser.user && existingUser.user.id !== userId) {
         return res.status(400).json({ message: "Email already exists" });
       }
@@ -374,7 +374,7 @@ router.put("/update-profile", auth, [
 
     // Prepare update data
     const updateData = { data: { name } };
-    
+
     // Only update email if it's different
     if (email !== currentEmail) {
       updateData.email = email;
@@ -392,7 +392,7 @@ router.put("/update-profile", auth, [
       const serviceSupabase = require("../utils/supabase").supabaseAdmin || supabase;
       const { error: profileError } = await serviceSupabase
         .from('profiles')
-        .update({ 
+        .update({
           name: name,
           ...(email !== currentEmail && { email: email })
         })
@@ -404,7 +404,7 @@ router.put("/update-profile", auth, [
     } catch (profileErr) {
     }
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: "Profile updated successfully",
       user: {
         id: userId,
@@ -424,7 +424,7 @@ router.post("/logout", auth, async (req, res) => {
     // In a production system, you should implement token blacklisting
     // For example, using Redis:
     // await redisClient.set(`blacklist:${req.token}`, 'true', 'EX', TOKEN_EXPIRY_TIME);
-    
+
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -443,8 +443,8 @@ router.post("/admin/logout", auth, requireAdmin, async (req, res) => {
 
 // Validate token route
 router.post("/validate-token", auth, (req, res) => {
-  res.status(200).json({ 
-    valid: true, 
+  res.status(200).json({
+    valid: true,
     user: {
       id: req.user._id,
       name: req.user.name,
@@ -459,27 +459,27 @@ router.post("/validate-token", auth, (req, res) => {
 // Google OAuth via Supabase - start flow
 router.get('/oauth/google', async (req, res) => {
   try {
-    
+
     if (!process.env.FRONTEND_URL) {
-      return res.status(500).json({ 
+      return res.status(500).json({
         message: 'Server configuration error: FRONTEND_URL not set',
         hint: 'Please set FRONTEND_URL in your .env file'
       });
     }
-    
+
     const redirectTo = `${process.env.FRONTEND_URL.replace(/\/$/, '')}/auth/callback`;
-    
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo
       }
     });
-    
+
     if (error) {
       return res.status(400).json({ message: error.message });
     }
-    
+
     return res.redirect(data.url);
   } catch (e) {
     res.status(500).json({ message: 'Server error', error: e.message });

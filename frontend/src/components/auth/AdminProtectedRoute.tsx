@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import React, { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 interface User {
   id: string;
@@ -9,7 +9,9 @@ interface User {
   role: string;
 }
 
-const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
@@ -17,8 +19,8 @@ const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuth = () => {
       try {
-        const authUser = localStorage.getItem('authUser');
-        const accessToken = localStorage.getItem('accessToken');
+        const authUser = localStorage.getItem("authUser");
+        const accessToken = localStorage.getItem("accessToken");
 
         if (!authUser || !accessToken) {
           setLoading(false);
@@ -46,12 +48,12 @@ const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   if (!user) {
-    toast.error('Please sign in to access this page');
+    toast.error("Please sign in to access this page");
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
-  if (user.role !== 'admin') {
-    toast.error('Admin access required');
+  if (user.role !== "admin") {
+    toast.error("Admin access required");
     return <Navigate to="/dashboard" replace />;
   }
 
