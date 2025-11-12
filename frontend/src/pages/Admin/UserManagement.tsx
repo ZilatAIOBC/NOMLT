@@ -5,7 +5,7 @@ import {
   getUsers,
   updateUserRole,
   updateUserStatus,
-  updateUserCredits,
+  manuallyAdjustUserCredits,
 } from "../../services/adminUsersService";
 import toast from "react-hot-toast";
 import ChangeCreditsModal from "../../components/admin/modals/ChangeCreditsModal";
@@ -121,10 +121,17 @@ export default function UserManagement() {
   // submit credits change
   const handleChangeCreditsSubmit = async (
     userId: string,
-    creditsDelta: number
+    creditsDelta: number,
+    adjustType: "earned" | "purchased" | "bonus" | "refund",
+    description?: string
   ) => {
     try {
-      await updateUserCredits(userId, creditsDelta);
+      await manuallyAdjustUserCredits(
+        userId,
+        creditsDelta,
+        adjustType,
+        description
+      );
       toast.success("Credits added successfully");
       await fetchUsers();
     } catch (error: any) {
@@ -385,7 +392,7 @@ export default function UserManagement() {
                                   onClick={() => openChangeCredits(user)}
                                   className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
                                 >
-                                  Change Credits
+                                  Add Credits
                                 </button>
                               </>
                             )}

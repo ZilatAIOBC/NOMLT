@@ -8,7 +8,12 @@ interface ChangeCreditsModalProps {
   open: boolean;
   user: (MinimalUser & { credits?: number }) | null;
   onClose: () => void;
-  onSubmit: (userId: string, creditsDelta: number) => Promise<void> | void;
+  onSubmit: (
+    userId: string,
+    creditsDelta: number,
+    type: "earned" | "purchased" | "bonus" | "refund",
+    description?: string
+  ) => Promise<void> | void;
   step?: number;
   maxCredits?: number;
 }
@@ -22,6 +27,10 @@ export default function ChangeCreditsModal({
   maxCredits,
 }: ChangeCreditsModalProps) {
   const [creditsInput, setCreditsInput] = useState<string>("");
+  const [adjustType, setAdjustType] = useState<
+    "earned" | "purchased" | "bonus" | "refund"
+  >("bonus");
+  const [description, setDescription] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
   // Refs/effects – always called
@@ -39,6 +48,8 @@ export default function ChangeCreditsModal({
   useEffect(() => {
     if (open) {
       setCreditsInput("");
+      setAdjustType("bonus");
+      setDescription("");
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   }, [open]);
@@ -91,10 +102,15 @@ export default function ChangeCreditsModal({
 
   const onFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || !user) return;
     try {
       setSubmitting(true);
-      await onSubmit(user.id, parsed);
+      await onSubmit(
+        user.id,
+        parsed,
+        adjustType,
+        description.trim() || undefined
+      );
       onClose();
     } finally {
       setSubmitting(false);
@@ -238,6 +254,46 @@ export default function ChangeCreditsModal({
                 You can add up to {maxCredits.toLocaleString()} credits at once.
               </div>
             )}
+
+            {/* Type dropdown */}
+            <div className="mt-5">
+              <label className="block text-sm text-gray-300 mb-2">Type</label>
+              <select
+                value={adjustType}
+                onChange={(e) =>
+                  setAdjustType(
+                    e.target.value as
+                      | "earned"
+                      | "purchased"
+                      | "bonus"
+                      | "refund"
+                  )
+                }
+                className="w-full px-3 py-2 rounded-lg bg-[#0F0F0F] border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/60"
+              >
+                <option value="bonus">Bonus</option>
+                <option value="earned">Earned</option>
+                <option value="purchased">Purchased</option>
+                <option value="refund">Refund</option>
+              </select>
+              <p className="text-[11px] text-gray-500 mt-1">
+                This is recorded on the credit transaction for auditing.
+              </p>
+            </div>
+
+            {/* Description textarea */}
+            <div className="mt-4">
+              <label className="block text-sm text-gray-300 mb-2">
+                Description <span className="text-gray-500">(optional)</span>
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                placeholder="Reason for manual adjustment (visible in logs)"
+                className="w-full px-3 py-2 rounded-lg bg-[#0F0F0F] border border-white/10 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/60 resize-y"
+              />
+            </div>
           </div>
 
           {/* Footer */}
