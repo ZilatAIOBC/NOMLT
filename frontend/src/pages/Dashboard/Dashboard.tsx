@@ -15,6 +15,7 @@ import GenerationTools from "../../components/dashboard/GenerationTools";
 import TopHeader from "../../components/dashboard/TopHeader";
 import HeaderBar from "../../components/dashboard/HeaderBar";
 import ExploreGrid from "../../components/dashboard/ExploreGrid";
+import Uncensored from "./UncensoredMode";
 
 const Dashboard: React.FC = () => {
   return (
@@ -48,6 +49,7 @@ const Dashboard: React.FC = () => {
         <Route path="/text-to-video" element={<TextToVideo />} />
         <Route path="/image-to-video" element={<ImageToVideo />} />
         <Route path="/view-generations" element={<ViewGenerations />} />
+        <Route path="/uncensored" element={<Uncensored />} />
         <Route path="/subscription" element={<ManageSubscription />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/credits" element={<Credits />} />
