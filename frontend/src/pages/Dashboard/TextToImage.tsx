@@ -14,6 +14,7 @@ import {
 import { fetchUsageSummary } from "../../services/usageService";
 import { useCreditCost } from "../../hooks/useCreditCost";
 import { getCreditBalance } from "../../services/creditsService";
+import CensoredModeModal from "../../components/dashboard/uncensored/CensoredModeModal";
 
 const TextToImage: React.FC = () => {
   const navigate = useNavigate();
@@ -43,6 +44,19 @@ const TextToImage: React.FC = () => {
   const [generationProgress, setGenerationProgress] = useState("");
   const [width, setWidth] = useState<number>(2227);
   const [height, setHeight] = useState<number>(3183);
+  const [censoredModal, setCensoredModal] = useState<{
+    isOpen: boolean;
+    nsfwWord: string | null;
+    planName: string | null;
+    reason: string | null;
+    unfilteredModeUrl: string;
+  }>({
+    isOpen: false,
+    nsfwWord: null,
+    planName: null,
+    reason: null,
+    unfilteredModeUrl: "/dashboard/uncensored",
+  });
 
   // Credit system states
   const [creditRefreshTrigger, setCreditRefreshTrigger] = useState(0);
@@ -128,12 +142,16 @@ const TextToImage: React.FC = () => {
         throw new Error("No image URL found in result outputs");
       }
     } catch (error: any) {
+      // Support both fetch-style (status/data) and axios-style (response.status/response.data)
+      const respStatus = error?.status ?? error?.response?.status;
+      const respData = error?.data ?? error?.response?.data;
+
       // Handle insufficient credits error (402)
       if (
-        error.response?.status === 402 ||
+        respStatus === 402 ||
         error.message?.includes("Insufficient credits")
       ) {
-        const errorData = error.response?.data;
+        const errorData = respData;
         setInsufficientCreditsModal({
           isOpen: true,
           required: errorData?.details?.required || CREDIT_COST,
@@ -141,6 +159,21 @@ const TextToImage: React.FC = () => {
           shortfall: errorData?.details?.shortfall || CREDIT_COST,
         });
         setError("");
+      }
+      // Handle censored-mode / NSFW error (403 from backend)
+      else if (
+        respStatus === 403 &&
+        respData?.error === "CENSORED_MODE_BLOCKED"
+      ) {
+        const data = respData;
+        setCensoredModal({
+          isOpen: true,
+          nsfwWord: data.nsfwWord || null,
+          planName: data.planName || null,
+          reason: data.reason || null,
+          unfilteredModeUrl: data.unfilteredModeUrl || "/dashboard/uncensored",
+        });
+        setError(""); // clear generic error; modal explains it
       } else {
         setError(
           error instanceof Error ? error.message : "Failed to generate image"
@@ -489,6 +522,21 @@ const TextToImage: React.FC = () => {
         current={insufficientCreditsModal.current}
         shortfall={insufficientCreditsModal.shortfall}
         generationType="text_to_image"
+      />
+
+      {/* Censored / NSFW Modal */}
+      <CensoredModeModal
+        isOpen={censoredModal.isOpen}
+        onClose={() =>
+          setCensoredModal((prev) => ({
+            ...prev,
+            isOpen: false,
+          }))
+        }
+        nsfwWord={censoredModal.nsfwWord}
+        planName={censoredModal.planName}
+        reason={censoredModal.reason}
+        unfilteredModeUrl={censoredModal.unfilteredModeUrl}
       />
     </div>
   );

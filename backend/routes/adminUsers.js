@@ -25,7 +25,7 @@ router.get('/', auth, requireAdmin, async (req, res) => {
       });
     }
 
-    // Build the query - fetch profiles without credits join for now
+    // Build the query - fetch profiles
     let query = supabaseAdmin
       .from('profiles')
       .select('*', { count: 'exact' });
@@ -62,55 +62,87 @@ router.get('/', auth, requireAdmin, async (req, res) => {
     }
 
     // Format the user data
-    const formattedUsers = await Promise.all(users.map(async (user) => {
-      // Try to fetch credits separately
-      let userCredits = 0;
-      try {
-        const { data: creditsData } = await supabaseAdmin
-          .from('user_credits')
-          .select('balance')
-          .eq('user_id', user.id)
-          .single();
-        userCredits = creditsData?.balance || 0;
-      } catch (err) {
-        // If credits don't exist, default to 0
-        userCredits = 0;
-      }
-
-      // Try to fetch subscription plan
-      let userPlan = 'Free';
-      try {
-        const { data: subscriptionData } = await supabaseAdmin
-          .from('subscriptions')
-          .select('plans:plan_id(name, display_name)')
-          .eq('user_id', user.id)
-          .eq('status', 'active')
-          .order('updated_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (subscriptionData && subscriptionData.plans) {
-          userPlan = subscriptionData.plans.display_name || subscriptionData.plans.name || 'Free';
+    const formattedUsers = await Promise.all(
+      users.map(async (user) => {
+        // 1) Credits
+        let userCredits = 0;
+        try {
+          const { data: creditsData } = await supabaseAdmin
+            .from('user_credits')
+            .select('balance')
+            .eq('user_id', user.id)
+            .single();
+          userCredits = creditsData?.balance || 0;
+        } catch (err) {
+          userCredits = 0;
         }
-      } catch (err) {
-        // If subscription doesn't exist, default to 'Free'
-        userPlan = 'Free';
-      }
 
-      return {
-        id: user.id,
-        name: user.name || user.full_name || user.display_name || 'Unknown User',
-        email: user.email,
-        role: user.role || 'user',
-        status: user.status || 'active',
-        plan: (user.role === 'admin') ? 'Admin' : userPlan,
-        credits: userCredits,
-        joinDate: user.created_at,
-        lastLogin: user.last_login || null,
-        profilePicture: user.avatar_url || null,
-        verified: user.email_verified || false
-      };
-    }));
+        // 2) Subscription + censored_enabled
+        let userPlan = 'Free';
+        let censoredEnabled = true; // default to censored ON
+
+        try {
+          const { data: subscriptionData } = await supabaseAdmin
+            .from('subscriptions')
+            .select(`
+              censored_enabled,
+              plans:plan_id (
+                name,
+                display_name
+              )
+            `)
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (subscriptionData && subscriptionData.plans) {
+            userPlan =
+              subscriptionData.plans.display_name ||
+              subscriptionData.plans.name ||
+              'Free';
+          } else {
+            userPlan = 'Free';
+          }
+
+          // If DB column explicitly set, use that
+          if (typeof subscriptionData?.censored_enabled === 'boolean') {
+            censoredEnabled = subscriptionData.censored_enabled;
+          } else {
+            // fallback rule: Pro plan is uncensored by default
+            const planName = (userPlan || '').toLowerCase();
+            if (planName.includes('pro')) {
+              censoredEnabled = false;
+            }
+          }
+        } catch (err) {
+          // If subscription doesn't exist, default to Free + censored on
+          userPlan = 'Free';
+          censoredEnabled = true;
+        }
+
+        return {
+          id: user.id,
+          name:
+            user.name ||
+            user.full_name ||
+            user.display_name ||
+            'Unknown User',
+          email: user.email,
+          role: user.role || 'user',
+          status: user.status || 'active',
+          plan: user.role === 'admin' ? 'Admin' : userPlan,
+          credits: userCredits,
+          joinDate: user.created_at,
+          lastLogin: user.last_login || null,
+          profilePicture: user.avatar_url || null,
+          verified: user.email_verified || false,
+          // 🔹 expose this to frontend:
+          censoredEnabled
+        };
+      })
+    );
 
     res.json({
       success: true,
@@ -124,7 +156,6 @@ router.get('/', auth, requireAdmin, async (req, res) => {
         }
       }
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,

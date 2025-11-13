@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import ChangeCreditsModal from "../../components/admin/modals/ChangeCreditsModal";
 import ChangePlanModal from "../../components/admin/modals/ChangePlanModal";
 import { adminChangePlan } from "../../services/adminBillingService";
+import { adminChangeCensoredMode } from "../../services/adminCensoredModeService"; // 🔹 NEW
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -24,19 +25,24 @@ export default function UserManagement() {
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  //state for credits modal
+  // state for credits modal
   const [creditsModalOpen, setCreditsModalOpen] = useState(false);
   const [creditsUser, setCreditsUser] = useState<Pick<
     User,
     "id" | "name" | "email" | "credits"
   > | null>(null);
 
-  //  state for change-plan modal
+  // state for change-plan modal
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [planUser, setPlanUser] = useState<Pick<
     User,
     "id" | "name" | "email" | "plan"
   > | null>(null);
+
+  // 🔹 NEW: track which user’s censored mode is being updated
+  const [censoredModeLoadingUserId, setCensoredModeLoadingUserId] = useState<
+    string | null
+  >(null);
 
   // Fetch users from API
   const fetchUsers = async () => {
@@ -177,6 +183,44 @@ export default function UserManagement() {
     }
   };
 
+  // 🔹 NEW: toggle censored/uncensored mode for a user
+  const handleToggleCensoredMode = async (user: User) => {
+    // IMPORTANT:
+    // Assume backend exposes a boolean "censoredEnabled" on User
+    //  - true  => filtered / censored mode ON
+    //  - false => uncensored mode (Unfiltered Mode) ON
+    const isCurrentlyCensored =
+      (user as any).censoredEnabled !== undefined
+        ? (user as any).censoredEnabled
+        : true; // default to censored if missing
+
+    const nextCensored = !isCurrentlyCensored;
+
+    try {
+      setCensoredModeLoadingUserId(user.id);
+
+      const res = await adminChangeCensoredMode({
+        userId: user.id,
+        censoredEnabled: nextCensored,
+      });
+
+      toast.success(
+        res?.message ||
+          (nextCensored
+            ? "Censored Mode enabled for this user"
+            : "Uncensored Mode enabled for this user")
+      );
+
+      await fetchUsers();
+      setActionMenuOpen(null);
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to update censored mode");
+      throw error;
+    } finally {
+      setCensoredModeLoadingUserId(null);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
@@ -285,172 +329,200 @@ export default function UserManagement() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="border-b border-white/10 hover:bg-white/5"
-                  >
-                    <td className="px-3 md:px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {user.profilePicture ? (
-                          <img
-                            src={user.profilePicture}
-                            alt={user.name}
-                            className="w-6 h-6 md:w-8 md:h-8 rounded-full"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-xs md:text-sm font-medium">
-                            {user.name.charAt(0).toUpperCase()}
+                {users.map((user) => {
+                  const isCensored =
+                    (user as any).censoredEnabled !== undefined
+                      ? (user as any).censoredEnabled
+                      : true; // default to censored
+                  const isCensoredLoading =
+                    censoredModeLoadingUserId === user.id;
+
+                  return (
+                    <tr
+                      key={user.id}
+                      className="border-b border-white/10 hover:bg-white/5"
+                    >
+                      <td className="px-3 md:px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {user.profilePicture ? (
+                            <img
+                              src={user.profilePicture}
+                              alt={user.name}
+                              className="w-6 h-6 md:w-8 md:h-8 rounded-full"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-xs md:text-sm font-medium">
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="text-white font-medium text-sm md:text-base truncate">
+                            {user.name}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 md:px-6 py-4 text-gray-400 text-sm md:text-base truncate">
+                        {user.email}
+                      </td>
+                      <td className="px-3 md:px-6 py-4">
+                        <span
+                          className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(
+                            user.role
+                          )}`}
+                        >
+                          {capitalizeFirst(user.role)}
+                        </span>
+                      </td>
+                      <td className="px-3 md:px-6 py-4">
+                        <span
+                          className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            user.status
+                          )}`}
+                        >
+                          {capitalizeFirst(user.status)}
+                        </span>
+                      </td>
+                      <td className="px-3 md:px-6 py-4">
+                        <span
+                          className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getPlanColor(
+                            user.plan
+                          )}`}
+                        >
+                          {capitalizeFirst(user.plan)}
+                        </span>
+                      </td>
+                      <td className="px-3 md:px-6 py-4 text-white text-sm md:text-base">
+                        {user.credits.toLocaleString()}
+                      </td>
+                      <td className="px-3 md:px-6 py-4 text-gray-400 text-sm md:text-base">
+                        {formatDate(user.joinDate)}
+                      </td>
+                      <td className="px-3 md:px-6 py-4 relative">
+                        <button
+                          onClick={() =>
+                            setActionMenuOpen(
+                              actionMenuOpen === user.id ? null : user.id
+                            )
+                          }
+                          className="p-2 hover:bg-white/10 rounded text-gray-400 hover:text-white"
+                          title="More"
+                        >
+                          <MoreVertical size={16} />
+                        </button>
+                        {actionMenuOpen === user.id && (
+                          <div
+                            ref={menuRef}
+                            className="absolute right-0 w-48 bg-[#1A1A1A] border border-white/10 rounded-lg shadow-lg z-50"
+                            style={{
+                              bottom:
+                                users.indexOf(user) >= users.length - 2
+                                  ? "100%"
+                                  : "auto",
+                              top:
+                                users.indexOf(user) >= users.length - 2
+                                  ? "auto"
+                                  : "100%",
+                              marginTop:
+                                users.indexOf(user) >= users.length - 2
+                                  ? "auto"
+                                  : "8px",
+                              marginBottom:
+                                users.indexOf(user) >= users.length - 2
+                                  ? "8px"
+                                  : "auto",
+                            }}
+                          >
+                            <div className="py-1">
+                              {user.role === "user" && (
+                                <button
+                                  onClick={() =>
+                                    handleRoleUpdate(user.id, "admin")
+                                  }
+                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
+                                >
+                                  Make Admin
+                                </button>
+                              )}
+                              {user.role === "admin" && (
+                                <button
+                                  onClick={() =>
+                                    handleRoleUpdate(user.id, "user")
+                                  }
+                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
+                                >
+                                  Remove Admin
+                                </button>
+                              )}
+                              {user.status === "active" && (
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(user.id, "suspended")
+                                  }
+                                  className="w-full text-left px-4 py-2 text-sm text-orange-400 hover:bg-white/5"
+                                >
+                                  Suspend User
+                                </button>
+                              )}
+                              {user.status === "suspended" && (
+                                <button
+                                  onClick={() =>
+                                    handleStatusUpdate(user.id, "active")
+                                  }
+                                  className="w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-white/5"
+                                >
+                                  Activate User
+                                </button>
+                              )}
+
+                              {/* Change Credits button for non-Free plans */}
+                              {user.plan.toLowerCase() !== "free" && (
+                                <>
+                                  <div className="my-1 border-t border-white/10" />
+                                  <button
+                                    onClick={() => openChangeCredits(user)}
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
+                                  >
+                                    Add Credits
+                                  </button>
+                                </>
+                              )}
+
+                              {user.plan.toLowerCase() !== "free" && (
+                                <>
+                                  <div className="my-1 border-t border-white/10" />
+                                  <button
+                                    onClick={() => openChangePlan(user)}
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
+                                  >
+                                    Change Plan
+                                  </button>
+                                </>
+                              )}
+
+                              {/* 🔹 NEW divider + Uncensored toggle button */}
+                              <div className="my-1 border-t border-white/10" />
+                              <button
+                                onClick={() => handleToggleCensoredMode(user)}
+                                disabled={isCensoredLoading}
+                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {isCensoredLoading ? (
+                                  <span className="flex items-center gap-2">
+                                    <span className="w-3 h-3 border-2 border-white/40 border-t-transparent rounded-full animate-spin" />
+                                    Updating…
+                                  </span>
+                                ) : isCensored ? (
+                                  "Enable Uncensored Mode"
+                                ) : (
+                                  "Disable Uncensored Mode"
+                                )}
+                              </button>
+                            </div>
                           </div>
                         )}
-                        <div className="text-white font-medium text-sm md:text-base truncate">
-                          {user.name}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-3 md:px-6 py-4 text-gray-400 text-sm md:text-base truncate">
-                      {user.email}
-                    </td>
-                    <td className="px-3 md:px-6 py-4">
-                      <span
-                        className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(
-                          user.role
-                        )}`}
-                      >
-                        {capitalizeFirst(user.role)}
-                      </span>
-                    </td>
-                    <td className="px-3 md:px-6 py-4">
-                      <span
-                        className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                          user.status
-                        )}`}
-                      >
-                        {capitalizeFirst(user.status)}
-                      </span>
-                    </td>
-                    <td className="px-3 md:px-6 py-4">
-                      <span
-                        className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${getPlanColor(
-                          user.plan
-                        )}`}
-                      >
-                        {capitalizeFirst(user.plan)}
-                      </span>
-                    </td>
-                    <td className="px-3 md:px-6 py-4 text-white text-sm md:text-base">
-                      {user.credits.toLocaleString()}
-                    </td>
-                    <td className="px-3 md:px-6 py-4 text-gray-400 text-sm md:text-base">
-                      {formatDate(user.joinDate)}
-                    </td>
-                    <td className="px-3 md:px-6 py-4 relative">
-                      <button
-                        onClick={() =>
-                          setActionMenuOpen(
-                            actionMenuOpen === user.id ? null : user.id
-                          )
-                        }
-                        className="p-2 hover:bg-white/10 rounded text-gray-400 hover:text-white"
-                        title="More"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      {actionMenuOpen === user.id && (
-                        <div
-                          ref={menuRef}
-                          className="absolute right-0 w-48 bg-[#1A1A1A] border border-white/10 rounded-lg shadow-lg z-50"
-                          style={{
-                            bottom:
-                              users.indexOf(user) >= users.length - 2
-                                ? "100%"
-                                : "auto",
-                            top:
-                              users.indexOf(user) >= users.length - 2
-                                ? "auto"
-                                : "100%",
-                            marginTop:
-                              users.indexOf(user) >= users.length - 2
-                                ? "auto"
-                                : "8px",
-                            marginBottom:
-                              users.indexOf(user) >= users.length - 2
-                                ? "8px"
-                                : "auto",
-                          }}
-                        >
-                          <div className="py-1">
-                            {user.role === "user" && (
-                              <button
-                                onClick={() =>
-                                  handleRoleUpdate(user.id, "admin")
-                                }
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
-                              >
-                                Make Admin
-                              </button>
-                            )}
-                            {user.role === "admin" && (
-                              <button
-                                onClick={() =>
-                                  handleRoleUpdate(user.id, "user")
-                                }
-                                className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
-                              >
-                                Remove Admin
-                              </button>
-                            )}
-                            {user.status === "active" && (
-                              <button
-                                onClick={() =>
-                                  handleStatusUpdate(user.id, "suspended")
-                                }
-                                className="w-full text-left px-4 py-2 text-sm text-orange-400 hover:bg-white/5"
-                              >
-                                Suspend User
-                              </button>
-                            )}
-                            {user.status === "suspended" && (
-                              <button
-                                onClick={() =>
-                                  handleStatusUpdate(user.id, "active")
-                                }
-                                className="w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-white/5"
-                              >
-                                Activate User
-                              </button>
-                            )}
-
-                            {/* Change Credits button for non-Free plans */}
-                            {user.plan.toLowerCase() !== "free" && (
-                              <>
-                                <div className="my-1 border-t border-white/10" />
-                                <button
-                                  onClick={() => openChangeCredits(user)}
-                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
-                                >
-                                  Add Credits
-                                </button>
-                              </>
-                            )}
-
-                            {user.plan.toLowerCase() !== "free" && (
-                              <>
-                                <div className="my-1 border-t border-white/10" />
-                                <button
-                                  onClick={() => openChangePlan(user)}
-                                  className="w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
-                                >
-                                  Change Plan
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -524,7 +596,7 @@ export default function UserManagement() {
         onSubmit={handleChangeCreditsSubmit}
       />
 
-      {/*  Change Plan Modal*/}
+      {/* Change Plan Modal */}
       <ChangePlanModal
         open={planModalOpen}
         user={planUser}
