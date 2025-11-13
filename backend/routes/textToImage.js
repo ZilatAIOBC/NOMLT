@@ -20,6 +20,39 @@ router.post("/", auth, checkCredits('text_to_image'), async (req, res) => {
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
     const requestSizeBytes = Buffer.byteLength(JSON.stringify(req.body || {}), "utf8");
 
+    //  1. Check censorship status for this user
+    const {
+      getUserCensorshipStatus,
+      detectNSFWWords,
+    } = require("../services/censorshipService");
+
+    const censorship = await getUserCensorshipStatus(req.user._id);
+    const isCensoredMode = censorship.isCensoredMode;
+
+    //  2. Extract the prompt text to scan (adjust if your schema differs)
+    const prompt =
+      (req.body && (req.body.prompt || req.body.text || "")) || "";
+
+    //  3. If in Censored Mode, block NSFW prompts and let frontend show popup
+    if (isCensoredMode) {
+      const nsfw = detectNSFWWords(prompt);
+
+      if (nsfw.matched) {
+        return res.status(403).json({
+          error: "CENSORED_MODE_BLOCKED",
+          message:
+            "Censored Mode is enabled for your account. Your prompt contains restricted content.",
+          nsfwWord: nsfw.word,
+          censoredMode: true,
+          // Frontend can use this to open the Unfiltered Mode / Uncensored page
+          unfilteredModeUrl: "/dashboard/uncensored",
+          // Optional: include plan name / reason for debugging or UI
+          planName: censorship.planName,
+          reason: censorship.reason,
+        });
+      }
+    }
+
     const data = await createTextToImageJob(req.body || {});
 
     const processingTimeMs = Date.now() - startedAt;

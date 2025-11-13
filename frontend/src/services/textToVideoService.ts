@@ -13,9 +13,9 @@ function getSupabaseAccessToken(): string | undefined {
         if (parsed && parsed.access_token) return parsed.access_token as string;
       }
     }
-    const sbSimple = localStorage.getItem('sb-access-token');
+    const sbSimple = localStorage.getItem("sb-access-token");
     if (sbSimple) return sbSimple;
-    const custom = localStorage.getItem('accessToken');
+    const custom = localStorage.getItem("accessToken");
     if (custom) return custom;
   } catch (_) {}
   return undefined;
@@ -69,10 +69,11 @@ export const createTextToVideoJob = async (
 ): Promise<TextToVideoCreateResponse> => {
   const url = `${BACKEND_BASE_URL}/api/text-to-video`;
   const token = getSupabaseAccessToken();
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  // Removed console for production
-  // Removed console for production
 
   const response = await fetch(url, {
     method: "POST",
@@ -82,10 +83,31 @@ export const createTextToVideoJob = async (
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Backend request failed: ${response.status} ${response.statusText} - ${errorText}`
+    let errorData: any = null;
+    let rawText = "";
+
+    try {
+      errorData = await response.json();
+    } catch {
+      try {
+        rawText = await response.text();
+      } catch {
+        rawText = "";
+      }
+    }
+
+    const err: any = new Error(
+      errorData?.message ||
+        errorData?.error ||
+        rawText ||
+        `Backend request failed: ${response.status} ${response.statusText}`
     );
+
+    // 🔴 important: attach status + data so UI can inspect
+    err.status = response.status;
+    err.data = errorData || { raw: rawText };
+
+    throw err;
   }
 
   const data = (await response.json()) as TextToVideoCreateResponse;
@@ -107,7 +129,9 @@ export const getTextToVideoResult = async (
   intervalMs = 6000
 ): Promise<TextToVideoResultResponse> => {
   // Sanitize potential stray quotes/whitespace to avoid malformed URLs
-  const sanitizedResultUrl = (resultUrl || "").trim().replace(/^['"]|['"]$/g, "");
+  const sanitizedResultUrl = (resultUrl || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
   let attempts = 0;
 
   while (attempts < maxAttempts) {
@@ -121,7 +145,11 @@ export const getTextToVideoResult = async (
 
     // Removed console for production
     // Removed console for production
-    const response = await fetch(url, { method: "GET", headers, credentials: "include" });
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
     // Removed console for production
 
     if (!response.ok) {
@@ -143,15 +171,15 @@ export const getTextToVideoResult = async (
         // Transform our S3 response to match expected format
         return {
           code: data.code || 200,
-          message: data.message || 'Success',
+          message: data.message || "Success",
           data: {
             ...data.data,
             // Convert single output to outputs array for compatibility
-            outputs: data.data.output ? [data.data.output] : []
-          }
+            outputs: data.data.output ? [data.data.output] : [],
+          },
         } as TextToVideoResultResponse;
       }
-      
+
       // Original AI provider response format
       return data as TextToVideoResultResponse;
     }
@@ -167,5 +195,7 @@ export const getTextToVideoResult = async (
   }
 
   // Removed console for production
-  throw new Error("Text-to-video generation timed out - maximum attempts reached");
+  throw new Error(
+    "Text-to-video generation timed out - maximum attempts reached"
+  );
 };

@@ -134,4 +134,71 @@ router.post('/change-plan', auth, requireAdmin, async (req, res) => {
     }
 });
 
+/**
+ * POST /api/admin/billing/set-censored-mode
+ * Admin-only: enable/disable censored mode for a user's active subscription
+ * Body: { userId: string, censoredEnabled: boolean }
+ */
+router.post('/set-censored-mode', auth, requireAdmin, async (req, res) => {
+    try {
+        const { userId, censoredEnabled } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ error: 'userId is required' });
+        }
+
+        if (typeof censoredEnabled !== 'boolean') {
+            return res.status(400).json({ error: 'censoredEnabled must be a boolean' });
+        }
+
+        const client = supabaseAdmin || supabase;
+
+        // 1) Get user's active subscription
+        const { data: currentSubscription, error: fetchError } = await client
+            .from('subscriptions')
+            .select('id, user_id, censored_enabled, status')
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (fetchError || !currentSubscription) {
+            return res.status(404).json({
+                error: 'No active subscription found for this user',
+                details: fetchError?.message || null
+            });
+        }
+
+        // 2) Update censored_enabled flag
+        const { data: updatedSub, error: updateError } = await client
+            .from('subscriptions')
+            .update({
+                censored_enabled: censoredEnabled,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', currentSubscription.id)
+            .select('id, user_id, censored_enabled, status')
+            .single();
+
+        if (updateError) {
+            return res.status(500).json({
+                error: 'Failed to update censored mode for subscription',
+                details: updateError.message
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: `Censored mode has been ${censoredEnabled ? 'enabled' : 'disabled'} for this user.`,
+            subscription: updatedSub
+        });
+    } catch (error) {
+        return res.status(500).json({
+            error: error.message || 'Failed to set censored mode'
+        });
+    }
+});
+
+
 module.exports = router;

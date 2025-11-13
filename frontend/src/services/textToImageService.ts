@@ -85,9 +85,6 @@ export const createTextToImageJob = async (
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  // Removed console for production
-  // Removed console for production
-
   const response = await fetch(url, {
     method: "POST",
     headers,
@@ -96,10 +93,33 @@ export const createTextToImageJob = async (
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Backend request failed: ${response.status} ${response.statusText} - ${errorText}`
+    // Try to read JSON first (your backend sends JSON with error + reason)
+    let errorData: any = null;
+    let rawText = "";
+
+    try {
+      errorData = await response.json();
+    } catch {
+      // If not JSON, fall back to text
+      try {
+        rawText = await response.text();
+      } catch {
+        rawText = "";
+      }
+    }
+
+    const err: any = new Error(
+      errorData?.message ||
+        errorData?.error ||
+        rawText ||
+        `Backend request failed: ${response.status} ${response.statusText}`
     );
+
+    // 🔴 Attach status + data so the UI can inspect them
+    err.status = response.status;
+    err.data = errorData || { raw: rawText };
+
+    throw err;
   }
 
   const data = (await response.json()) as TextToImageCreateResponse;
