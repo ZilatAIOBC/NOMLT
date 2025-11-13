@@ -2,14 +2,14 @@
  * =====================================================
  * CREDIT PRICING SERVICE
  * =====================================================
- * 
+ *
  * Frontend service for managing dynamic credit pricing via AI models
  * Uses the existing ai_models table, grouped by category (feature)
  */
 
-import axios from 'axios';
+import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export interface CategoryPricing {
   cost_per_generation: number;
@@ -38,19 +38,24 @@ export interface CategoryUpdate {
  */
 export const getCategoryPricing = async (): Promise<CategoryPricingData> => {
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (!token) {
-      throw new Error('No authentication token found');
+      throw new Error("No authentication token found");
     }
-    const response = await axios.get(`${API_URL}/api/admin/models/category-pricing`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axios.get(
+      `${API_URL}/api/admin/models/category-pricing`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     return response.data.data;
   } catch (error: any) {
     // Removed console for production
-    throw new Error(error.response?.data?.error || 'Failed to fetch category pricing');
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch category pricing"
+    );
   }
 };
 
@@ -67,9 +72,9 @@ export const updateCategoryPricing = async (
   models_updated: number;
 }> => {
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (!token) {
-      throw new Error('No authentication token found');
+      throw new Error("No authentication token found");
     }
     const response = await axios.put(
       `${API_URL}/api/admin/models/category-pricing/${category}`,
@@ -77,14 +82,16 @@ export const updateCategoryPricing = async (
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
     return response.data.data;
   } catch (error: any) {
     // Removed console for production
-    throw new Error(error.response?.data?.error || 'Failed to update category pricing');
+    throw new Error(
+      error.response?.data?.error || "Failed to update category pricing"
+    );
   }
 };
 
@@ -104,9 +111,9 @@ export const bulkUpdateCategoryPricing = async (
   message: string;
 }> => {
   try {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (!token) {
-      throw new Error('No authentication token found');
+      throw new Error("No authentication token found");
     }
     const response = await axios.patch(
       `${API_URL}/api/admin/models/bulk-category-pricing`,
@@ -114,14 +121,16 @@ export const bulkUpdateCategoryPricing = async (
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       }
     );
     return response.data;
   } catch (error: any) {
     // Removed console for production
-    throw new Error(error.response?.data?.error || 'Failed to bulk update category pricing');
+    throw new Error(
+      error.response?.data?.error || "Failed to bulk update category pricing"
+    );
   }
 };
 
@@ -132,4 +141,3 @@ const creditPricingService = {
 };
 
 export default creditPricingService;
-
