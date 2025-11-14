@@ -20,7 +20,7 @@ router.post('/stripe', async (req, res) => {
 
   try {
     const stripe = getStripeClient();
-    
+
     // Now we have raw body available from the middleware
     // Verify the webhook signature for security
     try {
@@ -38,19 +38,19 @@ router.post('/stripe', async (req, res) => {
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(event.data.object);
         break;
-      
+
       case 'customer.subscription.created':
         await handleSubscriptionCreated(event.data.object);
         break;
-        
+
       case 'customer.subscription.updated':
         await handleSubscriptionUpdated(event.data.object);
         break;
-        
+
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object);
         break;
-        
+
       case 'invoice.payment_succeeded':
         // Retrieve full invoice with expanded fields to ensure we have all data
         const stripe = getStripeClient();
@@ -62,45 +62,45 @@ router.post('/stripe', async (req, res) => {
       case 'invoice.upcoming':
         await handleInvoiceUpcoming(event.data.object);
         break;
-        
+
       // Additional event handlers - NEW FEATURES
       case 'invoice.payment_failed':
         await handleInvoicePaymentFailed(event.data.object);
         break;
-        
+
       case 'customer.created':
         await handleCustomerCreated(event.data.object);
         break;
-        
+
       case 'customer.updated':
         await handleCustomerUpdated(event.data.object);
         break;
-        
+
       case 'payment_method.attached':
         await handlePaymentMethodAttached(event.data.object);
         break;
-        
+
       case 'charge.dispute.created':
         await handleChargeDisputeCreated(event.data.object);
         break;
-        
+
       // Additional important subscription events
       case 'customer.subscription.trial_will_end':
         await handleSubscriptionTrialWillEnd(event.data.object);
         break;
-        
+
       case 'invoice.created':
         await handleInvoiceCreated(event.data.object);
         break;
-        
+
       case 'invoice.updated':
         await handleInvoiceUpdated(event.data.object);
         break;
-        
+
       case 'invoice.payment_action_required':
         await handleInvoicePaymentActionRequired(event.data.object);
         break;
-        
+
       default:
     }
 
@@ -111,10 +111,84 @@ router.post('/stripe', async (req, res) => {
 });
 
 async function handleCheckoutSessionCompleted(session) {
-  
+
   const client = supabaseAdmin || supabase;
-  
+
   try {
+    // ========================================
+    // ONE-TIME UNCENSORED MODE PURCHASE
+    // ========================================
+    if (
+      session.mode === 'payment' &&
+      session.metadata?.type === 'uncensored_mode_one_time'
+    ) {
+      const userId = session.metadata.user_id;
+      const addonKey = session.metadata.addon_key || 'uncensored_mode';
+
+      if (!userId) {
+        console.warn(
+          '[webhook] uncensored_mode_one_time: missing user_id in metadata'
+        );
+        return;
+      }
+
+      // Find the latest active subscription for this user
+      const { data: subscription, error: subError } = await client
+        .from('subscriptions')
+        .select('id, user_id, censored_enabled')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (subError) {
+        console.warn(
+          '[webhook] uncensored_mode_one_time: failed to fetch subscription',
+          subError.message
+        );
+        return;
+      }
+
+      if (!subscription) {
+        console.log(
+          '[webhook] uncensored_mode_one_time: no active subscription for user, skipping censored_enabled update',
+          { userId }
+        );
+        return;
+      }
+
+      const { error: updateError } = await client
+        .from('subscriptions')
+        .update({
+          censored_enabled: false,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', subscription.id);
+
+      if (updateError) {
+        console.warn(
+          '[webhook] uncensored_mode_one_time: failed to update censored_enabled',
+          updateError.message
+        );
+      } else {
+        console.log(
+          '[webhook] uncensored_mode_one_time: censored_enabled set to false',
+          {
+            userId,
+            subscriptionId: subscription.id,
+            addonKey,
+          }
+        );
+      }
+
+      // (Optional) If you later add an addon_purchases table, insert a row here.
+
+      return;
+    }
+
+
+
     // Branch: credit top-up payments (mode=payment)
     if (session.mode === 'payment' && session.metadata?.purpose === 'credit_topup') {
       console.log('[webhook] checkout.session.completed (credit_topup) received');
@@ -141,7 +215,7 @@ async function handleCheckoutSessionCompleted(session) {
           .eq('reference_type', 'credit_topup')
           .maybeSingle();
         if (existingByRef) alreadyRecorded = true;
-      } catch {}
+      } catch { }
 
       if (!alreadyRecorded) {
         try {
@@ -153,7 +227,7 @@ async function handleCheckoutSessionCompleted(session) {
             .ilike('description', `%${paymentIntentId}%`)
             .maybeSingle();
           if (existingByDesc) alreadyRecorded = true;
-        } catch {}
+        } catch { }
       }
 
       if (alreadyRecorded) {
@@ -206,13 +280,13 @@ async function handleCheckoutSessionCompleted(session) {
     // Default branch: subscription checkout (mode=subscription)
     const stripe = getStripeClient();
     const subscription = await stripe.subscriptions.retrieve(session.subscription);
-    
+
     // Extract user ID and plan ID from session metadata, fallback to subscription metadata
     const userId = session.metadata?.user_id || subscription.metadata?.user_id;
     const planId = session.metadata?.plan_id || subscription.metadata?.plan_id;
     const isUpgrade = session.metadata?.is_upgrade === 'true' || subscription.metadata?.is_upgrade === 'true';
     const oldSubscriptionId = session.metadata?.old_subscription_id || subscription.metadata?.old_subscription_id;
-    
+
     if (!userId || !planId) {
       return;
     }
@@ -235,7 +309,7 @@ async function handleCheckoutSessionCompleted(session) {
 
     if (isUpgrade && oldSubscriptionId) {
       // This is an upgrade - update existing subscription record and cancel old Stripe subscription
-      
+
       // Update the existing subscription record in database
       const { error: updateError } = await client
         .from('subscriptions')
@@ -273,10 +347,10 @@ async function handleCheckoutSessionCompleted(session) {
     // ========================================
     // CREDIT ALLOCATION - NEW SUBSCRIPTION
     // ========================================
-    
+
     try {
       // Get plan details to find credits_included
-      
+
       const { data: plan, error: planError } = await client
         .from('plans')
         .select('credits_included, display_name, name')
@@ -286,7 +360,7 @@ async function handleCheckoutSessionCompleted(session) {
 
       if (planError) {
       } else if (plan && plan.credits_included) {
-        
+
         // Add credits to user (rollover strategy - they accumulate)
         const creditResult = await addCredits(
           userId,
@@ -297,11 +371,11 @@ async function handleCheckoutSessionCompleted(session) {
           'subscription'
         );
 
-        
+
         // Update usage summary to track credit additions
         updateUsageSummaryAfterCreditsAdded(userId, plan.credits_included, 'purchased')
-          .catch(() => {});
-        
+          .catch(() => { });
+
       } else {
       }
     } catch (creditError) {
@@ -318,9 +392,9 @@ async function handleSubscriptionCreated(subscription) {
 }
 
 async function handleSubscriptionUpdated(subscription) {
-  
+
   const client = supabaseAdmin || supabase;
-  
+
   try {
     // Check if subscription exists first
     const { data: existingSubscription, error: fetchError } = await client
@@ -386,7 +460,7 @@ async function handleSubscriptionUpdated(subscription) {
       // Check if subscription items changed (plan change)
       if (subscription.items && subscription.items.data && subscription.items.data.length > 0) {
         const newStripePriceId = subscription.items.data[0].price.id;
-        
+
         // Find the plan that matches this price ID
         const { data: newPlan, error: planError } = await client
           .from('plans')
@@ -436,7 +510,7 @@ async function handleSubscriptionUpdated(subscription) {
 
             // Update usage summary
             updateUsageSummaryAfterCreditsAdded(currentSub.user_id, creditDifference, 'bonus')
-              .catch(() => {});
+              .catch(() => { });
           } else if (creditDifference < 0) {
             // DOWNGRADE - Keep existing credits (Option B: Rollover)
           }
@@ -459,9 +533,9 @@ async function handleSubscriptionUpdated(subscription) {
 }
 
 async function handleSubscriptionDeleted(subscription) {
-  
+
   const client = supabaseAdmin || supabase;
-  
+
   try {
     const { error } = await client
       .from('subscriptions')
@@ -482,18 +556,18 @@ async function handleSubscriptionDeleted(subscription) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice) {
-  
+
   const client = supabaseAdmin || supabase;
-  
+
   try {
     // Get subscription ID from invoice (Stripe can store it in multiple locations)
     let subscriptionId = invoice.subscription;
-    
+
     // If subscription is an object (from expanded invoice), extract the ID
     if (subscriptionId && typeof subscriptionId === 'object' && subscriptionId.id) {
       subscriptionId = subscriptionId.id;
     }
-    
+
     // If not found directly, check in lines.data (subscription items)
     if (!subscriptionId && invoice.lines && invoice.lines.data && invoice.lines.data.length > 0) {
       subscriptionId = invoice.lines.data[0].subscription;
@@ -535,7 +609,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
 
     // Get charge ID from invoice (can be in different fields)
     const chargeId = invoice.charge || invoice.charge_id || invoice.payment_intent;
-    
+
     // Check if transaction already exists (prevent duplicates)
     // Use stripe_invoice_id as it's UNIQUE in the database schema
     const { data: existingTransaction, error: checkError } = await client
@@ -584,7 +658,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
     // ========================================
     // Check if this is a renewal (not the first invoice)
     const isRenewal = invoice.billing_reason === 'subscription_cycle';
-    
+
     if (!isRenewal) {
       return;
     }
@@ -602,7 +676,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
     }
 
     if (plan.credits_included && plan.credits_included > 0) {
-      
+
       // Add credits (Option B: Rollover - they accumulate)
       const creditResult = await addCredits(
         dbSubscription.user_id,
@@ -613,10 +687,10 @@ async function handleInvoicePaymentSucceeded(invoice) {
         'subscription'
       );
 
-      
+
       // Update usage summary
       updateUsageSummaryAfterCreditsAdded(dbSubscription.user_id, plan.credits_included, 'purchased')
-        .catch(() => {});
+        .catch(() => { });
     } else {
     }
 
@@ -691,21 +765,21 @@ async function handleInvoiceUpcoming(invoice) {
 
 // NEW FEATURE: Invoice payment failed handler
 async function handleInvoicePaymentFailed(invoice) {
-  
+
   try {
     // Get subscription details from Stripe
     const stripe = getStripeClient();
     const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
-    
+
     // Update subscription status if needed
     await handleSubscriptionUpdated(subscription);
-    
-    
+
+
     // You can add additional logic here:
     // - Send payment failure notification to user
     // - Update user access if needed
     // - Log failed payment attempt
-    
+
   } catch (error) {
     // Don't throw to prevent webhook retries
   }
@@ -713,117 +787,117 @@ async function handleInvoicePaymentFailed(invoice) {
 
 // NEW FEATURE: Customer created handler
 async function handleCustomerCreated(customer) {
-  
+
   try {
     // You can add logic here to:
     // - Sync customer data to your database
     // - Set up customer-specific settings
     // - Send welcome email
-    
-    
+
+
   } catch (error) {
   }
 }
 
 // NEW FEATURE: Customer updated handler
 async function handleCustomerUpdated(customer) {
-  
+
   try {
     // You can add logic here to:
     // - Sync updated customer data
     // - Update customer preferences
     // - Log customer changes
-    
-    
+
+
   } catch (error) {
   }
 }
 
 // NEW FEATURE: Payment method attached handler
 async function handlePaymentMethodAttached(paymentMethod) {
-  
+
   try {
     // You can add logic here to:
     // - Update customer payment method info
     // - Send confirmation to user
     // - Log payment method changes
-    
-    
+
+
   } catch (error) {
   }
 }
 
 // NEW FEATURE: Charge dispute created handler
 async function handleChargeDisputeCreated(dispute) {
-  
+
   try {
     // You can add logic here to:
     // - Send dispute notification to admin
     // - Update subscription status if needed
     // - Log dispute for investigation
     // - Notify customer about dispute
-    
-    
+
+
   } catch (error) {
   }
 }
 
 // NEW FEATURE: Subscription trial will end handler
 async function handleSubscriptionTrialWillEnd(subscription) {
-  
+
   try {
     // You can add logic here to:
     // - Send trial ending notification to user
     // - Offer trial extension or discount
     // - Update user dashboard with trial status
     // - Log trial ending for analytics
-    
-    
+
+
   } catch (error) {
   }
 }
 
 // NEW FEATURE: Invoice created handler
 async function handleInvoiceCreated(invoice) {
-  
+
   try {
     // You can add logic here to:
     // - Log invoice creation for tracking
     // - Send invoice preview to user
     // - Update billing records
     // - Prepare for payment processing
-    
-    
+
+
   } catch (error) {
   }
 }
 
 // NEW FEATURE: Invoice updated handler
 async function handleInvoiceUpdated(invoice) {
-  
+
   try {
     // You can add logic here to:
     // - Sync invoice changes to database
     // - Update billing records
     // - Notify user of invoice changes
     // - Log invoice modifications
-    
-    
+
+
   } catch (error) {
   }
 }
 
 // NEW FEATURE: Invoice payment action required handler
 async function handleInvoicePaymentActionRequired(invoice) {
-  
+
   try {
     // You can add logic here to:
     // - Notify user that payment requires action (3D Secure)
     // - Update subscription status to show payment pending
     // - Send email with payment action instructions
     // - Log payment action required for tracking
-    
-    
+
+
   } catch (error) {
   }
 }
