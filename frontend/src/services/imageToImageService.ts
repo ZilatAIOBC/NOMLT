@@ -12,9 +12,9 @@ function getSupabaseAccessToken(): string | undefined {
         if (parsed && parsed.access_token) return parsed.access_token as string;
       }
     }
-    const sbSimple = localStorage.getItem('sb-access-token');
+    const sbSimple = localStorage.getItem("sb-access-token");
     if (sbSimple) return sbSimple;
-    const custom = localStorage.getItem('accessToken');
+    const custom = localStorage.getItem("accessToken");
     if (custom) return custom;
   } catch (_) {}
   return undefined;
@@ -72,39 +72,54 @@ export const createImageToImageJob = async (
   requestBody: ImageToImageRequest
 ): Promise<ImageToImageCreateResponse> => {
   const url = `${BACKEND_BASE_URL}/api/image-to-image`;
-  
-  // Removed console for production
-  // Removed console for production
-  // Removed console for production
 
   const token = getSupabaseAccessToken();
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify(requestBody),
-    credentials: 'include',
+    credentials: "include",
   });
 
-  // Removed console for production
-
   if (!response.ok) {
-    const errorText = await response.text();
-    // Removed console for production
-    throw new Error(`Backend request failed: ${response.status} ${response.statusText} - ${errorText}`);
+    // Try JSON first
+    let errorData: any = null;
+    let rawText = "";
+
+    try {
+      errorData = await response.json();
+    } catch {
+      try {
+        rawText = await response.text();
+      } catch {
+        rawText = "";
+      }
+    }
+
+    const err: any = new Error(
+      errorData?.message ||
+        errorData?.error ||
+        rawText ||
+        `Backend request failed: ${response.status} ${response.statusText}`
+    );
+
+    err.status = response.status;
+    err.data = errorData || { raw: rawText };
+
+    throw err;
   }
 
   const data = (await response.json()) as ImageToImageCreateResponse;
-  // Removed console for production
-  
+
   if (!data?.data?.urls?.get) {
-    // Removed console for production
-    throw new Error('Invalid backend response: missing result URL');
+    throw new Error("Invalid backend response: missing result URL");
   }
-  
-  // Removed console for production
+
   return data;
 };
 
@@ -115,60 +130,70 @@ export const getImageToImageResult = async (
   intervalMs: number = 6000
 ): Promise<ImageToImageResultResponse> => {
   // Sanitize potential stray quotes/whitespace to avoid malformed URLs
-  const sanitizedResultUrl = (resultUrl || "").trim().replace(/^['"]|['"]$/g, "");
-  
+  const sanitizedResultUrl = (resultUrl || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
+
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    const url = `${BACKEND_BASE_URL}/api/image-to-image/result?url=${encodeURIComponent(sanitizedResultUrl)}`;
-    
+    const url = `${BACKEND_BASE_URL}/api/image-to-image/result?url=${encodeURIComponent(
+      sanitizedResultUrl
+    )}`;
+
     // Removed console for production
     // Removed console for production
 
     const token = getSupabaseAccessToken();
     const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const response = await fetch(url, { method: 'GET', headers, credentials: 'include' });
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
 
     // Removed console for production
 
     if (!response.ok) {
       const errorText = await response.text();
       // Removed console for production
-      throw new Error(`Backend result failed: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(
+        `Backend result failed: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
     const data = (await response.json()) as any;
     const status = data?.data?.status;
-    
+
     // Removed console for production
     // Removed console for production
 
-    if (status === 'succeeded' || status === 'completed') {
+    if (status === "succeeded" || status === "completed") {
       // Removed console for production
-      
+
       // Check if this is our new S3 response format with generation info
       if (data.success && data.generation) {
         // Removed console for production
         // Transform our S3 response to match expected format
         return {
           code: data.code || 200,
-          message: data.message || 'Success',
+          message: data.message || "Success",
           data: {
             ...data.data,
             // Convert single output to outputs array for compatibility
-            outputs: data.data.output ? [data.data.output] : []
-          }
+            outputs: data.data.output ? [data.data.output] : [],
+          },
         } as ImageToImageResultResponse;
       }
-      
+
       // Removed console for production
       // Original AI provider response format
       return data as ImageToImageResultResponse;
     }
-    if (status === 'failed') {
-      const err = data?.data?.error || 'Unknown error';
+    if (status === "failed") {
+      const err = data?.data?.error || "Unknown error";
       // Removed console for production
       throw new Error(`Image-to-image generation failed: ${err}`);
     }
@@ -179,7 +204,9 @@ export const getImageToImageResult = async (
   }
 
   // Removed console for production
-  throw new Error('Image-to-image generation timed out - maximum attempts reached');
+  throw new Error(
+    "Image-to-image generation timed out - maximum attempts reached"
+  );
 };
 
 // Backward-compatible alias for existing call sites
@@ -190,23 +217,23 @@ export const callImageToImageAPI = (
 // Helper function to convert file to base64
 export const convertFileToBase64 = async (file: File): Promise<string> => {
   // Removed console for production
-  
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = () => {
       const result = reader.result as string;
       // Remove data URL prefix if present
-      const base64 = result.includes(',') ? result.split(',')[1] : result;
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
       // Removed console for production
       resolve(base64);
     };
-    
+
     reader.onerror = () => {
       // Removed console for production
-      reject(new Error('Failed to read file'));
+      reject(new Error("Failed to read file"));
     };
-    
+
     reader.readAsDataURL(file);
   });
 };
@@ -215,27 +242,30 @@ export const convertFileToBase64 = async (file: File): Promise<string> => {
 export const uploadImageToUrl = async (file: File): Promise<string> => {
   try {
     // Removed console for production
-    
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = () => {
         const dataUrl = reader.result as string;
         // Removed console for production
         // Removed console for production
         resolve(dataUrl);
       };
-      
+
       reader.onerror = () => {
         // Removed console for production
-        reject(new Error('Failed to read file'));
+        reject(new Error("Failed to read file"));
       };
-      
+
       reader.readAsDataURL(file);
     });
-    
   } catch (error) {
     // Removed console for production
-    throw new Error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to upload image: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 };
