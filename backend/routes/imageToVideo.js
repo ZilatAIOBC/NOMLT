@@ -21,6 +21,39 @@ router.post("/", auth, checkCredits('image_to_video'), async (req, res) => {
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
     const requestSizeBytes = Buffer.byteLength(JSON.stringify(req.body || {}), "utf8");
 
+    //  1. Check censorship status for this user
+    const {
+      getUserCensorshipStatus,
+      detectNSFWWords,
+    } = require("../services/censorshipService");
+
+    const censorship = await getUserCensorshipStatus(req.user._id);
+    const isCensoredMode = censorship.isCensoredMode;
+
+    //  2. Extract the prompt text to scan (adjust if your schema differs)
+    const prompt =
+      (req.body && (req.body.prompt || req.body.text || "")) || "";
+
+    //  3. If in Censored Mode, block NSFW prompts and let frontend show popup
+    if (isCensoredMode) {
+      const nsfw = detectNSFWWords(prompt);
+
+      if (nsfw.matched) {
+        return res.status(403).json({
+          error: "CENSORED_MODE_BLOCKED",
+          message:
+            "Censored Mode is enabled for your account. Your prompt contains restricted content.",
+          nsfwWord: nsfw.word,
+          censoredMode: true,
+          // Frontend can use this to open the Unfiltered Mode / Uncensored page
+          unfilteredModeUrl: "/dashboard/uncensored",
+          // Optional: include plan name / reason for debugging or UI
+          planName: censorship.planName,
+          reason: censorship.reason,
+        });
+      }
+    }
+
     const data = await createImageToVideoJob(req.body || {});
 
     const processingTimeMs = Date.now() - startedAt;
@@ -46,9 +79,9 @@ router.post("/", auth, checkCredits('image_to_video'), async (req, res) => {
             request_size_bytes: requestSizeBytes,
             processing_time_ms: processingTimeMs
           })
-          .then(() => {})
-          .catch(() => {});
-      } catch (_) {}
+          .then(() => { })
+          .catch(() => { });
+      } catch (_) { }
     }
     res.status(200).json(data);
   } catch (e) {
@@ -61,8 +94,8 @@ router.get("/result", auth, async (req, res) => {
   try {
     const userId = (req.supabaseUser && req.supabaseUser.id) || (req.user && req.user._id);
     const { url, maxAttempts, intervalMs } = req.query;
-    
-    
+
+
     if (!url) {
       return res.status(400).json({ error: "Missing url query parameter" });
     }
@@ -78,7 +111,7 @@ router.get("/result", auth, async (req, res) => {
 
     // Check if generation is complete and has video URL
     const externalVideoUrl = result.data.output || (result.data.outputs && result.data.outputs[0]);
-    
+
     if (!externalVideoUrl) {
       // Still processing or no output yet, return the original response
       return res.status(200).json(result);
@@ -116,20 +149,20 @@ router.get("/result", auth, async (req, res) => {
     // Step 4: Deduct credits with generation ID (enables idempotency)
     const creditCost = req.creditInfo?.cost || 80; // Default to 80 if not set
     let creditResult = null;
-    
+
     try {
       creditResult = await deductCredits(
-        userId, 
-        creditCost, 
-        'image_to_video', 
+        userId,
+        creditCost,
+        'image_to_video',
         generation.id // Use generation ID for idempotency
       );
-      
+
       // Update generation record with credits_used
       const client = supabaseAdmin || supabase;
       await client
         .from('generations')
-        .update({ 
+        .update({
           credits_used: creditCost,
           status: 'completed',
           completed_at: new Date().toISOString()
@@ -142,8 +175,8 @@ router.get("/result", auth, async (req, res) => {
         creditsUsed: creditCost,
         status: 'completed',
         createdAt: generation.created_at
-      }).catch(() => {});
-        
+      }).catch(() => { });
+
     } catch (creditError) {
       // Mark generation as completed even if credit deduction fails
       try {

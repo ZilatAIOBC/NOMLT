@@ -12,9 +12,9 @@ function getSupabaseAccessToken(): string | undefined {
         if (parsed && parsed.access_token) return parsed.access_token as string;
       }
     }
-    const sbSimple = localStorage.getItem('sb-access-token');
+    const sbSimple = localStorage.getItem("sb-access-token");
     if (sbSimple) return sbSimple;
-    const custom = localStorage.getItem('accessToken');
+    const custom = localStorage.getItem("accessToken");
     if (custom) return custom;
   } catch (_) {}
   return undefined;
@@ -74,38 +74,53 @@ export const createImageToVideoJob = async (
   requestBody: ImageToVideoRequest
 ): Promise<ImageToVideoCreateResponse> => {
   const url = `${BACKEND_BASE_URL}/api/image-to-video`;
-  
-  
 
   const token = getSupabaseAccessToken();
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify(requestBody),
-    credentials: 'include',
+    credentials: "include",
   });
 
-  
-
   if (!response.ok) {
-    const errorText = await response.text();
-    
-    throw new Error(`Backend request failed: ${response.status} ${response.statusText} - ${errorText}`);
+    let errorData: any = null;
+    let rawText = "";
+
+    try {
+      errorData = await response.json();
+    } catch {
+      try {
+        rawText = await response.text();
+      } catch {
+        rawText = "";
+      }
+    }
+
+    const err: any = new Error(
+      errorData?.message ||
+        errorData?.error ||
+        rawText ||
+        `Backend request failed: ${response.status} ${response.statusText}`
+    );
+
+    err.status = response.status;
+    err.data = errorData || { raw: rawText };
+
+    throw err;
   }
 
   const data = (await response.json()) as ImageToVideoCreateResponse;
-  
-  
+
   if (!data?.data?.urls?.get) {
-    
-    throw new Error('Invalid backend response: missing result URL');
+    throw new Error("Invalid backend response: missing result URL");
   }
-  
-  
+
   return data;
 };
 
@@ -116,68 +131,68 @@ export const getImageToVideoResult = async (
   intervalMs: number = 6000
 ): Promise<ImageToVideoResultResponse> => {
   // Sanitize potential stray quotes/whitespace to avoid malformed URLs
-  const sanitizedResultUrl = (resultUrl || "").trim().replace(/^['"]|['"]$/g, "");
+  const sanitizedResultUrl = (resultUrl || "")
+    .trim()
+    .replace(/^['"]|['"]$/g, "");
   let attempts = 0;
 
   while (attempts < maxAttempts) {
-    const url = `${BACKEND_BASE_URL}/api/image-to-video/result?url=${encodeURIComponent(sanitizedResultUrl)}`;
-    
-    
+    const url = `${BACKEND_BASE_URL}/api/image-to-video/result?url=${encodeURIComponent(
+      sanitizedResultUrl
+    )}`;
 
     const token = getSupabaseAccessToken();
     const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    const response = await fetch(url, { method: 'GET', headers, credentials: 'include' });
-
-    
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+      credentials: "include",
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      
-      throw new Error(`Backend result failed: ${response.status} ${response.statusText} - ${errorText}`);
+
+      throw new Error(
+        `Backend result failed: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
     const data = (await response.json()) as any;
     const status = data?.data?.status;
-    
-    
 
-    if (status === 'succeeded' || status === 'completed') {
-      
-      
+    if (status === "succeeded" || status === "completed") {
       // Check if this is our new S3 response format with generation info
       if (data.success && data.generation) {
-        
         // Transform our S3 response to match expected format
         return {
           code: data.code || 200,
-          message: data.message || 'Success',
+          message: data.message || "Success",
           data: {
             ...data.data,
             // Convert single output to outputs array for compatibility
-            outputs: data.data.output ? [data.data.output] : []
-          }
+            outputs: data.data.output ? [data.data.output] : [],
+          },
         } as ImageToVideoResultResponse;
       }
-      
-      
+
       // Original AI provider response format
       return data as ImageToVideoResultResponse;
     }
-    if (status === 'failed') {
-      const err = data?.data?.error || 'Unknown error';
-      
+    if (status === "failed") {
+      const err = data?.data?.error || "Unknown error";
+
       throw new Error(`Image-to-video generation failed: ${err}`);
     }
 
-    
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
     attempts++;
   }
 
-  
-  throw new Error('Image-to-video generation timed out - maximum attempts reached');
+  throw new Error(
+    "Image-to-video generation timed out - maximum attempts reached"
+  );
 };
 
 // Backward-compatible alias for existing call sites
@@ -189,27 +204,30 @@ export const callImageToVideoAPI = (
 export const uploadImageToUrl = async (file: File): Promise<string> => {
   try {
     // Removed console for production
-    
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      
+
       reader.onload = () => {
         const dataUrl = reader.result as string;
         // Removed console for production
         // Removed console for production
         resolve(dataUrl);
       };
-      
+
       reader.onerror = () => {
         // Removed console for production
-        reject(new Error('Failed to read file'));
+        reject(new Error("Failed to read file"));
       };
-      
+
       reader.readAsDataURL(file);
     });
-    
   } catch (error) {
     // Removed console for production
-    throw new Error(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to upload image: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 };
