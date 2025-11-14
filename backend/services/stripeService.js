@@ -237,6 +237,91 @@ async function getSubscription(subscriptionId) {
   return await stripe.subscriptions.retrieve(subscriptionId);
 }
 
+/**
+ * Create a one-time Checkout Session for Uncensored Mode
+ * Uses addon_prices row (static Stripe product, dynamic price from DB)
+ * @param {Object} params
+ * @param {string} params.userId - Authenticated user ID
+ * @param {string} params.addonId - addon_prices.id for uncensored mode
+ * @param {string} params.successUrl - Base success URL (frontend)
+ * @param {string} params.cancelUrl - Base cancel URL (frontend)
+ * @returns {Promise<object>} Stripe Checkout Session
+ */
+async function createUncensoredCheckoutSession({
+  userId,
+  addonId,
+  successUrl,
+  cancelUrl,
+}) {
+  const client = supabaseAdmin || supabase;
+  const stripe = getStripeClient();
+
+  if (!addonId) {
+    throw new Error("addonId is required");
+  }
+
+  // Load addon config (price, currency, static Stripe product)
+  const { data: addon, error } = await client
+    .from("addon_prices")
+    .select(
+      "id, addon_key, label, price, currency, stripe_product_id, is_active"
+    )
+    .eq("id", addonId)
+    .eq("is_active", true)
+    .single();
+
+  if (error || !addon) {
+    throw new Error(
+      error?.message || "Uncensored Mode add-on not found or inactive"
+    );
+  }
+
+  if (!addon.stripe_product_id) {
+    throw new Error("stripe_product_id is not configured for this add-on");
+  }
+
+  if (typeof addon.price !== "number" || addon.price <= 0) {
+    throw new Error("Invalid price configured for this add-on");
+  }
+
+  const unitAmount = Math.round(addon.price * 100); // dollars → cents
+  const currency = (addon.currency || "usd").toLowerCase();
+
+  // Ensure Stripe customer exists
+  const customerId = await getOrCreateCustomerForUser(userId);
+
+  const session = await stripe.checkout.sessions.create({
+    mode: "payment",
+    customer: customerId,
+    line_items: [
+      {
+        price_data: {
+          currency,
+          unit_amount: unitAmount,
+          product: addon.stripe_product_id, // static product in Stripe
+        },
+        quantity: 1,
+      },
+    ],
+    allow_promotion_codes: true,
+    billing_address_collection: "auto",
+    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}&success=1`,
+    cancel_url: `${cancelUrl}?canceled=1`,
+    metadata: {
+      type: "uncensored_mode_one_time",
+      user_id: userId,
+      addon_id: addon.id,
+      addon_key: addon.addon_key,
+      amount: String(unitAmount),
+      currency,
+    },
+  });
+
+  return session;
+}
+
+
+
 module.exports = {
   getOrCreateCustomerForUser,
   createCheckoutSession,
@@ -246,6 +331,7 @@ module.exports = {
   reactivateSubscription,
   changeSubscriptionPlan,
   getSubscription,
+  createUncensoredCheckoutSession,
 };
 
 

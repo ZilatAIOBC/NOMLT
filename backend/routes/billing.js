@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { supabase, supabaseAdmin } = require('../utils/supabase');
-const { cancelSubscription, reactivateSubscription, changeSubscriptionPlan } = require('../services/stripeService');
+const { cancelSubscription, reactivateSubscription, changeSubscriptionPlan, createUncensoredCheckoutSession } = require('../services/stripeService');
+
+function getFrontendUrl() {
+  return process.env.FRONTEND_URL || "http://localhost:5173";
+}
+
 
 // Helper function to get user ID from request
 async function getUserId(req) {
@@ -482,5 +487,35 @@ router.post('/subscription/change-plan', async (req, res) => {
     });
   }
 });
+
+// POST /api/billing/uncensored/create-checkout-session
+// Creates Stripe Checkout Session for one-time Uncensored Mode purchase
+router.post("/uncensored/create-checkout-session", async (req, res) => {
+  try {
+    const userId = await getUserId(req); // reuse your existing helper
+    const { addonId } = req.body;
+
+    if (!addonId) {
+      return res.status(400).json({ error: "addonId is required" });
+    }
+
+    const successUrl = `${getFrontendUrl()}/dashboard/uncensored`;
+    const cancelUrl = `${getFrontendUrl()}/dashboard/uncensored`;
+
+    const session = await createUncensoredCheckoutSession({
+      userId,
+      addonId,
+      successUrl,
+      cancelUrl,
+    });
+
+    return res.status(200).json({ url: session.url });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: error.message || "Failed to create checkout session" });
+  }
+});
+
 
 module.exports = router;
